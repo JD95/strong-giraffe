@@ -12,9 +12,9 @@ import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.text.input.ImeAction
-import com.example.stronggiraffe.FIELD_NAME_FONT_SIZE
 import com.example.stronggiraffe.views.LargeDropDownFromList
 import com.example.stronggiraffe.model.Muscle
+import com.example.stronggiraffe.views.FIELD_NAME_FONT_SIZE
 import com.ramcosta.composedestinations.annotation.Destination
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalComposeUiApi::class)

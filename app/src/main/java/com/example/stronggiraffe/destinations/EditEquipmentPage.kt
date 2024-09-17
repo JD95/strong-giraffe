@@ -14,35 +14,51 @@ import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.lifecycle.ViewModel
-import com.example.stronggiraffe.FIELD_NAME_FONT_SIZE
 import com.example.stronggiraffe.views.LargeDropDownFromList
 import com.example.stronggiraffe.model.Location
 import com.example.stronggiraffe.model.ids.EquipmentId
 import com.example.stronggiraffe.model.ids.LocationId
+import com.example.stronggiraffe.views.FIELD_NAME_FONT_SIZE
+import com.example.stronggiraffe.views.RequiredDataRedirect
 import com.ramcosta.composedestinations.annotation.Destination
 
 
 abstract class EditEquipmentPageViewModel : ViewModel() {
     abstract val startingName: String
     abstract val locations: List<Location>
-    abstract fun submit(value: String): Unit
+    abstract val startingLocation: Location
+    abstract fun submit(name: String, location: LocationId)
+    abstract fun redirectToCreateLocation()
 }
 
 data class EditEquipmentPageNavArgs(
-    val id: EquipmentId
+    val id: EquipmentId,
+    val name: String,
+    val location: LocationId,
 )
 
-@OptIn(ExperimentalMaterial3Api::class, ExperimentalComposeUiApi::class)
 @Composable
 @Destination(navArgsDelegate = EditEquipmentPageNavArgs::class)
 fun EditEquipmentPage(view: EditEquipmentPageViewModel) {
+    if (view.locations.isEmpty()) {
+        RequiredDataRedirect(missing = "Location") {
+           view.redirectToCreateLocation()
+        }
+    } else {
+        Page(view)
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalComposeUiApi::class)
+@Composable
+fun Page(view: EditEquipmentPageViewModel) {
     val keyboardController = LocalSoftwareKeyboardController.current
     var name by remember { mutableStateOf(view.startingName) }
-    var selectedLocation by remember { mutableStateOf(view.locations[0]) }
+    var selectedLocation by remember { mutableStateOf(view.startingLocation) }
     Scaffold(
         floatingActionButton = {
             FloatingActionButton(
-                onClick = { view.submit(name) }
+                onClick = { view.submit(name, selectedLocation.id) }
             ) {
                 Icon(Icons.Default.Done, contentDescription = "Save Location")
             }
@@ -69,6 +85,7 @@ fun EditEquipmentPage(view: EditEquipmentPageViewModel) {
                 modifier = Modifier.fillMaxWidth(0.8f),
                 items = view.locations,
                 label = selectedLocation.name,
+                selectedIndex = view.locations.indexOfFirst { it.id == selectedLocation.id },
                 itemToString = { it.name },
                 onItemSelected = { selectedLocation = it }
             )
@@ -83,9 +100,19 @@ fun EditEquipmentPagePreview() {
         override val startingName: String
             get() = "New Equipment"
         override val locations: List<Location>
-            get() = listOf(Location(LocationId("a"), "24 Hour"))
+            get() = listOf(
+                Location(LocationId("a"), "24 Hour"),
+                Location(LocationId("b"), "Planet Fitness"),
+            )
+        override val startingLocation: Location
+            get() = Location(LocationId("b"), "24 Hour")
 
-        override fun submit(value: String) {
+        override fun submit(name: String, location: LocationId) {
+            TODO("Not yet implemented")
+        }
+
+        override fun redirectToCreateLocation() {
+
         }
     })
 }

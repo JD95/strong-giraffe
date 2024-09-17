@@ -2,15 +2,13 @@ package com.example.stronggiraffe.repository
 
 import androidx.room.Database
 import androidx.room.RoomDatabase
-import com.example.stronggiraffe.repository.entity.Exercise
-import com.example.stronggiraffe.repository.entity.Location
-import com.example.stronggiraffe.repository.entity.Muscle
-import com.example.stronggiraffe.repository.entity.WorkoutSet
+import com.example.stronggiraffe.repository.entity.*
 
 @Database(
     entities = [
         WorkoutSet::class, Location::class,
         Exercise::class, Muscle::class,
+        Equipment::class,
     ],
     version = 1,
     autoMigrations = [ ],

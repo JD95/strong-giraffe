@@ -14,6 +14,7 @@ fun MuscleListPage(
     goto: (Muscle) -> Unit
 ) {
     EditPageList(
+        title = "Muscles",
         items = muscles,
         gotoNewPage = new,
         gotoEditPage = goto

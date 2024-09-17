@@ -2,6 +2,7 @@ package com.example.stronggiraffe.repository
 
 import androidx.room.Insert
 import androidx.room.Query
+import com.example.stronggiraffe.repository.entity.Equipment
 import com.example.stronggiraffe.repository.entity.Location
 import com.example.stronggiraffe.repository.entity.Muscle
 import com.example.stronggiraffe.repository.entity.WorkoutSet
@@ -54,4 +55,27 @@ interface AppDao {
         """
     )
     suspend fun getLatestNSetsForExercise(exerciseId:String, count: Int): List<WorkoutSet>
+
+    @Query(
+        """
+            SELECT id
+                 , name
+                 , location
+            FROM equipment
+        """
+    )
+    suspend fun getEquipment(): List<Equipment>
+
+    @Insert
+    suspend fun insertEquipment(equipmentEntity: Equipment)
+
+    @Query(
+        """
+            UPDATE equipment
+            SET name = :name
+              , location = :location
+            WHERE id = :id
+        """
+    )
+    suspend fun updateEquipment(id: String, name: String, location: String)
 }

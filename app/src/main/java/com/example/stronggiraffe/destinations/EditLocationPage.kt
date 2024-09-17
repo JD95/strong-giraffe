@@ -13,8 +13,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.text.input.ImeAction
 import androidx.lifecycle.ViewModel
-import com.example.stronggiraffe.FIELD_NAME_FONT_SIZE
 import com.example.stronggiraffe.model.ids.LocationId
+import com.example.stronggiraffe.views.FIELD_NAME_FONT_SIZE
 import com.ramcosta.composedestinations.annotation.Destination
 
 abstract class EditLocationPageViewModel : ViewModel() {
