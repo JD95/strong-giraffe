@@ -12,22 +12,29 @@ import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.text.input.ImeAction
+import androidx.lifecycle.ViewModel
+import com.example.stronggiraffe.model.ids.MuscleId
 import com.example.stronggiraffe.views.FIELD_NAME_FONT_SIZE
 import com.ramcosta.composedestinations.annotation.Destination
 
+data class EditMusclePageNavArgs(val muscleId: MuscleId, val startingName: String)
+
+abstract class EditMusclePageViewModel: ViewModel() {
+    abstract val startingName: String
+    abstract fun submit(name: String)
+
+}
+
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalComposeUiApi::class)
 @Composable
-@Destination
-fun EditMusclePage(
-    startingName: String = "New Muscle",
-    submit: (String) -> Unit = { _ -> },
-) {
+@Destination(navArgsDelegate = EditMusclePageNavArgs::class)
+fun EditMusclePage(view: EditMusclePageViewModel) {
     val keyboardController = LocalSoftwareKeyboardController.current
-    var name by remember { mutableStateOf(startingName) }
+    var name by remember { mutableStateOf(view.startingName) }
     Scaffold(
         floatingActionButton = {
             FloatingActionButton(
-                onClick = { submit(name) }
+                onClick = { view.submit(name) }
             ) {
                 Icon(Icons.Default.Done, contentDescription = "Save Muscle")
             }

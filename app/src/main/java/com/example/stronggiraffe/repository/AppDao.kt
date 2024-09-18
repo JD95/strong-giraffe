@@ -78,4 +78,17 @@ interface AppDao {
         """
     )
     suspend fun updateEquipment(id: String, name: String, location: String)
+
+    @Insert
+    suspend fun insertMuscle(value: Muscle)
+
+    @Query(
+        """
+            UPDATE muscle
+            SET name = :name
+            WHERE id = :id
+            
+        """
+    )
+    suspend fun updateMuscle(id: String, name: String)
 }

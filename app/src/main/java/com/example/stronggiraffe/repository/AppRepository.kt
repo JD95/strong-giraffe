@@ -2,10 +2,13 @@ package com.example.stronggiraffe.repository
 
 import com.example.stronggiraffe.model.Equipment
 import com.example.stronggiraffe.model.Location
+import com.example.stronggiraffe.model.Muscle
 import com.example.stronggiraffe.model.ids.EquipmentId
 import com.example.stronggiraffe.repository.entity.Location as LocationEntity
 import com.example.stronggiraffe.repository.entity.Equipment as EquipmentEntity
+import com.example.stronggiraffe.repository.entity.Muscle as MuscleEntity
 import com.example.stronggiraffe.model.ids.LocationId
+import com.example.stronggiraffe.model.ids.MuscleId
 import java.util.UUID
 
 class AppRepository(private val dao: AppDao) {
@@ -36,5 +39,20 @@ class AppRepository(private val dao: AppDao) {
 
     suspend fun updateEquipment(id: EquipmentId, name: String, location: LocationId) {
         dao.updateEquipment(id.value, name, location.value)
+    }
+
+    suspend fun getMuscles(): List<Muscle> {
+        return dao.getAllMuscles().map { e -> Muscle(MuscleId(e.id), e.name) }
+    }
+
+    suspend fun newMuscle(): Muscle {
+        val id = UUID.randomUUID().toString()
+        val name = "New Muscle"
+        dao.insertMuscle(MuscleEntity(id, name))
+        return Muscle(MuscleId(id), name)
+    }
+
+    suspend fun updateMuscle(muscleId: MuscleId, name: String) {
+        dao.updateMuscle(muscleId.value, name)
     }
 }

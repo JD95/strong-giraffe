@@ -57,6 +57,9 @@ fun MainComponent(repo: AppRepository) {
                 },
                 gotoEquipmentList = {
                     destinationsNavigator.navigate(EquipmentListPageDestination)
+                },
+                gotoMuscleList = {
+                    destinationsNavigator.navigate(MuscleListPageDestination)
                 }
             )
         }
@@ -173,6 +176,49 @@ fun MainComponent(repo: AppRepository) {
                 }
             })
         }
+        composable(MuscleListPageDestination) {
+            var muscles by remember { mutableStateOf(emptyList<Muscle>()) }
+            LaunchedEffect(muscles) {
+                muscles = repo.getMuscles()
+            }
+            MuscleListPage(view = object : MuscleListPageViewModel() {
+                override val muscles: List<Muscle>
+                    get() = muscles
+
+                override fun new() {
+                    viewModelScope.launch {
+                        val new = repo.newMuscle()
+                        destinationsNavigator.navigate(
+                            EditMusclePageDestination(
+                                EditMusclePageNavArgs(new.id, new.name)
+                            )
+                        )
+                    }
+                }
+
+                override fun goto(value: Muscle) {
+                    destinationsNavigator.navigate(
+                        EditMusclePageDestination(
+                            EditMusclePageNavArgs(value.id, value.name)
+                        )
+                    )
+                }
+            })
+        }
+        composable(EditMusclePageDestination) {
+            val navArgs = this.navArgs
+            EditMusclePage(view = object : EditMusclePageViewModel(){
+                override val startingName: String
+                    get() = navArgs.startingName
+
+                override fun submit(name: String) {
+                    viewModelScope.launch {
+                        repo.updateMuscle(navArgs.muscleId, name)
+                    }
+                    destinationsNavigator.popBackStack()
+                }
+            })
+        }
     }
 }
 
@@ -194,6 +240,7 @@ fun locationRedirect(
 fun HomePage(
     gotoLocationsList: () -> Unit,
     gotoEquipmentList: () -> Unit,
+    gotoMuscleList: () -> Unit,
 ) {
     Scaffold(
         floatingActionButton = {
@@ -221,7 +268,7 @@ fun HomePage(
             Button(onClick = gotoEquipmentList) {
                 Text(text = "Equipment")
             }
-            Button(onClick = { }) {
+            Button(onClick = gotoMuscleList) {
                 Text(text = "Muscles")
             }
             Button(onClick = { }) {
