@@ -49,7 +49,10 @@ class MainActivity : ComponentActivity() {
 
 @Composable
 fun MainComponent(repo: AppRepository) {
-    DestinationsNavHost(navGraph = NavGraphs.root) {
+    DestinationsNavHost(
+        navGraph = NavGraphs.root,
+
+    ) {
         composable(HomePageDestination) {
             HomePage(
                 gotoLocationsList = {
@@ -60,6 +63,12 @@ fun MainComponent(repo: AppRepository) {
                 },
                 gotoMuscleList = {
                     destinationsNavigator.navigate(MuscleListPageDestination)
+                },
+                gotoExerciseList = {
+                    destinationsNavigator.navigate(ExerciseListPageDestination)
+                },
+                gotoSetList = {
+                    destinationsNavigator.navigate(SetListPageDestination)
                 }
             )
         }
@@ -219,6 +228,88 @@ fun MainComponent(repo: AppRepository) {
                 }
             })
         }
+        composable(ExerciseListPageDestination) {
+            val navArgs = this.navArgs
+            var exercises by remember { mutableStateOf(emptyList<Exercise>())}
+            var muscles by remember { mutableStateOf(emptyList<Muscle>())}
+            LaunchedEffect(exercises, muscles) {
+                exercises = repo.getExercises()
+                muscles = repo.getMuscles()
+            }
+            ExerciseListPage(view = object : ExerciseListPageViewModel() {
+                override val exercises: List<Exercise>
+                    get() = exercises
+
+                override fun gotoNew() {
+                    viewModelScope.launch {
+                        val new = repo.newExercise(muscles[0])
+                        destinationsNavigator.navigate(
+                            EditExercisePageDestination(
+                                EditExercisePageNavArgs(new.id, new.name, new.muscle)
+                            )
+                        )
+                    }
+                }
+
+                override fun goto(value: Exercise) {
+                    destinationsNavigator.navigate(
+                        EditExercisePageDestination(
+                            EditExercisePageNavArgs(value.id, value.name, value.muscle)
+                        )
+                    )
+                }
+
+                override fun redirectToCreateMuscle() {
+                    viewModelScope.launch {
+                        val new = repo.newMuscle()
+
+                        destinationsNavigator.navigate(
+                            EditMusclePageDestination(
+                                EditMusclePageNavArgs(new.id, new.name)
+                            )
+                        )
+                    }
+                }
+
+                override val muscles: List<Muscle>
+                    get() = muscles
+            })
+        }
+        composable(EditExercisePageDestination) {
+            val navArgs = this.navArgs
+            var exercises by remember { mutableStateOf(emptyList<Exercise>())}
+            var muscles by remember { mutableStateOf(emptyList<Muscle>())}
+            LaunchedEffect(exercises, muscles) {
+                exercises = repo.getExercises()
+                muscles = repo.getMuscles()
+            }
+            EditExercisePage(view = object : EditExercisePageViewModel() {
+                override val startingName: String
+                    get() = navArgs.startingName
+                override val startingMuscle: Muscle
+                    get() = muscles.first { it.id == navArgs.startingMuscle }
+                override val muscles: List<Muscle>
+                    get() = muscles
+
+                override fun submit(name: String, muscle: Muscle) {
+                    viewModelScope.launch {
+                        repo.updateExercise(navArgs.id, name, muscle)
+                    }
+                    destinationsNavigator.popBackStack()
+                }
+
+                override fun redirectToCreateMuscle() {
+                    viewModelScope.launch {
+                        val new = repo.newMuscle()
+                        destinationsNavigator.navigate(
+                            EditMusclePageDestination(
+                                EditMusclePageNavArgs(new.id, new.name)
+                            )
+                        )
+                    }
+                }
+            })
+        }
     }
 }
 
@@ -241,6 +332,8 @@ fun HomePage(
     gotoLocationsList: () -> Unit,
     gotoEquipmentList: () -> Unit,
     gotoMuscleList: () -> Unit,
+    gotoExerciseList: () -> Unit,
+    gotoSetList: () -> Unit,
 ) {
     Scaffold(
         floatingActionButton = {
@@ -271,10 +364,10 @@ fun HomePage(
             Button(onClick = gotoMuscleList) {
                 Text(text = "Muscles")
             }
-            Button(onClick = { }) {
+            Button(onClick = gotoExerciseList) {
                 Text(text = "Exercises")
             }
-            Button(onClick = { }) {
+            Button(onClick = gotoSetList) {
                 Text(text = "Sets")
             }
         }

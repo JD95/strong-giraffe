@@ -1,12 +1,15 @@
 package com.example.stronggiraffe.repository
 
 import com.example.stronggiraffe.model.Equipment
+import com.example.stronggiraffe.model.Exercise
 import com.example.stronggiraffe.model.Location
 import com.example.stronggiraffe.model.Muscle
 import com.example.stronggiraffe.model.ids.EquipmentId
+import com.example.stronggiraffe.model.ids.ExerciseId
 import com.example.stronggiraffe.repository.entity.Location as LocationEntity
 import com.example.stronggiraffe.repository.entity.Equipment as EquipmentEntity
 import com.example.stronggiraffe.repository.entity.Muscle as MuscleEntity
+import com.example.stronggiraffe.repository.entity.Exercise as ExerciseEntity
 import com.example.stronggiraffe.model.ids.LocationId
 import com.example.stronggiraffe.model.ids.MuscleId
 import java.util.UUID
@@ -54,5 +57,22 @@ class AppRepository(private val dao: AppDao) {
 
     suspend fun updateMuscle(muscleId: MuscleId, name: String) {
         dao.updateMuscle(muscleId.value, name)
+    }
+
+    suspend fun getExercises(): List<Exercise> {
+        val entities = dao.getExercises()
+        return entities.map { e -> Exercise(ExerciseId(e.id), e.name, MuscleId(e.muscle)) }
+    }
+
+    suspend fun newExercise(muscle: Muscle): Exercise {
+        val id = UUID.randomUUID().toString()
+        val name = "New Exercise"
+        dao.insertExercise(ExerciseEntity(id, name, muscle.id.value))
+        return Exercise(ExerciseId(id), name, muscle.id)
+
+    }
+
+    suspend fun updateExercise(id: ExerciseId, name: String, muscle: Muscle) {
+        dao.updateExercise(id.value, name, muscle.id.value)
     }
 }

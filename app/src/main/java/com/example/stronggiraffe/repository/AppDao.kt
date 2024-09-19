@@ -2,10 +2,7 @@ package com.example.stronggiraffe.repository
 
 import androidx.room.Insert
 import androidx.room.Query
-import com.example.stronggiraffe.repository.entity.Equipment
-import com.example.stronggiraffe.repository.entity.Location
-import com.example.stronggiraffe.repository.entity.Muscle
-import com.example.stronggiraffe.repository.entity.WorkoutSet
+import com.example.stronggiraffe.repository.entity.*
 
 @androidx.room.Dao
 interface AppDao {
@@ -91,4 +88,27 @@ interface AppDao {
         """
     )
     suspend fun updateMuscle(id: String, name: String)
+
+    @Query(
+        """
+            SELECT id
+                 , name
+                 , muscle
+            FROM exercise
+        """
+    )
+    suspend fun getExercises(): List<Exercise>
+
+    @Insert
+    suspend fun insertExercise(value: Exercise)
+
+    @Query(
+        """
+            UPDATE exercise
+            SET name = :name
+              , muscle = :muscle
+            WHERE id = :id
+        """
+    )
+    suspend fun updateExercise(id: String, name: String, muscle: String)
 }

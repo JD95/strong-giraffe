@@ -12,26 +12,51 @@ import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.text.input.ImeAction
+import androidx.lifecycle.ViewModel
 import com.example.stronggiraffe.views.LargeDropDownFromList
 import com.example.stronggiraffe.model.Muscle
+import com.example.stronggiraffe.model.ids.ExerciseId
+import com.example.stronggiraffe.model.ids.MuscleId
 import com.example.stronggiraffe.views.FIELD_NAME_FONT_SIZE
+import com.example.stronggiraffe.views.RequiredDataRedirect
 import com.ramcosta.composedestinations.annotation.Destination
 
-@OptIn(ExperimentalMaterial3Api::class, ExperimentalComposeUiApi::class)
+data class EditExercisePageNavArgs(
+    val id: ExerciseId,
+    val startingName: String,
+    val startingMuscle: MuscleId,
+)
+
+abstract class EditExercisePageViewModel() : ViewModel() {
+    abstract val startingName: String
+    abstract val startingMuscle: Muscle
+    abstract val muscles: List<Muscle>
+    abstract fun submit(name: String, muscle: Muscle)
+    abstract fun redirectToCreateMuscle()
+}
+
 @Composable
-@Destination
-fun EditExercisePage(
-    startingName: String = "New Exercise",
-    muscles: List<Muscle> = emptyList(),
-    submit: (String, Muscle) -> Unit = { _, _ -> },
-) {
+@Destination(navArgsDelegate = EditExercisePageNavArgs::class)
+fun EditExercisePage(view: EditExercisePageViewModel) {
+    if (view.muscles.isEmpty()) {
+        RequiredDataRedirect(missing = "Muscle") {
+            view.redirectToCreateMuscle()
+        }
+    } else {
+        Page(view)
+    }
+}
+
+@Composable
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalComposeUiApi::class)
+private fun Page(view: EditExercisePageViewModel){
     val keyboardController = LocalSoftwareKeyboardController.current
-    var name by remember { mutableStateOf(startingName) }
-    var selectedMuscle by remember { mutableStateOf(muscles[0]) }
+    var name by remember { mutableStateOf(view.startingName) }
+    var selectedMuscle by remember { mutableStateOf(view.startingMuscle) }
     Scaffold(
         floatingActionButton = {
             FloatingActionButton(
-                onClick = { submit(name, selectedMuscle) }
+                onClick = { view.submit(name, selectedMuscle) }
             ) {
                 Icon(Icons.Default.Done, contentDescription = "Save Location")
             }
@@ -56,7 +81,7 @@ fun EditExercisePage(
             Text("Muscle", fontSize = FIELD_NAME_FONT_SIZE)
             LargeDropDownFromList(
                 modifier = Modifier.fillMaxWidth(0.8f),
-                items = muscles,
+                items = view.muscles,
                 label = selectedMuscle.name,
                 itemToString = { it.name },
                 onItemSelected = { selectedMuscle = it }
