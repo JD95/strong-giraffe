@@ -7,7 +7,7 @@ import androidx.compose.ui.Modifier
 fun <T> LargeDropDownFromList(
     items: List<T>,
     label: String,
-    selectedIndex: Int = 0,
+    selectedIndex: Int,
     itemToString: (T) -> String,
     onItemSelected: (T) -> Unit,
     modifier: Modifier

@@ -10,6 +10,9 @@ import com.example.stronggiraffe.repository.entity.*
         Exercise::class, Muscle::class,
         Equipment::class,
     ],
+    views = [
+        SetSummary::class
+    ],
     version = 1,
     autoMigrations = [ ],
     exportSchema = true,

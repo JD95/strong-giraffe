@@ -27,6 +27,7 @@ import com.ramcosta.composedestinations.navigation.DestinationsNavigator
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 
+
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -133,7 +134,7 @@ fun MainComponent(repo: AppRepository) {
 
                 override fun gotoNew() {
                     viewModelScope.launch {
-                        val new = repo.newEquipment("New Equipment", locations[0].id)
+                        val new = repo.newEquipment(locations[0].id)
                         destinationsNavigator.navigate(
                             EditEquipmentPageDestination(
                                 EditEquipmentPageNavArgs(new.id, new.name, new.location)
@@ -242,7 +243,7 @@ fun MainComponent(repo: AppRepository) {
 
                 override fun gotoNew() {
                     viewModelScope.launch {
-                        val new = repo.newExercise(muscles[0])
+                        val new = repo.newExercise(muscles[0].id)
                         destinationsNavigator.navigate(
                             EditExercisePageDestination(
                                 EditExercisePageNavArgs(new.id, new.name, new.muscle)
@@ -309,6 +310,12 @@ fun MainComponent(repo: AppRepository) {
                     }
                 }
             })
+        }
+        composable(SetListPageDestination) {
+            RegisterSetListPage(repo, destinationsNavigator)
+        }
+        composable(EditSetPageDestination) {
+            RegisterEditSetPage(navArgs, repo, destinationsNavigator)
         }
     }
 }

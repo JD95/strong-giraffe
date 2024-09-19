@@ -40,4 +40,36 @@ sealed class Intensity {
             is Pain -> "Painful"
         }
     }
+
+    companion object {
+
+        fun toInt(value: Intensity): Int {
+            return when (value) {
+                is NoActivation -> NO_ACTIVATION
+                is Easy -> EASY
+                is Normal-> NORMAL
+                is EarlyFailure -> EARLY_FAILURE
+                is Pain -> PAIN
+            }
+        }
+
+        fun fromInt(n: Int): Intensity? {
+            return when (n) {
+                NO_ACTIVATION -> NoActivation
+                EASY -> Easy
+                NORMAL -> Normal
+                EARLY_FAILURE -> EarlyFailure
+                PAIN -> Pain
+                else -> {
+                    null
+                }
+            }
+        }
+
+        const val NO_ACTIVATION: Int = 0
+        const val EASY: Int = 1
+        const val NORMAL: Int = 2
+        const val EARLY_FAILURE: Int = 3
+        const val PAIN: Int = 4
+    }
 }

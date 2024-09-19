@@ -2,6 +2,7 @@ package com.example.stronggiraffe.repository
 
 import androidx.room.Insert
 import androidx.room.Query
+import com.example.stronggiraffe.model.ids.SetId
 import com.example.stronggiraffe.repository.entity.*
 
 @androidx.room.Dao
@@ -41,7 +42,9 @@ interface AppDao {
             SELECT id
                  , exercise
                  , location
+                 , equipment
                  , reps
+                 , weight
                  , time
                  , intensity
                  , comment
@@ -111,4 +114,69 @@ interface AppDao {
         """
     )
     suspend fun updateExercise(id: String, name: String, muscle: String)
+
+    @Insert
+    suspend fun insertWorkoutSet(workoutSetEntity: WorkoutSet)
+
+    @Query(
+        """
+            SELECT id
+                 , exercise
+                 , location
+                 , equipment
+                 , reps
+                 , weight
+                 , time
+                 , intensity
+                 , comment
+            FROM workout_set
+        """
+    )
+    suspend fun getWorkoutSets(): List<WorkoutSet>
+
+    @Query("SELECT * FROM SetSummary")
+    suspend fun getSetSummaries(): List<SetSummary>
+
+    @Query(
+        """
+            UPDATE workout_set
+            SET exercise = :exercise
+              , location = :location
+              , equipment = :equipment
+              , reps = :reps
+              , weight = :weight
+              , time = :time
+              , intensity = :intensity
+              , comment = :comment
+            WHERE id = :id
+        """
+    )
+    suspend fun updateWorkoutSet(
+        id: String,
+        exercise: String,
+        location: String,
+        equipment: String,
+        reps: Int,
+        weight: Int,
+        time: Long,
+        intensity: Int,
+        comment: String
+    )
+
+    @Query(
+        """
+            SELECT id
+                 , exercise
+                 , location
+                 , equipment
+                 , reps
+                 , weight
+                 , time
+                 , intensity
+                 , comment
+            FROM workout_set
+            WHERE id = :id
+        """
+    )
+    suspend fun getWorkoutSet(id: String): WorkoutSet
 }

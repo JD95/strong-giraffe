@@ -84,7 +84,8 @@ private fun Page(view: EditExercisePageViewModel){
                 items = view.muscles,
                 label = selectedMuscle.name,
                 itemToString = { it.name },
-                onItemSelected = { selectedMuscle = it }
+                onItemSelected = { selectedMuscle = it },
+                selectedIndex = view.muscles.indexOf(selectedMuscle)
             )
         }
     }
