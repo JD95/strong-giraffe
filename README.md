@@ -1,6 +1,6 @@
 # Strong Giraffe
 
-A workout logger that prioritizes entering meaningful data to help you make meaningful training choices.
+A workout logger that prioritizes entering meaningful data for meaningful training choices.
 
 For example, progressive overload is an important aspect of most training programs. If you want to
 increase the difficulty of a workout week to week, you need an accurate measure of your performance
@@ -10,9 +10,9 @@ Although machines can ostensibly be used for the same movement, one might be mor
 other for various reasons. 
 
 Instead of recording sets at different machines as the same workout, or having to create custom 
-workouts for every machine. This app aims to let you be as specific as you want in your logging. 
+workouts for every machine, this app aims to let you be as specific as you want in your logging. 
 
-A set of a movement is conceptualized with these pieces:
+A set of a movement is conceptualized with these pieces
 - Location: These exist to differentiate equipment between different locations.
 - Equipment: What are you using to workout? Are you doing a hammer curl with a cable or a dumbbell?
 - Exercise: What movement are you performing? These exist separate from the equipment used for them.
