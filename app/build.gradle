@@ -8,11 +8,11 @@ plugins {
 }
 
 android {
-    namespace 'com.example.stronggiraffe'
+    namespace 'org.wspcgir.strong_giraffe'
     compileSdk 34
 
     defaultConfig {
-        applicationId "com.example.stronggiraffe"
+        applicationId "org.wspcgir.strong_giraffe"
         minSdk 33
         targetSdk 34
         versionCode 1
