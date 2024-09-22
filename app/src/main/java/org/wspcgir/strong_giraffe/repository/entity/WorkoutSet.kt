@@ -1,12 +1,14 @@
 package org.wspcgir.strong_giraffe.repository.entity
 
-import androidx.room.ColumnInfo
-import androidx.room.Entity
-import androidx.room.ForeignKey
-import androidx.room.PrimaryKey
+import androidx.room.*
 
 @Entity(
     tableName = "workout_set",
+    indices = [
+        Index(value = arrayOf("id")),
+        Index(value = arrayOf("location", "exercise", "equipment")),
+        Index(value = arrayOf("time")),
+    ],
     foreignKeys = [
         ForeignKey(
             entity = Exercise::class,

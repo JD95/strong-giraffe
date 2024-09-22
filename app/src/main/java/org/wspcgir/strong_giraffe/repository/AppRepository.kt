@@ -162,4 +162,24 @@ class AppRepository(private val dao: AppDao) {
             comment = Comment(e.comment)
         )
     }
+
+    suspend fun deleteLocation(id: LocationId) {
+        dao.deleteLocation(id.value)
+    }
+
+    suspend fun deleteEquipment(id: EquipmentId) {
+        dao.deleteEquipment(id.value)
+    }
+
+    suspend fun deleteMuscle(id: MuscleId) {
+        dao.deleteMuscle(id.value)
+    }
+
+    suspend fun deleteExercise(id: ExerciseId) {
+        dao.deleteExercise(id.value)
+    }
+
+    suspend fun deleteWorkoutSet(id: SetId) {
+        dao.deleteWorkoutSet(id.value)
+    }
 }

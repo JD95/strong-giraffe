@@ -1,16 +1,19 @@
 package org.wspcgir.strong_giraffe.repository.entity
 
-import androidx.room.ColumnInfo
-import androidx.room.Entity
-import androidx.room.ForeignKey
-import androidx.room.PrimaryKey
+import androidx.room.*
+import androidx.room.ForeignKey.Companion.CASCADE
 
 @Entity(
+    indices = [
+        Index(value = arrayOf("id")),
+        Index(value = arrayOf("location")),
+    ],
     foreignKeys = [
         ForeignKey(
             entity = Location::class,
             parentColumns = arrayOf("id"),
             childColumns = arrayOf("location"),
+            onDelete = CASCADE
         )
     ]
 )
