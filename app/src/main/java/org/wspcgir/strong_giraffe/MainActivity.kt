@@ -115,6 +115,13 @@ fun MainComponent(repo: AppRepository) {
                         scope.launch { repo.updateLocation(navArgs.id, newName) }
                         destinationsNavigator.popBackStack()
                     }
+
+                override fun delete() {
+                    viewModelScope.launch {
+                        repo.deleteLocation(navArgs.id)
+                    }
+                    destinationsNavigator.popBackStack()
+                }
             })
         }
         composable(EquipmentListPageDestination) {
