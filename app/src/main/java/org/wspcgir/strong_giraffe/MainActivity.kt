@@ -183,6 +183,13 @@ fun MainComponent(repo: AppRepository) {
                 override fun redirectToCreateLocation() {
                    locationRedirect(viewModelScope, repo, destinationsNavigator)
                 }
+
+                override fun delete() {
+                    viewModelScope.launch {
+                        repo.deleteEquipment(navArgs.id)
+                    }
+                    destinationsNavigator.popBackStack()
+                }
             })
         }
         composable(MuscleListPageDestination) {
