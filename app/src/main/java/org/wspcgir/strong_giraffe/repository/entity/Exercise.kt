@@ -1,16 +1,22 @@
 package org.wspcgir.strong_giraffe.repository.entity
 
-import androidx.room.ColumnInfo
-import androidx.room.Entity
-import androidx.room.Index
-import androidx.room.PrimaryKey
+import androidx.room.*
+import androidx.room.ForeignKey.Companion.CASCADE
 
 @Entity(
     indices = [
         Index(value = arrayOf("id")),
-        Index(value = arrayOf("name")),
         Index(value = arrayOf("muscle")),
+    ],
+    foreignKeys = [
+        ForeignKey(
+            entity = Muscle::class,
+            parentColumns = arrayOf("id"),
+            childColumns = arrayOf("muscle"),
+            onDelete = CASCADE
+        )
     ]
+
 )
 data class Exercise (
     @PrimaryKey val id: String,

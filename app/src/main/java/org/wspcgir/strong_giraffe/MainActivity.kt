@@ -115,6 +115,13 @@ fun MainComponent(repo: AppRepository) {
                         scope.launch { repo.updateLocation(navArgs.id, newName) }
                         destinationsNavigator.popBackStack()
                     }
+
+                override fun delete() {
+                    viewModelScope.launch {
+                        repo.deleteLocation(navArgs.id)
+                    }
+                    destinationsNavigator.popBackStack()
+                }
             })
         }
         composable(EquipmentListPageDestination) {
@@ -183,6 +190,13 @@ fun MainComponent(repo: AppRepository) {
                 override fun redirectToCreateLocation() {
                    locationRedirect(viewModelScope, repo, destinationsNavigator)
                 }
+
+                override fun delete() {
+                    viewModelScope.launch {
+                        repo.deleteEquipment(navArgs.id)
+                    }
+                    destinationsNavigator.popBackStack()
+                }
             })
         }
         composable(MuscleListPageDestination) {
@@ -223,6 +237,13 @@ fun MainComponent(repo: AppRepository) {
                 override fun submit(name: String) {
                     viewModelScope.launch {
                         repo.updateMuscle(navArgs.muscleId, name)
+                    }
+                    destinationsNavigator.popBackStack()
+                }
+
+                override fun delete() {
+                    viewModelScope.launch {
+                        repo.deleteMuscle(navArgs.muscleId)
                     }
                     destinationsNavigator.popBackStack()
                 }
@@ -307,6 +328,13 @@ fun MainComponent(repo: AppRepository) {
                             )
                         )
                     }
+                }
+
+                override fun delete() {
+                    viewModelScope.launch {
+                        repo.deleteExercise(navArgs.id)
+                    }
+                    destinationsNavigator.popBackStack()
                 }
             })
         }

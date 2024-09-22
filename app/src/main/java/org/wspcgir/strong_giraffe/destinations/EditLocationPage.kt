@@ -4,6 +4,7 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Done
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -20,6 +21,7 @@ import com.ramcosta.composedestinations.annotation.Destination
 abstract class EditLocationPageViewModel : ViewModel() {
     abstract val startingName: String
     abstract val submit: (String) -> Unit
+    abstract fun delete()
 }
 
 data class EditLocationPageNavArgs(
@@ -58,6 +60,12 @@ fun EditLocationPage(view: EditLocationPageViewModel) {
                 keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
                 keyboardActions = KeyboardActions(onDone = { keyboardController?.hide() })
             )
+            Spacer(modifier = Modifier.fillMaxHeight(0.1f))
+            Button(onClick = view::delete) {
+                Text("Delete")
+                Spacer(modifier = Modifier.fillMaxWidth(0.03f))
+                Icon(Icons.Default.Delete, contentDescription = "delete location")
+            }
         }
     }
 }

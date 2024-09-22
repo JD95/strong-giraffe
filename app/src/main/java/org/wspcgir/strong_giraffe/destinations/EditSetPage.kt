@@ -4,6 +4,7 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Done
 import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.*
@@ -37,6 +38,8 @@ abstract class EditSetPageViewModel : ViewModel() {
         intensity: Intensity,
         comment: Comment
     )
+
+    abstract fun delete()
 
     abstract val starting: WorkoutSet
     abstract val locations: List<Location>
@@ -90,6 +93,13 @@ fun RegisterEditSetPage(
                 dest.popBackStack()
             }
 
+            override fun delete() {
+                viewModelScope.launch {
+                    repo.deleteWorkoutSet(navArgs.id)
+                }
+                dest.popBackStack()
+            }
+
             override val starting: WorkoutSet
                 get() = starting!!
 
@@ -108,6 +118,7 @@ fun RegisterEditSetPage(
 fun EditSetPage(view: EditSetPageViewModel) {
     Page(
         submit = view::submit,
+        delete = view::delete,
         starting = view.starting,
         locations = view.locations,
         equipment = view.equipment,
@@ -121,6 +132,7 @@ fun EditSetPage(view: EditSetPageViewModel) {
 fun Page(
     starting: WorkoutSet,
     submit: (Location, Exercise, Equipment, Reps, Weight, Intensity, Comment) -> Unit,
+    delete: () -> Unit,
     locations: List<Location>,
     equipment: List<Equipment>,
     exercises: List<Exercise>,
@@ -258,6 +270,12 @@ fun Page(
                     keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
                     keyboardActions = KeyboardActions(onDone = { keyboardController?.hide() })
                 )
+                Spacer(modifier = Modifier.fillMaxHeight(0.1f))
+                Button(onClick = delete) {
+                    Text("Delete")
+                    Spacer(modifier = Modifier.fillMaxWidth(0.03f))
+                    Icon(Icons.Default.Delete, contentDescription = "delete set")
+                }
             }
         }
     }

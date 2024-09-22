@@ -4,6 +4,7 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Done
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -29,6 +30,7 @@ abstract class EditEquipmentPageViewModel : ViewModel() {
     abstract val startingLocation: Location
     abstract fun submit(name: String, location: LocationId)
     abstract fun redirectToCreateLocation()
+    abstract fun delete()
 }
 
 data class EditEquipmentPageNavArgs(
@@ -89,6 +91,12 @@ fun Page(view: EditEquipmentPageViewModel) {
                 itemToString = { it.name },
                 onItemSelected = { selectedLocation = it }
             )
+            Spacer(modifier = Modifier.fillMaxHeight(0.1f))
+            Button(onClick = view::delete) {
+                Text("Delete")
+                Spacer(modifier = Modifier.fillMaxWidth(0.03f))
+                Icon(Icons.Default.Delete, contentDescription = "delete equipment")
+            }
         }
     }
 }
@@ -112,6 +120,10 @@ fun EditEquipmentPagePreview() {
         }
 
         override fun redirectToCreateLocation() {
+
+        }
+
+        override fun delete() {
 
         }
     })

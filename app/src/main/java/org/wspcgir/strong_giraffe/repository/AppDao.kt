@@ -1,5 +1,6 @@
 package org.wspcgir.strong_giraffe.repository
 
+import androidx.room.Delete
 import androidx.room.Insert
 import androidx.room.Query
 import org.wspcgir.strong_giraffe.repository.entity.*
@@ -178,4 +179,44 @@ interface AppDao {
         """
     )
     suspend fun getWorkoutSet(id: String): WorkoutSet
+
+    @Query(
+        """ 
+            DELETE from location
+            WHERE id = :id
+        """
+    )
+    suspend fun deleteLocation(id: String)
+
+    @Query(
+        """ 
+            DELETE from equipment
+            WHERE id = :id
+        """
+    )
+    suspend fun deleteEquipment(id: String)
+
+    @Query(
+        """ 
+            DELETE from muscle 
+            WHERE id = :id
+        """
+    )
+    suspend fun deleteMuscle(id: String)
+
+    @Query(
+        """ 
+            DELETE from exercise 
+            WHERE id = :id
+        """
+    )
+    suspend fun deleteExercise(id: String)
+
+    @Query(
+        """ 
+            DELETE from workout_set 
+            WHERE id = :id
+        """
+    )
+    suspend fun deleteWorkoutSet(id: String)
 }
