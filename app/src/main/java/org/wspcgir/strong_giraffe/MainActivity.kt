@@ -315,6 +315,13 @@ fun MainComponent(repo: AppRepository) {
                         )
                     }
                 }
+
+                override fun delete() {
+                    viewModelScope.launch {
+                        repo.deleteExercise(navArgs.id)
+                    }
+                    destinationsNavigator.popBackStack()
+                }
             })
         }
         composable(SetListPageDestination) {
