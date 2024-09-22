@@ -233,6 +233,13 @@ fun MainComponent(repo: AppRepository) {
                     }
                     destinationsNavigator.popBackStack()
                 }
+
+                override fun delete() {
+                    viewModelScope.launch {
+                        repo.deleteMuscle(navArgs.muscleId)
+                    }
+                    destinationsNavigator.popBackStack()
+                }
             })
         }
         composable(ExerciseListPageDestination) {
