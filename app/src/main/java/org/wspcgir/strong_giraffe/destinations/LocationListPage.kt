@@ -21,7 +21,8 @@ fun LocationListPage(view: LocationListPageViewModel) {
         title = "Locations",
         items = view.locations,
         gotoNewPage = view::newLocation,
-        gotoEditPage = view::gotoEditLocationPage
+        gotoEditPage = view::gotoEditLocationPage,
+        sortBy = { x, y -> x.name.compareTo(y.name) }
     ) {
         Text(it.name)
     }

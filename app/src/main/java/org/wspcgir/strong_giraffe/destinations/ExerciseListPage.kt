@@ -10,6 +10,7 @@ import org.wspcgir.strong_giraffe.model.ids.MuscleId
 import org.wspcgir.strong_giraffe.views.EditPageList
 import org.wspcgir.strong_giraffe.views.RequiredDataRedirect
 import com.ramcosta.composedestinations.annotation.Destination
+import org.wspcgir.strong_giraffe.model.ids.ExerciseId
 
 abstract class ExerciseListPageViewModel : ViewModel() {
     abstract val exercises: List<Exercise>
@@ -32,7 +33,8 @@ fun ExerciseListPage(view: ExerciseListPageViewModel) {
             title = "Exercise",
             items = view.exercises,
             gotoNewPage = view::gotoNew,
-            gotoEditPage = view::goto
+            gotoEditPage = view::goto,
+            sortBy = { x, y -> x.name.compareTo(y.name) }
         ) {
             Text(it.name)
         }
@@ -44,10 +46,16 @@ fun ExerciseListPage(view: ExerciseListPageViewModel) {
 private fun Preview() {
     ExerciseListPage(object : ExerciseListPageViewModel() {
         override val exercises: List<Exercise>
-            get() = emptyList()
+            get() = listOf(
+                Exercise(ExerciseId("b"), "Lat Pulldown", MuscleId("a")),
+                Exercise(ExerciseId("a"), "Bench Press", MuscleId("b")),
+            )
 
         override val muscles: List<Muscle>
-            get() = listOf(Muscle(MuscleId("a"), "Lats"))
+            get() = listOf(
+                Muscle(MuscleId("a"), "Lats"),
+                Muscle(MuscleId("b"), "Chest"),
+            )
 
         override fun gotoNew() {
         }
