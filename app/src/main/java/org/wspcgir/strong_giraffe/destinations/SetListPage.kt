@@ -7,6 +7,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import org.wspcgir.strong_giraffe.model.*
@@ -16,6 +17,7 @@ import org.wspcgir.strong_giraffe.views.*
 import com.ramcosta.composedestinations.annotation.Destination
 import com.ramcosta.composedestinations.navigation.DestinationsNavigator
 import kotlinx.coroutines.launch
+import java.time.Instant
 
 abstract class SetListPageViewModel: ViewModel() {
     abstract val sets: List<SetSummary>
@@ -106,41 +108,55 @@ private fun Page(
     gotoNew: () -> Unit,
     goto: (SetSummary) -> Unit
 ) {
-    Scaffold(
-        floatingActionButton = {
-            FloatingActionButton(
-                onClick = { gotoNew() }
+    EditPageList(
+        title = "Sets",
+        items = sets,
+        gotoNewPage = gotoNew,
+        gotoEditPage = goto,
+        sortBy = { x, y -> y.time.compareTo(x.time) },
+        rowRender = { onClick, inner, item ->
+            Button(
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = intensityColor(item.intensity)
+                ),
+                onClick = { onClick(item) }
             ) {
-                Icon(Icons.Default.Add, contentDescription = "Create New")
+                inner(item)
             }
         }
-    ) { innerPadding ->
-
-        Column(
-            modifier = Modifier
-                .padding(innerPadding)
-                .fillMaxSize(),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.Center
-        ) {
-            Text("Sets", fontSize = PAGE_TITLE_FONTSIZE)
-            Spacer(modifier = Modifier.fillMaxHeight(0.3f))
-            if (sets.isNotEmpty()) {
-                sets.forEach { item ->
-                    Button(
-                        colors = ButtonDefaults.buttonColors(
-                            containerColor = intensityColor(item.intensity)
-                        ),
-                        onClick = { goto(item) }
-                    ) {
-                        Text("${item.exerciseName} | ${item.reps} | ${item.weight}")
-                    }
-                }
-            } else {
-                Text("There's nothing here yet")
-            }
-        }
+    ) {
+        Text("${it.exerciseName} | ${it.reps} | ${it.weight}")
     }
+}
 
-
+@Preview
+@Composable
+private fun Preview() {
+    val template =
+        SetSummary(
+            id = SetId("a"),
+            reps = Reps(10),
+            weight = Weight(140),
+            time = Instant.now(),
+            intensity = Intensity.Easy,
+            exerciseName = "Bicep Curls",
+            exerciseId = ExerciseId("a")
+        )
+    Page(
+        sets = listOf(
+            template.copy(
+                time = template.time.minusSeconds(60),
+                reps = Reps(5),
+                intensity = Intensity.NoActivation
+            ),
+            template.copy(
+                time = template.time.minusSeconds(120),
+                reps = Reps(20),
+                intensity = Intensity.Pain
+            ),
+            template,
+        ),
+        gotoNew = { },
+        goto = { }
+    )
 }
