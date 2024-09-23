@@ -210,13 +210,23 @@ class AppRepository(private val dao: AppDao) {
     suspend fun setsForMusclesInWeek(now: Instant): SetsForMuscleInWeek {
         val zone = TimeZone.getDefault()
         val range = WeekRange.forInstant(now, zone)
-        val sets = dao.setsInWeek(range.start.toEpochSecond(), range.end.toEpochSecond())
-        return SetsForMuscleInWeek(
-            range,
-            sets.fold(emptyMap()) { acc, x ->
-                acc.plus(MuscleId(x.muscleId) to Pair(x.muscleName, x.setCount))
+        val lastWeek = dao
+            .setsInWeek(
+                range.start.minusWeeks(1).toEpochSecond(),
+                range.end.minusWeeks(1).toEpochSecond()
+            )
+            .fold(emptyMap<MuscleId, Int>()) { map, x ->
+                map.plus(MuscleId(x.muscleId) to x.setCount)
             }
-        )
+        val thisWeek = dao
+            .setsInWeek(range.start.toEpochSecond(), range.end.toEpochSecond())
+            .fold(emptyMap<MuscleId, MuscleSetHistory>()) { map, x ->
+                val id = MuscleId(x.muscleId)
+                map.plus(
+                    id to MuscleSetHistory(x.muscleName, x.setCount, lastWeek[id] ?: 0)
+                )
+            }
+        return SetsForMuscleInWeek(range, thisWeek)
     }
 
     suspend fun dropDb() {

@@ -10,6 +10,8 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewModelScope
 import androidx.room.Room
 import org.wspcgir.strong_giraffe.destinations.*
@@ -25,20 +27,21 @@ import com.ramcosta.composedestinations.manualcomposablecalls.composable
 import com.ramcosta.composedestinations.navigation.DestinationsNavigator
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
+import java.time.Instant
+import java.util.*
 
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        val db = Room.databaseBuilder(applicationContext, AppDatabase::class.java, "data.db")
-            .build()
+        val db =
+            Room.databaseBuilder(applicationContext, AppDatabase::class.java, "data.db").build()
         val dao = db.dao()
         setContent {
             StrongGiraffeTheme {
                 // A surface container using the 'background' color from the theme
                 Surface(
-                    modifier = Modifier.fillMaxSize(),
-                    color = MaterialTheme.colorScheme.background
+                    modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background
                 ) {
                     MainComponent(repo = AppRepository(dao))
                 }
@@ -52,22 +55,18 @@ fun MainComponent(repo: AppRepository) {
     DestinationsNavHost(
         navGraph = NavGraphs.root,
 
-    ) {
+        ) {
         composable(HomePageDestination) {
             HomePage(
                 gotoLocationsList = {
                     destinationsNavigator.navigate(LocationListPageDestination)
-                },
-                gotoEquipmentList = {
+                }, gotoEquipmentList = {
                     destinationsNavigator.navigate(EquipmentListPageDestination)
-                },
-                gotoMuscleList = {
+                }, gotoMuscleList = {
                     destinationsNavigator.navigate(MuscleListPageDestination)
-                },
-                gotoExerciseList = {
+                }, gotoExerciseList = {
                     destinationsNavigator.navigate(ExerciseListPageDestination)
-                },
-                gotoSetList = {
+                }, gotoSetList = {
                     destinationsNavigator.navigate(SetListPageDestination)
                 }
             )
@@ -78,23 +77,13 @@ fun MainComponent(repo: AppRepository) {
             LaunchedEffect(locations) {
                 locations = repo.getLocations()
             }
-            LocationListPage(
-                object : LocationListPageViewModel() {
-                    override val locations: List<Location>
-                        get() = locations
+            LocationListPage(object : LocationListPageViewModel() {
+                override val locations: List<Location>
+                    get() = locations
 
-                    override fun newLocation() {
-                        scope.launch {
-                            val loc = repo.newLocation()
-                            destinationsNavigator.navigate(
-                                EditLocationPageDestination(
-                                    EditLocationPageNavArgs(loc.name, loc.id)
-                                )
-                            )
-                        }
-                    }
-
-                    override fun gotoEditLocationPage(loc: Location) {
+                override fun newLocation() {
+                    scope.launch {
+                        val loc = repo.newLocation()
                         destinationsNavigator.navigate(
                             EditLocationPageDestination(
                                 EditLocationPageNavArgs(loc.name, loc.id)
@@ -102,7 +91,15 @@ fun MainComponent(repo: AppRepository) {
                         )
                     }
                 }
-            )
+
+                override fun gotoEditLocationPage(loc: Location) {
+                    destinationsNavigator.navigate(
+                        EditLocationPageDestination(
+                            EditLocationPageNavArgs(loc.name, loc.id)
+                        )
+                    )
+                }
+            })
         }
         composable(EditLocationPageDestination) {
             val navArgs = this.navArgs
@@ -188,7 +185,7 @@ fun MainComponent(repo: AppRepository) {
                 }
 
                 override fun redirectToCreateLocation() {
-                   locationRedirect(viewModelScope, repo, destinationsNavigator)
+                    locationRedirect(viewModelScope, repo, destinationsNavigator)
                 }
 
                 override fun delete() {
@@ -200,12 +197,12 @@ fun MainComponent(repo: AppRepository) {
             })
         }
         composable(MuscleListPageDestination) {
-            var muscles by remember { mutableStateOf(emptyList<Muscle>()) }
+            var muscles by remember { mutableStateOf(emptyMap<MuscleId, MuscleSetHistory>()) }
             LaunchedEffect(muscles) {
-                muscles = repo.getMuscles()
+                muscles = repo.setsForMusclesInWeek(Instant.now()).setCounts
             }
             MuscleListPage(view = object : MuscleListPageViewModel() {
-                override val muscles: List<Muscle>
+                override val musclesWithSetCounts: Map<MuscleId, MuscleSetHistory>
                     get() = muscles
 
                 override fun new() {
@@ -230,7 +227,7 @@ fun MainComponent(repo: AppRepository) {
         }
         composable(EditMusclePageDestination) {
             val navArgs = this.navArgs
-            EditMusclePage(view = object : EditMusclePageViewModel(){
+            EditMusclePage(view = object : EditMusclePageViewModel() {
                 override val startingName: String
                     get() = navArgs.startingName
 
@@ -250,9 +247,8 @@ fun MainComponent(repo: AppRepository) {
             })
         }
         composable(ExerciseListPageDestination) {
-            val navArgs = this.navArgs
-            var exercises by remember { mutableStateOf(emptyList<Exercise>())}
-            var muscles by remember { mutableStateOf(emptyList<Muscle>())}
+            var exercises by remember { mutableStateOf(emptyList<Exercise>()) }
+            var muscles by remember { mutableStateOf(emptyList<Muscle>()) }
             LaunchedEffect(exercises, muscles) {
                 exercises = repo.getExercises()
                 muscles = repo.getMuscles()
@@ -298,8 +294,8 @@ fun MainComponent(repo: AppRepository) {
         }
         composable(EditExercisePageDestination) {
             val navArgs = this.navArgs
-            var exercises by remember { mutableStateOf(emptyList<Exercise>())}
-            var muscles by remember { mutableStateOf(emptyList<Muscle>())}
+            var exercises by remember { mutableStateOf(emptyList<Exercise>()) }
+            var muscles by remember { mutableStateOf(emptyList<Muscle>()) }
             LaunchedEffect(exercises, muscles) {
                 exercises = repo.getExercises()
                 muscles = repo.getMuscles()
@@ -348,9 +344,7 @@ fun MainComponent(repo: AppRepository) {
 }
 
 fun locationRedirect(
-    scope: CoroutineScope,
-    repo: AppRepository,
-    destinationsNavigator: DestinationsNavigator
+    scope: CoroutineScope, repo: AppRepository, destinationsNavigator: DestinationsNavigator
 ) {
     scope.launch {
         val new = repo.newLocation()
@@ -359,6 +353,7 @@ fun locationRedirect(
         )
     }
 }
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 @Destination(start = true)
@@ -369,15 +364,11 @@ fun HomePage(
     gotoExerciseList: () -> Unit,
     gotoSetList: () -> Unit,
 ) {
-    Scaffold(
-        floatingActionButton = {
-            FloatingActionButton(
-                onClick = { /* create new set */ }
-            ) {
-                Icon(Icons.Default.Add, contentDescription = "Record New Set")
-            }
+    Scaffold(floatingActionButton = {
+        FloatingActionButton(onClick = { /* create new set */ }) {
+            Icon(Icons.Default.Add, contentDescription = "Record New Set")
         }
-    ) { innerPadding ->
+    }) { innerPadding ->
 
         Column(
             modifier = Modifier
@@ -386,24 +377,59 @@ fun HomePage(
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center
         ) {
-            Text("Strong", fontSize = PAGE_TITLE_FONTSIZE)
-            Text("Giraffe", fontSize = PAGE_TITLE_FONTSIZE)
-            Spacer(modifier = Modifier.fillMaxHeight(0.2f))
-            Button(onClick = gotoLocationsList) {
-                Text(text = "Locations")
+
+
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .fillMaxHeight(0.2f),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.Center
+            ) {
+                Text("Strong", fontSize = PAGE_TITLE_FONTSIZE)
+                Text("Giraffe", fontSize = PAGE_TITLE_FONTSIZE)
             }
-            Button(onClick = gotoEquipmentList) {
-                Text(text = "Equipment")
-            }
-            Button(onClick = gotoMuscleList) {
-                Text(text = "Muscles")
-            }
-            Button(onClick = gotoExerciseList) {
-                Text(text = "Exercises")
-            }
-            Button(onClick = gotoSetList) {
-                Text(text = "Sets")
+            Spacer(modifier = Modifier
+                .fillMaxWidth()
+                .fillMaxHeight(0.2f))
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .fillMaxHeight(0.3f),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.Center
+            ) {
+                val space = 10.dp
+                Row() {
+                    Button(onClick = gotoLocationsList) {
+                        Text(text = "Locations")
+                    }
+                    Spacer(modifier = Modifier.width(space))
+                    Button(onClick = gotoEquipmentList) {
+                        Text(text = "Equipment")
+                    }
+                }
+                Spacer(modifier = Modifier.height(space))
+                Row() {
+                    Button(onClick = gotoMuscleList) {
+                        Text(text = "Muscles")
+                    }
+                    Spacer(modifier = Modifier.width(space))
+                    Button(onClick = gotoExerciseList) {
+                        Text(text = "Exercises")
+                    }
+                }
+                Spacer(modifier = Modifier.height(space))
+                Button(onClick = gotoSetList) {
+                    Text(text = "Sets")
+                }
             }
         }
     }
+}
+
+@Preview
+@Composable
+fun HomePagePreview() {
+    HomePage({}, {}, {}, {}, {})
 }
