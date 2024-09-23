@@ -71,7 +71,7 @@ class ExampleInstrumentedTest() {
                 val setCounts = repo.setsForMusclesInWeek(Instant.now()).setCounts
                 val length = repo.setsForMusclesInWeek(Instant.now()).setCounts.size
                 assertEquals(1, length)
-                assertEquals(1, setCounts[muscle.id]?.second)
+                assertEquals(1, setCounts[muscle.id]?.thisWeek)
             }
         }
     }
@@ -93,7 +93,7 @@ class ExampleInstrumentedTest() {
                 val setCounts = repo.setsForMusclesInWeek(Instant.now()).setCounts
                 val length = repo.setsForMusclesInWeek(Instant.now()).setCounts.size
                 assertEquals(1, length)
-                assertEquals(2, setCounts[muscle.id]?.second)
+                assertEquals(2, setCounts[muscle.id]?.thisWeek)
             }
         }
     }
@@ -114,7 +114,7 @@ class ExampleInstrumentedTest() {
                 val setCounts = repo.setsForMusclesInWeek(Instant.now()).setCounts
                 val length = repo.setsForMusclesInWeek(Instant.now()).setCounts.size
                 assertEquals(1, length)
-                assertEquals(4, setCounts[muscle.id]?.second)
+                assertEquals(4, setCounts[muscle.id]?.thisWeek)
             }
         }
     }
@@ -142,8 +142,8 @@ class ExampleInstrumentedTest() {
                 val setCounts = repo.setsForMusclesInWeek(Instant.now()).setCounts
                 val length = repo.setsForMusclesInWeek(Instant.now()).setCounts.size
                 assertEquals(2, length)
-                assertEquals(1, setCounts[muscleA.id]?.second)
-                assertEquals(0, setCounts[muscleB.id]?.second)
+                assertEquals(1, setCounts[muscleA.id]?.thisWeek)
+                assertEquals(0, setCounts[muscleB.id]?.thisWeek)
             }
         }
     }
