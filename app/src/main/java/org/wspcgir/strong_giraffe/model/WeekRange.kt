@@ -12,8 +12,7 @@ data class WeekRange(
 
     companion object {
         fun forInstant(now: Instant, zone: TimeZone): WeekRange {
-            val tz = TimeZone.getDefault()
-            val time = OffsetDateTime.ofInstant(Instant.now(), tz.toZoneId())
+            val time = OffsetDateTime.ofInstant(now, zone.toZoneId())
             val startOfWeek = time
                 .minusDays(time.dayOfWeek.value.toLong() % 7)
                 .withHour(0)
