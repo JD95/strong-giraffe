@@ -66,6 +66,8 @@ sealed class Intensity {
             }
         }
 
+        val range: List<Intensity> = listOf(NoActivation, Easy, Normal, EarlyFailure, Pain)
+
         const val NO_ACTIVATION: Int = 0
         const val EASY: Int = 1
         const val NORMAL: Int = 2

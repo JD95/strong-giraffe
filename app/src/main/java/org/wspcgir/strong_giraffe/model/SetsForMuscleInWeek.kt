@@ -1,8 +1,8 @@
 package org.wspcgir.strong_giraffe.model
 
-import java.time.Instant
+import org.wspcgir.strong_giraffe.model.ids.MuscleId
 
 data class SetsForMuscleInWeek(
     val range: WeekRange,
-    val sets: Map<String, Int>
+    val setCounts: Map<MuscleId, Pair<String,Int>>
 )
