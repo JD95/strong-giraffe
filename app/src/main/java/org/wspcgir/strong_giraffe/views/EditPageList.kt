@@ -16,6 +16,7 @@ fun <T> EditPageList(
     items: List<T>,
     gotoNewPage: () -> Unit,
     gotoEditPage: (T) -> Unit,
+    sortBy: ((T,T) -> Int)? = null,
     rowRender: @Composable (((T) -> Unit), (@Composable (T) -> Unit), T) -> Unit =
         { onClick, inner, item ->
             Button(onClick = { onClick(item) }) {
@@ -43,7 +44,8 @@ fun <T> EditPageList(
             Text(title, fontSize = PAGE_TITLE_FONTSIZE)
             Spacer(modifier = Modifier.fillMaxHeight(0.2f))
             if (items.isNotEmpty()) {
-                items.forEach { item ->
+                val ordered = if (sortBy != null) { items.sortedWith(sortBy) } else items
+                ordered.forEach { item ->
                     rowRender(gotoEditPage, itemRow, item)
                 }
             } else {

@@ -15,7 +15,6 @@ import org.wspcgir.strong_giraffe.model.ids.MuscleId
 
 
 abstract class MuscleListPageViewModel: ViewModel() {
-
     abstract val musclesWithSetCounts: Map<MuscleId, MuscleSetHistory>
     abstract fun new()
     abstract fun goto(value: Muscle)
@@ -36,9 +35,10 @@ fun overloadIndicator(thisWeek: Int, lastWeek: Int): Color {
 fun MuscleListPage(view: MuscleListPageViewModel) {
     EditPageList(
         title = "Muscles",
-        items = view.musclesWithSetCounts.entries.toList().sortedBy { it.value.name },
+        items = view.musclesWithSetCounts.entries.toList(),
         gotoNewPage = view::new,
         gotoEditPage = { view.goto(Muscle(it.key, it.value.name)) },
+        sortBy = { x,y -> x.value.name.compareTo(y.value.name) },
         rowRender = { onClick, inner, item ->
             Button(
                 onClick = { onClick(item) },

@@ -32,7 +32,8 @@ fun EquipmentListPage(view: EquipmentListPageViewModel) {
             title = "Equipment",
             items = view.equipment,
             gotoNewPage = view::gotoNew,
-            gotoEditPage = view::goto
+            gotoEditPage = view::goto,
+            sortBy = { x, y -> x.name.compareTo(y.name) }
         ) {
             Text(it.name)
         }
