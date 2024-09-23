@@ -1,6 +1,8 @@
 package org.wspcgir.strong_giraffe.views
 
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material3.*
@@ -34,22 +36,31 @@ fun <T> EditPageList(
             }
         }
     ) { innerPadding ->
-        Column(
-            modifier = Modifier
-                .padding(innerPadding)
-                .fillMaxSize(),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.Center
-        ) {
-            Text(title, fontSize = PAGE_TITLE_FONTSIZE)
-            Spacer(modifier = Modifier.fillMaxHeight(0.2f))
-            if (items.isNotEmpty()) {
-                val ordered = if (sortBy != null) { items.sortedWith(sortBy) } else items
-                ordered.forEach { item ->
-                    rowRender(gotoEditPage, itemRow, item)
+        Column(modifier = Modifier.padding(innerPadding)) {
+            Column(
+                modifier = Modifier.fillMaxWidth().fillMaxHeight(0.2f),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.Center
+            ) {
+                Text(title, fontSize = PAGE_TITLE_FONTSIZE)
+            }
+            Column(
+                modifier = Modifier.fillMaxWidth().fillMaxHeight(0.8f),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.Center
+            ) {
+                if (items.isNotEmpty()) {
+                    val ordered = if (sortBy != null) {
+                        items.sortedWith(sortBy)
+                    } else items
+                    LazyColumn {
+                        this.items(ordered) { item ->
+                            rowRender(gotoEditPage, itemRow, item)
+                        }
+                    }
+                } else {
+                    Text("There's nothing here yet")
                 }
-            } else {
-                Text("There's nothing here yet")
             }
         }
     }
@@ -60,10 +71,10 @@ fun <T> EditPageList(
 private fun Preview(){
     EditPageList(
         title = "Fruits",
-        items = listOf("apple"), //, "banana", "coconut", "durian"),
+        items = (0..100).toList(),
         gotoNewPage = { },
         gotoEditPage = { }
     ) {
-        Text(it)
+        Text(it.toString())
     }
 }
