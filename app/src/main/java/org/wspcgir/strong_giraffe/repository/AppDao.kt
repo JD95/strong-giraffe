@@ -1,6 +1,5 @@
 package org.wspcgir.strong_giraffe.repository
 
-import androidx.room.Delete
 import androidx.room.Insert
 import androidx.room.Query
 import org.wspcgir.strong_giraffe.repository.entity.*
@@ -219,4 +218,57 @@ interface AppDao {
         """
     )
     suspend fun deleteWorkoutSet(id: String)
+
+    @Query(
+        """
+            SELECT m.id as muscle_id
+                 , m.name as muscle_name
+                 , COUNT(ws.id) as set_count
+            FROM muscle m
+              LEFT JOIN exercise e on e.muscle = m.id
+              LEFT JOIN workout_set ws on ws.exercise = e.id
+            WHERE ws.id IS NULL
+               OR (:weekStart < ws.time 
+                     AND ws.time < :weekEnd 
+                     AND 1 < ws.intensity
+                     AND ws.intensity < 4)
+            GROUP BY m.id, m.name
+        """
+    )
+    suspend fun setsInWeek(weekStart: Long, weekEnd: Long): List<MuscleSetCount>
+
+    @Query(
+        """
+            DELETE from location
+        """
+    )
+    suspend fun deleteAllLocations()
+
+    @Query(
+        """
+            DELETE from muscle 
+        """
+    )
+    suspend fun deleteAllMuscles()
+
+    @Query(
+        """
+            DELETE from equipment 
+        """
+    )
+    suspend fun deleteAllEquipment()
+
+    @Query(
+        """
+            DELETE from exercise 
+        """
+    )
+    suspend fun deleteAllExercises()
+
+    @Query(
+        """
+            DELETE from workout_set 
+        """
+    )
+    suspend fun deleteAllWorkoutSets()
 }

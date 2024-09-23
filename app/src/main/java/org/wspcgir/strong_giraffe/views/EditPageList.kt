@@ -16,6 +16,12 @@ fun <T> EditPageList(
     items: List<T>,
     gotoNewPage: () -> Unit,
     gotoEditPage: (T) -> Unit,
+    rowRender: @Composable (((T) -> Unit), (@Composable (T) -> Unit), T) -> Unit =
+        { onClick, inner, item ->
+            Button(onClick = { onClick(item) }) {
+                inner(item)
+            }
+        },
     itemRow: @Composable (T) -> Unit,
 ) {
     Scaffold(
@@ -38,9 +44,7 @@ fun <T> EditPageList(
             Spacer(modifier = Modifier.fillMaxHeight(0.2f))
             if (items.isNotEmpty()) {
                 items.forEach { item ->
-                    Button(onClick = { gotoEditPage(item) }) {
-                        itemRow(item)
-                    }
+                    rowRender(gotoEditPage, itemRow, item)
                 }
             } else {
                 Text("There's nothing here yet")

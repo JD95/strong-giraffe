@@ -3,12 +3,12 @@ package org.wspcgir.strong_giraffe.repository
 import org.wspcgir.strong_giraffe.model.*
 import org.wspcgir.strong_giraffe.model.ids.*
 import java.time.Instant
+import java.util.*
 import org.wspcgir.strong_giraffe.repository.entity.Location as LocationEntity
 import org.wspcgir.strong_giraffe.repository.entity.Equipment as EquipmentEntity
 import org.wspcgir.strong_giraffe.repository.entity.Muscle as MuscleEntity
 import org.wspcgir.strong_giraffe.repository.entity.Exercise as ExerciseEntity
 import org.wspcgir.strong_giraffe.repository.entity.WorkoutSet as WorkoutSetEntity
-import java.util.UUID
 
 class AppRepository(private val dao: AppDao) {
     suspend fun newLocation(): Location {
@@ -125,6 +125,30 @@ class AppRepository(private val dao: AppDao) {
     }
 
     suspend fun updateWorkoutSet(
+        original: WorkoutSet,
+        exercise: ExerciseId? = null,
+        location: LocationId? = null,
+        equipment: EquipmentId? = null,
+        reps: Reps? = null,
+        weight: Weight? = null,
+        time: Instant? = null,
+        intensity: Intensity? = null,
+        comment: Comment? = null
+    ) {
+        updateWorkoutSet(
+            id = original.id,
+            exercise = exercise ?: original.exercise,
+            location = location ?: original.location,
+            equipment = equipment ?: original.equipment,
+            reps = reps ?: original.reps,
+            weight = weight ?: original.weight,
+            time = time ?: original.time,
+            intensity = intensity ?: original.intensity,
+            comment = comment ?: original.comment,
+        )
+    }
+
+    suspend fun updateWorkoutSet(
         id: SetId,
         exercise: ExerciseId,
         location: LocationId,
@@ -181,5 +205,35 @@ class AppRepository(private val dao: AppDao) {
 
     suspend fun deleteWorkoutSet(id: SetId) {
         dao.deleteWorkoutSet(id.value)
+    }
+
+    suspend fun setsForMusclesInWeek(now: Instant): SetsForMuscleInWeek {
+        val zone = TimeZone.getDefault()
+        val range = WeekRange.forInstant(now, zone)
+        val lastWeek = dao
+            .setsInWeek(
+                range.start.minusWeeks(1).toEpochSecond(),
+                range.end.minusWeeks(1).toEpochSecond()
+            )
+            .fold(emptyMap<MuscleId, Int>()) { map, x ->
+                map.plus(MuscleId(x.muscleId) to x.setCount)
+            }
+        val thisWeek = dao
+            .setsInWeek(range.start.toEpochSecond(), range.end.toEpochSecond())
+            .fold(emptyMap<MuscleId, MuscleSetHistory>()) { map, x ->
+                val id = MuscleId(x.muscleId)
+                map.plus(
+                    id to MuscleSetHistory(x.muscleName, x.setCount, lastWeek[id] ?: 0)
+                )
+            }
+        return SetsForMuscleInWeek(range, thisWeek)
+    }
+
+    suspend fun dropDb() {
+        dao.deleteAllLocations()
+        dao.deleteAllMuscles()
+        dao.deleteAllEquipment()
+        dao.deleteAllExercises()
+        dao.deleteAllWorkoutSets()
     }
 }
