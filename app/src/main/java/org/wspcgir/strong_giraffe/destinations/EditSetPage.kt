@@ -60,7 +60,7 @@ fun RegisterEditSetPage(
     var starting by remember { mutableStateOf<WorkoutSet?>(null) }
 
     LaunchedEffect(locations, equipment, exercises) {
-        locations = repo.getLocations()
+        locations = repo.getLocationsWithEquipment()
         equipment = repo.getEquipment()
         exercises = repo.getExercises()
         starting = repo.getSetFromId(navArgs.id)

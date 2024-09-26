@@ -24,6 +24,10 @@ class AppRepository(private val dao: AppDao) {
         val entities = dao.getLocations()
         return entities.map { e -> Location(LocationId(e.id), e.name) }
     }
+    suspend fun getLocationsWithEquipment(): List<Location> {
+        val entities = dao.getLocationsWithEquipment()
+        return entities.map { e -> Location(LocationId(e.id), e.name) }
+    }
 
     suspend fun getEquipment(): List<Equipment> {
         val entities = dao.getEquipment()
@@ -43,6 +47,10 @@ class AppRepository(private val dao: AppDao) {
 
     suspend fun getMuscles(): List<Muscle> {
         return dao.getAllMuscles().map { e -> Muscle(MuscleId(e.id), e.name) }
+    }
+
+    suspend fun getMusclesWithExerise(): List<Muscle> {
+        return dao.getMusclesWithExercise().map { e -> Muscle(MuscleId(e.id), e.name) }
     }
 
     suspend fun newMuscle(): Muscle {
