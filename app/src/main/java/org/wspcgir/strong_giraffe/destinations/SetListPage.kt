@@ -1,5 +1,6 @@
 package org.wspcgir.strong_giraffe.destinations
 
+import android.util.Log
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.tooling.preview.Preview
@@ -64,14 +65,28 @@ fun RegisterSetListPage(repo: AppRepository, dest: DestinationsNavigator) {
 
             override fun new() {
                 viewModelScope.launch {
-                    val new: WorkoutSet = repo.newWorkoutSet(
+                    val set = repo.newWorkoutSet(
                         templateLocation!!,
                         templateEquipment!!,
                         templateExercise!!
                     )
+                    val latest = repo.latestSetNot(set.id)
+                    if (latest != null) {
+                        Log.i("NEW SET", "Using previous set '${latest.id}'")
+                        repo.updateWorkoutSet(
+                            original = set,
+                            location = latest.location,
+                            exercise = latest.exercise,
+                            equipment = latest.equipment,
+                            reps = latest.reps,
+                            weight = latest.weight
+                        )
+                    } else {
+                        Log.i("NEW SET", "No previous set available.")
+                    }
                     dest.navigate(
                         EditSetPageDestination(
-                            EditSetPageNavArgs(id = new.id)
+                            EditSetPageNavArgs(id = set.id)
                         )
                     )
                 }

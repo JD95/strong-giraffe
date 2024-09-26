@@ -237,11 +237,63 @@ class AppRepository(private val dao: AppDao) {
         return SetsForMuscleInWeek(range, thisWeek)
     }
 
+    private fun workoutSetFromEntity(e: WorkoutSetEntity): WorkoutSet {
+        return WorkoutSet(
+            id = SetId(e.id),
+            exercise = ExerciseId(e.exercise),
+            location = LocationId(e.location),
+            equipment = EquipmentId(e.equipment),
+            reps = Reps(e.reps),
+            weight = Weight(e.weight),
+            intensity = Intensity.fromInt(e.intensity)!!,
+            time = Instant.ofEpochSecond(e.time),
+            comment = Comment(e.comment)
+        )
+    }
+
+    suspend fun latestSet(): WorkoutSet? {
+        val e = dao.getLatestWorkoutSet()
+        return if (e != null) { workoutSetFromEntity(e) } else { null }
+    }
+
+    suspend fun latestSetNot(set: SetId): WorkoutSet? {
+        val e = dao.getLatestWorkoutSetNot(set.value)
+        return if (e != null) { workoutSetFromEntity(e) } else { null }
+    }
+
+    suspend fun latestSetForExerciseAtLocationExcluding(
+        set: SetId,
+        location: LocationId,
+        exercise: ExerciseId
+    ): WorkoutSet? {
+        val e = dao.getLatestWorkoutSetForExerciseAtLocationExcluding(
+            set.value,
+            location.value,
+            exercise.value
+        )
+        return if (e != null) { workoutSetFromEntity(e) } else { null }
+    }
+
     suspend fun dropDb() {
         dao.deleteAllLocations()
         dao.deleteAllMuscles()
         dao.deleteAllEquipment()
         dao.deleteAllExercises()
         dao.deleteAllWorkoutSets()
+    }
+
+    suspend fun latestSetForExerciseAndEquipmentAtLocationExcluding(
+        set: SetId,
+        location: LocationId,
+        exercise: ExerciseId,
+        equipment: EquipmentId
+    ): WorkoutSet? {
+        val e = dao.latestWorkoutSetForExerciseAndEquipmentAtLocationExcluding(
+            set.value,
+            location.value,
+            exercise.value,
+            equipment.value
+        )
+        return if (e != null) { workoutSetFromEntity(e) } else { null }
     }
 }

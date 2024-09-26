@@ -24,29 +24,132 @@ import org.wspcgir.strong_giraffe.repository.AppRepository
 import org.wspcgir.strong_giraffe.views.*
 import com.ramcosta.composedestinations.annotation.Destination
 import com.ramcosta.composedestinations.navigation.DestinationsNavigator
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.launch
 import java.time.Instant
 
 data class EditSetPageNavArgs(val id: SetId)
 
-abstract class EditSetPageViewModel : ViewModel() {
+class EditSetPageViewModel(
+    private val setId: SetId,
+    private val repo: AppRepository,
+    private val dest: DestinationsNavigator,
+    private val inProgressMut: MutableState<WorkoutSet>,
+    private val equipmentForLocationMut: MutableState<List<Equipment>>,
+    val locations: List<Location>,
+    val exercises: List<Exercise>,
+    val equipment: List<Equipment>,
+): ViewModel() {
+    fun submit() {
+        viewModelScope.launch {
+            repo.updateWorkoutSet(
+                id = setId,
+                exercise = inProgress.value.exercise,
+                location = inProgress.value.location,
+                equipment = inProgress.value.equipment,
+                reps = inProgress.value.reps,
+                weight = inProgress.value.weight,
+                intensity = inProgress.value.intensity,
+                comment = inProgress.value.comment,
+                time = inProgressMut.value.time
+            )
+        }
+        dest.popBackStack()
+    }
 
-    abstract fun submit(
-        location: Location,
-        exercise: Exercise,
-        equipment: Equipment,
-        reps: Reps,
-        weight: Weight,
-        intensity: Intensity,
-        comment: Comment
-    )
+    fun changeLocation(location: LocationId) {
+        equipmentForLocationMut.value = equipment.filter { it.location == location }
+        viewModelScope.launch {
+            val replacement = repo.latestSetForExerciseAtLocationExcluding(
+                inProgress.value.id,
+                inProgress.value.location,
+                inProgress.value.exercise,
+            )
+            if (replacement != null) {
+               inProgressMut.value = inProgress.value.copy(
+                   location = replacement.location,
+                   equipment = replacement.equipment,
+                   exercise = replacement.exercise,
+                   reps = replacement.reps,
+                   weight = replacement.weight,
+               )
+            } else {
+                inProgressMut.value = inProgress.value.copy(
+                    location = location,
+                    equipment = equipmentForLocationMut.value.first().id,
+                )
+            }
 
-    abstract fun delete()
+        }
+    }
 
-    abstract val starting: WorkoutSet
-    abstract val locations: List<Location>
-    abstract val equipment: List<Equipment>
-    abstract val exercises: List<Exercise>
+    fun changeExercise(exercise: ExerciseId) {
+        viewModelScope.launch {
+            val replacement = repo.latestSetForExerciseAndEquipmentAtLocationExcluding(
+                inProgress.value.id,
+                inProgress.value.location,
+                exercise,
+                inProgress.value.equipment
+            )
+            if (replacement != null) {
+                inProgressMut.value = inProgress.value.copy(
+                    exercise = replacement.exercise,
+                    reps = replacement.reps,
+                    weight = replacement.weight,
+                )
+            } else {
+                inProgressMut.value = inProgress.value.copy(exercise = exercise)
+            }
+        }
+    }
+
+    fun changeEquipment(equipment: EquipmentId) {
+        viewModelScope.launch {
+            val replacement = repo.latestSetForExerciseAndEquipmentAtLocationExcluding(
+                inProgress.value.id,
+                inProgress.value.location,
+                inProgress.value.exercise,
+                equipment
+            )
+            if (replacement != null) {
+                inProgressMut.value = inProgressMut.value.copy(
+                    equipment = replacement.equipment,
+                    reps = replacement.reps,
+                    weight = replacement.weight,
+                )
+            } else {
+                inProgressMut.value = inProgress.value.copy(equipment = equipment)
+            }
+        }
+    }
+
+    fun changeReps(new: Reps){
+        inProgressMut.value = inProgress.value.copy(reps = new)
+    }
+
+    fun changeWeight(new: Weight){
+        inProgressMut.value = inProgress.value.copy(weight = new)
+    }
+
+    fun changeIntensity(new: Intensity){
+        inProgressMut.value = inProgress.value.copy(intensity = new)
+    }
+
+    fun changeComment(new: Comment){
+        inProgressMut.value = inProgress.value.copy(comment = new)
+    }
+
+    fun delete() {
+        viewModelScope.launch {
+            repo.deleteWorkoutSet(setId)
+        }
+        dest.popBackStack()
+    }
+
+    val inProgress: State<WorkoutSet>
+        get() = inProgressMut
+    val equipmentForExercise: State<List<Equipment>>
+        get() = equipmentForLocationMut
 }
 
 @Composable
@@ -59,60 +162,29 @@ fun RegisterEditSetPage(
     var locations by remember { mutableStateOf<List<Location>>(emptyList()) }
     var equipment by remember { mutableStateOf<List<Equipment>>(emptyList()) }
     var exercises by remember { mutableStateOf<List<Exercise>>(emptyList()) }
-    var starting by remember { mutableStateOf<WorkoutSet?>(null) }
+    val inProgress = remember { mutableStateOf<WorkoutSet?>(null) }
 
     LaunchedEffect(locations, equipment, exercises) {
         locations = repo.getLocationsWithEquipment()
         equipment = repo.getEquipment()
         exercises = repo.getExercises()
-        starting = repo.getSetFromId(navArgs.id)
+        inProgress.value = repo.getSetFromId(navArgs.id)
+        Log.i("SET", "weight is now '${inProgress.value?.weight}")
     }
 
-    if (starting != null) {
-        EditSetPage(object : EditSetPageViewModel() {
-            override fun submit(
-                location: Location,
-                exercise: Exercise,
-                equipment: Equipment,
-                reps: Reps,
-                weight: Weight,
-                intensity: Intensity,
-                comment: Comment
-            ) {
-                viewModelScope.launch {
-                    Log.d("SET", "Submitting '${location.name}' '${exercise.name}' '${equipment.name}'")
-                    repo.updateWorkoutSet(
-                        id = navArgs.id,
-                        exercise = exercise.id,
-                        location = location.id,
-                        equipment = equipment.id,
-                        reps = reps,
-                        weight = weight,
-                        intensity = intensity,
-                        comment = comment,
-                        time = starting!!.time
-                    )
-                }
-                dest.popBackStack()
-            }
-
-            override fun delete() {
-                viewModelScope.launch {
-                    repo.deleteWorkoutSet(navArgs.id)
-                }
-                dest.popBackStack()
-            }
-
-            override val starting: WorkoutSet
-                get() = starting!!
-
-            override val locations: List<Location>
-                get() = locations
-            override val equipment: List<Equipment>
-                get() = equipment
-            override val exercises: List<Exercise>
-                get() = exercises
-        })
+    if (inProgress.value != null) {
+        EditSetPage(EditSetPageViewModel(
+            setId = navArgs.id,
+            inProgressMut = remember { mutableStateOf(inProgress.value!!) },
+            equipmentForLocationMut = remember {
+                mutableStateOf(equipment.filter { it.location == inProgress.value?.location })
+            },
+            repo = repo,
+            dest = dest,
+            locations = locations,
+            exercises = exercises,
+            equipment = equipment
+        ))
     }
 }
 
@@ -122,63 +194,45 @@ fun EditSetPage(view: EditSetPageViewModel) {
     Page(
         submit = view::submit,
         delete = view::delete,
-        starting = view.starting,
+        changeLocation = view::changeLocation,
+        changeExercise = view::changeExercise,
+        changeEquipment = view::changeEquipment,
+        changeReps = view::changeReps,
+        changeWeight = view::changeWeight,
+        changeIntensity = view::changeIntensity,
+        changeComment = view::changeComment,
+        starting = view.inProgress,
         locations = view.locations,
-        equipment = view.equipment,
+        equipment = view.equipmentForExercise,
         exercises = view.exercises,
     )
 }
 
-
 @OptIn(ExperimentalComposeUiApi::class, ExperimentalMaterial3Api::class)
 @Composable
 fun Page(
-    starting: WorkoutSet,
-    submit: (Location, Exercise, Equipment, Reps, Weight, Intensity, Comment) -> Unit,
+    starting: State<WorkoutSet>,
+    submit: () -> Unit,
     delete: () -> Unit,
+    changeLocation: (LocationId) -> Unit,
+    changeExercise: (ExerciseId) -> Unit,
+    changeEquipment: (EquipmentId) -> Unit,
+    changeReps: (Reps) -> Unit,
+    changeWeight: (Weight) -> Unit,
+    changeIntensity: (Intensity) -> Unit,
+    changeComment: (Comment) -> Unit,
     locations: List<Location>,
-    equipment: List<Equipment>,
+    equipment: State<List<Equipment>>,
     exercises: List<Exercise>,
 ) {
     val keyboardController = LocalSoftwareKeyboardController.current
     if (locations.isNotEmpty() && exercises.isNotEmpty()) {
-
-        var selectedLocation by remember {
-            mutableStateOf(locations.first { it.id == starting.location})
-        }
-        var equipmentForLocation by remember {
-            mutableStateOf(equipment.filter { it.location == selectedLocation.id })
-        }
-        var selectedEquipment by remember {
-            mutableStateOf(equipment.first { it.id == starting.equipment } )
-        }
-        var selectedExercise by remember {
-            mutableStateOf(exercises.first { it.id == starting.exercise })
-        }
-        var selectedReps by remember { mutableStateOf(starting.reps) }
-        var selectedWeight by remember { mutableStateOf(starting.weight) }
-        var selectedIntensity by remember { mutableStateOf(starting.intensity) }
-        var comment by remember { mutableStateOf(starting.comment) }
         var validReps by remember { mutableStateOf(true) }
         var validWeight by remember { mutableStateOf(true) }
 
         Scaffold(
             floatingActionButton = {
-                FloatingActionButton(
-                    onClick = {
-                        if (validReps && validWeight) {
-                            submit(
-                                selectedLocation,
-                                selectedExercise,
-                                selectedEquipment,
-                                selectedReps,
-                                selectedWeight,
-                                selectedIntensity,
-                                comment
-                            )
-                        }
-                    }
-                ) {
+                FloatingActionButton(onClick = submit) {
                     if (validReps && validWeight) {
                         Icon(Icons.Default.Done, contentDescription = "Save Set")
                     } else {
@@ -201,53 +255,49 @@ fun Page(
                     label = "",
                     itemToString = { it.name },
                     onItemSelected = {
-                        if (selectedLocation != it) {
-                            selectedLocation = it
-                            equipmentForLocation = equipment.filter { e ->
-                                e.location == selectedLocation.id
-                            }
-                            selectedEquipment = equipmentForLocation.first()
+                        if (starting.value.location != it.id) {
+                            changeLocation(it.id)
                         }
                     },
                     modifier = Modifier.fillMaxWidth(0.8f),
-                    selectedIndex = locations.indexOf(selectedLocation)
+                    selectedIndex = locations.indexOfFirst { it.id == starting.value.location }
                 )
                 Text("Exercise")
                 LargeDropDownFromList(
                     items = exercises,
                     label = "",
                     itemToString = { it.name },
-                    onItemSelected = { selectedExercise = it; },
+                    onItemSelected = { changeExercise(it.id) },
                     modifier = Modifier.fillMaxWidth(0.8f),
-                    selectedIndex = exercises.indexOf(selectedExercise)
+                    selectedIndex = exercises.indexOfFirst { it.id == starting.value.exercise }
                 )
                 Text("Equipment")
                 LargeDropDownFromList(
-                    items = equipmentForLocation,
+                    items = equipment.value,
                     label = "",
                     itemToString = { it.name },
-                    onItemSelected = { selectedEquipment = it; },
+                    onItemSelected = { changeEquipment(it.id) },
                     modifier = Modifier.fillMaxWidth(0.8f),
-                    selectedIndex = equipment.indexOf(selectedEquipment)
+                    selectedIndex = equipment.value.indexOfFirst { it.id == starting.value.equipment }
                 )
                 Text("Reps")
                 IntField(
                     modifier = Modifier.fillMaxWidth(0.8f),
-                    start = starting.reps.value
+                    start = starting.value.reps.value
                 ) { it ->
                     validReps = it != null
                     if (it != null) {
-                        selectedReps = Reps(it)
+                        changeReps(Reps(it))
                     }
                 }
                 Text("Weight")
                 IntField(
                     modifier = Modifier.fillMaxWidth(0.8f),
-                    start = starting.weight.value
+                    start = starting.value.weight.value
                 ) { it ->
                     validWeight = it != null
                     if (it != null) {
-                        selectedWeight = Weight(it)
+                        changeWeight(Weight(it))
                     }
                 }
                 Text("Intensity")
@@ -261,15 +311,15 @@ fun Page(
                     ),
                     label = "",
                     itemToString = Intensity::toString,
-                    onItemSelected = { selectedIntensity = it; },
+                    onItemSelected = changeIntensity,
                     modifier = Modifier.fillMaxWidth(0.8f),
-                    selectedIndex = Intensity.toInt(selectedIntensity)
+                    selectedIndex = Intensity.toInt(starting.value.intensity)
                 )
                 Text("Comment")
                 TextField(
                     modifier = Modifier.fillMaxWidth(0.8f),
-                    value = comment.value,
-                    onValueChange = { comment = Comment(it); },
+                    value = starting.value.comment.value,
+                    onValueChange = { changeComment(Comment(it)) },
                     keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
                     keyboardActions = KeyboardActions(onDone = { keyboardController?.hide() })
                 )
@@ -287,9 +337,8 @@ fun Page(
 @Preview
 @Composable
 private fun Preview() {
-
     Page(
-        starting = WorkoutSet(
+        starting = remember { mutableStateOf(WorkoutSet(
             id = SetId("a"),
             exercise = ExerciseId("a"),
             equipment = EquipmentId("equipA"),
@@ -299,17 +348,28 @@ private fun Preview() {
             time = Instant.now(),
             intensity = Intensity.Normal,
             comment = Comment("")
-        ),
-        submit = { _, _, _, _, _, _, _ -> },
+        ))},
+        submit = { },
         delete = { },
+        changeLocation = { },
+        changeExercise = { },
+        changeEquipment = { },
+        changeReps = { },
+        changeWeight = { },
+        changeIntensity = { },
+        changeComment = { },
         locations = listOf(
             Location(LocationId("locationA"), "24 Hour Parkmoore"),
             Location(LocationId("locationB"), "Fruitdale Apt. Gym"),
         ),
-        equipment = listOf(
-            Equipment(EquipmentId("equipA"), "Barbell", LocationId("locationA")),
-            Equipment(EquipmentId("equipB"), "Bicep Curl A", LocationId("locationA")),
-        ),
+        equipment = remember {
+            mutableStateOf(
+                listOf(
+                    Equipment(EquipmentId("equipA"), "Barbell", LocationId("locationA")),
+                    Equipment(EquipmentId("equipB"), "Bicep Curl A", LocationId("locationA")),
+                )
+            )
+        },
         exercises = listOf(
             Exercise(ExerciseId("a"), "Lat Pull Down", MuscleId("0")),
             Exercise(ExerciseId("b"), "Squats", MuscleId("1")),
