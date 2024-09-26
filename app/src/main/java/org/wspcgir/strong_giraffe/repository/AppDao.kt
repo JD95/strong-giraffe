@@ -27,6 +27,26 @@ interface AppDao {
     )
     suspend fun getLocations(): List<Location>
 
+    @Query(
+        """
+            SELECT DISTINCT l.id as id, l.name as name
+            FROM location l
+              JOIN equipment e ON e.location = l.id
+            ORDER BY l.name
+        """
+    )
+    suspend fun getLocationsWithEquipment(): List<Location>
+
+    @Query(
+        """
+            SELECT DISTINCT m.id as id, m.name as name
+            FROM muscle m
+              JOIN exercise e ON e.muscle = m.id
+            ORDER BY m.name
+        """
+    )
+    suspend fun getMusclesWithExercise(): List<Muscle>
+
 
     @Query(
         """
