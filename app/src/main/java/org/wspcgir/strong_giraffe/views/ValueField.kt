@@ -43,7 +43,7 @@ fun <T> ValueField(
     onChange: (T?) -> Unit = { },
 ) {
     val keyboardController = LocalSoftwareKeyboardController.current
-    var text by remember { mutableStateOf(start.toString()) }
+    var text by remember(key1 = start) { mutableStateOf(start.toString()) }
     var valid by remember { mutableStateOf(true) }
 
     val validStateColors = TextFieldDefaults
