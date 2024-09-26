@@ -2,6 +2,9 @@ package org.wspcgir.strong_giraffe.repository
 
 import androidx.room.Insert
 import androidx.room.Query
+import org.wspcgir.strong_giraffe.model.ids.EquipmentId
+import org.wspcgir.strong_giraffe.model.ids.ExerciseId
+import org.wspcgir.strong_giraffe.model.ids.LocationId
 import org.wspcgir.strong_giraffe.repository.entity.*
 
 @androidx.room.Dao
@@ -198,6 +201,94 @@ interface AppDao {
         """
     )
     suspend fun getWorkoutSet(id: String): WorkoutSet
+
+    @Query(
+        """
+            SELECT id
+                 , exercise
+                 , location
+                 , equipment
+                 , reps
+                 , weight
+                 , time
+                 , intensity
+                 , comment
+            FROM workout_set
+            ORDER BY time DESC
+            LIMIT 1
+        """
+    )
+    suspend fun getLatestWorkoutSet(): WorkoutSet?
+    @Query(
+        """
+            SELECT id
+                 , exercise
+                 , location
+                 , equipment
+                 , reps
+                 , weight
+                 , time
+                 , intensity
+                 , comment
+            FROM workout_set
+            WHERE id != :id
+            ORDER BY time DESC
+            LIMIT 1
+        """
+    )
+    suspend fun getLatestWorkoutSetNot(id: String): WorkoutSet?
+
+    @Query(
+        """
+            SELECT id
+                 , exercise
+                 , location
+                 , equipment
+                 , reps
+                 , weight
+                 , time
+                 , intensity
+                 , comment
+            FROM workout_set
+            WHERE id != :set
+              AND location = :location
+              AND exercise = :exercise
+            ORDER BY time DESC
+            LIMIT 1
+        """
+    )
+    suspend fun getLatestWorkoutSetForExerciseAtLocationExcluding(
+        set: String,
+        location: String,
+        exercise: String
+    ): WorkoutSet?
+
+    @Query(
+        """
+            SELECT id
+                 , exercise
+                 , location
+                 , equipment
+                 , reps
+                 , weight
+                 , time
+                 , intensity
+                 , comment
+            FROM workout_set
+            WHERE id != :set
+              AND location = :location
+              AND exercise = :exercise
+              AND equipment= :equipment
+            ORDER BY time DESC
+            LIMIT 1
+        """
+    )
+    suspend fun latestWorkoutSetForExerciseAndEquipmentAtLocationExcluding(
+        set: String,
+        location: String,
+        exercise: String,
+        equipment: String
+    ): WorkoutSet?
 
     @Query(
         """ 
