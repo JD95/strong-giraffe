@@ -1,5 +1,6 @@
 package org.wspcgir.strong_giraffe.destinations
 
+import android.util.Log
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
@@ -24,6 +25,7 @@ import org.wspcgir.strong_giraffe.views.*
 import com.ramcosta.composedestinations.annotation.Destination
 import com.ramcosta.composedestinations.navigation.DestinationsNavigator
 import kotlinx.coroutines.launch
+import java.time.Instant
 
 data class EditSetPageNavArgs(val id: SetId)
 
@@ -78,6 +80,7 @@ fun RegisterEditSetPage(
                 comment: Comment
             ) {
                 viewModelScope.launch {
+                    Log.d("SET", "Submitting '${location.name}' '${exercise.name}' '${equipment.name}'")
                     repo.updateWorkoutSet(
                         id = navArgs.id,
                         exercise = exercise.id,
@@ -195,7 +198,7 @@ fun Page(
                 Text("Location")
                 LargeDropDownFromList(
                     items = locations,
-                    label = selectedLocation.name,
+                    label = "",
                     itemToString = { it.name },
                     onItemSelected = {
                         if (selectedLocation != it) {
@@ -212,7 +215,7 @@ fun Page(
                 Text("Exercise")
                 LargeDropDownFromList(
                     items = exercises,
-                    label = selectedExercise.name,
+                    label = "",
                     itemToString = { it.name },
                     onItemSelected = { selectedExercise = it; },
                     modifier = Modifier.fillMaxWidth(0.8f),
@@ -221,7 +224,7 @@ fun Page(
                 Text("Equipment")
                 LargeDropDownFromList(
                     items = equipmentForLocation,
-                    label = selectedEquipment.name,
+                    label = "",
                     itemToString = { it.name },
                     onItemSelected = { selectedEquipment = it; },
                     modifier = Modifier.fillMaxWidth(0.8f),
@@ -256,7 +259,7 @@ fun Page(
                         Intensity.EarlyFailure,
                         Intensity.Pain
                     ),
-                    label = selectedIntensity.toString(),
+                    label = "",
                     itemToString = Intensity::toString,
                     onItemSelected = { selectedIntensity = it; },
                     modifier = Modifier.fillMaxWidth(0.8f),
@@ -285,21 +288,31 @@ fun Page(
 @Composable
 private fun Preview() {
 
-    // submit: (Location, Exercise, Equipment, Int, Intensity, String) -> Unit =
-    // { _, _, _, _, _, _ -> },
-    // locations: List<Location> =
-    // listOf(
-    //     Location(LocationId("locationA"), "24 Hour Parkmoore"),
-    //     Location(LocationId("locationB"), "Fruitdale Apt. Gym"),
-    // ),
-    // equipment: List<Equipment> =
-    // listOf(
-    //     Equipment(EquipmentId("equipA"), "Barbell", LocationId("locationA")),
-    //     Equipment(EquipmentId("equipB"), "Bicep Curl A", LocationId("locationA")),
-    // ),
-    // exercises: List<Exercise> =
-    // listOf(
-    //     Exercise(ExerciseId("a"), "Lat Pull Down", MuscleId("0")),
-    //     Exercise(ExerciseId("b"), "Squats", MuscleId("1")),
-    // )
+    Page(
+        starting = WorkoutSet(
+            id = SetId("a"),
+            exercise = ExerciseId("a"),
+            equipment = EquipmentId("equipA"),
+            location = LocationId("locationA"),
+            reps = Reps(0),
+            weight = Weight(0),
+            time = Instant.now(),
+            intensity = Intensity.Normal,
+            comment = Comment("")
+        ),
+        submit = { _, _, _, _, _, _, _ -> },
+        delete = { },
+        locations = listOf(
+            Location(LocationId("locationA"), "24 Hour Parkmoore"),
+            Location(LocationId("locationB"), "Fruitdale Apt. Gym"),
+        ),
+        equipment = listOf(
+            Equipment(EquipmentId("equipA"), "Barbell", LocationId("locationA")),
+            Equipment(EquipmentId("equipB"), "Bicep Curl A", LocationId("locationA")),
+        ),
+        exercises = listOf(
+            Exercise(ExerciseId("a"), "Lat Pull Down", MuscleId("0")),
+            Exercise(ExerciseId("b"), "Squats", MuscleId("1")),
+        )
+    )
 }
