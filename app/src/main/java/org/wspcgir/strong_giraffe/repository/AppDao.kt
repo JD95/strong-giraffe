@@ -2,9 +2,6 @@ package org.wspcgir.strong_giraffe.repository
 
 import androidx.room.Insert
 import androidx.room.Query
-import org.wspcgir.strong_giraffe.model.ids.EquipmentId
-import org.wspcgir.strong_giraffe.model.ids.ExerciseId
-import org.wspcgir.strong_giraffe.model.ids.LocationId
 import org.wspcgir.strong_giraffe.repository.entity.*
 
 @androidx.room.Dao
@@ -26,6 +23,7 @@ interface AppDao {
         """
             SELECT id, name
             FROM location
+            ORDER BY name
         """
     )
     suspend fun getLocations(): List<Location>
@@ -53,8 +51,9 @@ interface AppDao {
 
     @Query(
         """
-            select id, name
-            from muscle
+            SELECT id, name
+            FROM muscle
+            ORDER BY name
         """
     )
     suspend fun getAllMuscles(): List<Muscle>
@@ -62,28 +61,10 @@ interface AppDao {
     @Query(
         """
             SELECT id
-                 , exercise
-                 , location
-                 , equipment
-                 , reps
-                 , weight
-                 , time
-                 , intensity
-                 , comment
-            FROM workout_set
-            WHERE exercise = :exerciseId
-            ORDER BY time DESC 
-            LIMIT :count
-        """
-    )
-    suspend fun getLatestNSetsForExercise(exerciseId:String, count: Int): List<WorkoutSet>
-
-    @Query(
-        """
-            SELECT id
                  , name
                  , location
             FROM equipment
+            ORDER BY location, name
         """
     )
     suspend fun getEquipment(): List<Equipment>
@@ -120,6 +101,7 @@ interface AppDao {
                  , name
                  , muscle
             FROM exercise
+            ORDER BY name
         """
     )
     suspend fun getExercises(): List<Exercise>
@@ -139,22 +121,6 @@ interface AppDao {
 
     @Insert
     suspend fun insertWorkoutSet(workoutSetEntity: WorkoutSet)
-
-    @Query(
-        """
-            SELECT id
-                 , exercise
-                 , location
-                 , equipment
-                 , reps
-                 , weight
-                 , time
-                 , intensity
-                 , comment
-            FROM workout_set
-        """
-    )
-    suspend fun getWorkoutSets(): List<WorkoutSet>
 
     @Query("SELECT * FROM SetSummary")
     suspend fun getSetSummaries(): List<SetSummary>
@@ -198,6 +164,7 @@ interface AppDao {
                  , comment
             FROM workout_set
             WHERE id = :id
+            LIMIT 1
         """
     )
     suspend fun getWorkoutSet(id: String): WorkoutSet
@@ -219,6 +186,7 @@ interface AppDao {
         """
     )
     suspend fun getLatestWorkoutSet(): WorkoutSet?
+
     @Query(
         """
             SELECT id
