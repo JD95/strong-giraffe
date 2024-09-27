@@ -1,9 +1,12 @@
 package org.wspcgir.strong_giraffe.destinations
 
+import android.content.res.Configuration.UI_MODE_NIGHT_NO
+import android.content.res.Configuration.UI_MODE_NIGHT_YES
 import android.util.Log
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import org.wspcgir.strong_giraffe.model.*
@@ -13,6 +16,7 @@ import org.wspcgir.strong_giraffe.views.*
 import com.ramcosta.composedestinations.annotation.Destination
 import com.ramcosta.composedestinations.navigation.DestinationsNavigator
 import kotlinx.coroutines.launch
+import org.wspcgir.strong_giraffe.ui.theme.StrongGiraffeTheme
 import java.time.Instant
 
 abstract class SetListPageViewModel: ViewModel() {
@@ -138,34 +142,47 @@ private fun Page(
     }
 }
 
-@Preview
+@Preview(
+    name = "Dark",
+    uiMode = UI_MODE_NIGHT_YES,
+    showBackground = true
+)
+@Preview(
+    name = "Light",
+    uiMode = UI_MODE_NIGHT_NO,
+    showBackground = true
+)
 @Composable
 private fun Preview() {
-    val template =
-        SetSummary(
-            id = SetId("a"),
-            reps = Reps(10),
-            weight = Weight(140),
-            time = Instant.now(),
-            intensity = Intensity.Easy,
-            exerciseName = "Bicep Curls",
-            exerciseId = ExerciseId("a")
+    StrongGiraffeTheme {
+        val template =
+            SetSummary(
+                id = SetId("a"),
+                reps = Reps(10),
+                weight = Weight(140),
+                time = Instant.now(),
+                intensity = Intensity.Easy,
+                exerciseName = "Bicep Curls",
+                exerciseId = ExerciseId("a")
+            )
+        Page(
+            sets = listOf(
+                template.copy(
+                    time = template.time.minusSeconds(60),
+                    reps = Reps(5),
+                    intensity = Intensity.NoActivation
+                ),
+                template.copy(
+                    time = template.time.minusSeconds(120),
+                    reps = Reps(20),
+                    intensity = Intensity.Pain
+                ),
+                template.copy(intensity = Intensity.Normal),
+                template.copy(intensity = Intensity.EarlyFailure),
+                template,
+            ),
+            gotoNew = { },
+            goto = { }
         )
-    Page(
-        sets = listOf(
-            template.copy(
-                time = template.time.minusSeconds(60),
-                reps = Reps(5),
-                intensity = Intensity.NoActivation
-            ),
-            template.copy(
-                time = template.time.minusSeconds(120),
-                reps = Reps(20),
-                intensity = Intensity.Pain
-            ),
-            template,
-        ),
-        gotoNew = { },
-        goto = { }
-    )
+    }
 }
