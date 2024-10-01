@@ -42,10 +42,10 @@ fun <T> EditPageList(
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.Center
             ) {
-                Text(title, fontSize = PAGE_TITLE_FONTSIZE)
+                Text(title, fontSize = PAGE_TITLE_FONT_SIZE)
             }
             Column(
-                modifier = Modifier.fillMaxWidth().fillMaxHeight(0.8f),
+                modifier = Modifier.fillMaxWidth().fillMaxHeight(),
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.Center
             ) {

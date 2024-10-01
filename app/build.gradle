@@ -16,8 +16,8 @@ android {
         applicationId "org.wspcgir.strong_giraffe"
         minSdk 33
         targetSdk 34
-        versionCode 10
-        versionName "0.4.6"
+        versionCode 11
+        versionName "0.5.0"
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables {
@@ -69,6 +69,7 @@ dependencies {
     implementation "androidx.compose.ui:ui:$compose_version"
     implementation "androidx.compose.ui:ui-tooling-preview:$compose_version"
     implementation 'androidx.compose.material3:material3:1.0.0-alpha11'
+    implementation 'androidx.compose.foundation:foundation-layout-android:1.7.2'
 
     def kotest_version = '5.7.2'
     testImplementation "io.kotest:kotest-property-jvm:$kotest_version"
