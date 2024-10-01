@@ -12,9 +12,12 @@ import org.junit.runner.RunWith
 
 import org.junit.Assert.*
 import org.wspcgir.strong_giraffe.model.Intensity
+import org.wspcgir.strong_giraffe.model.WeekRange
 import org.wspcgir.strong_giraffe.repository.AppDatabase
 import org.wspcgir.strong_giraffe.repository.AppRepository
 import java.time.Instant
+import java.time.OffsetDateTime
+import java.util.TimeZone
 
 /**
  * Instrumented test, which will execute on an Android device.
@@ -140,10 +143,40 @@ class ExampleInstrumentedTest() {
                 assertEquals(2, muscles.size)
 
                 val setCounts = repo.setsForMusclesInWeek(Instant.now()).setCounts
-                val length = repo.setsForMusclesInWeek(Instant.now()).setCounts.size
+                val length = setCounts.size
                 assertEquals(2, length)
                 assertEquals(1, setCounts[muscleA.id]?.thisWeek)
                 assertEquals(0, setCounts[muscleB.id]?.thisWeek)
+            }
+        }
+    }
+
+    @Test
+    fun setForMusclesInWeek_set_in_prev_week() {
+
+        runBlocking() {
+            launch {
+                repo.dropDb()
+
+                val muscleA = repo.newMuscle()
+                val exerciseA = repo.newExercise(muscleA.id)
+
+                val location = repo.newLocation()
+                val equipment = repo.newEquipment(location.id)
+                val now = OffsetDateTime.now()
+                repo.newWorkoutSet(
+                    location.id,
+                    equipment.id,
+                    exerciseA.id,
+                    now.minusWeeks(1).toInstant()
+                )
+
+                val muscles = repo.getMuscles()
+
+                assertEquals(1, muscles.size)
+
+                val setCounts = repo.setsForMusclesInWeek(Instant.now()).setCounts
+                assertEquals(1, setCounts.size)
             }
         }
     }
