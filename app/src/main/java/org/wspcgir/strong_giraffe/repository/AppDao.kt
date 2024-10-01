@@ -300,18 +300,22 @@ interface AppDao {
 
     @Query(
         """
-            SELECT m.id as muscle_id
-                 , m.name as muscle_name
-                 , COUNT(ws.id) as set_count
+            SELECT m.id AS muscle_id
+                 , m.name AS muscle_name
+                 , SUM(IFNULL(set_counts.count, 0)) AS set_count
             FROM muscle m
-              LEFT JOIN exercise e on e.muscle = m.id
-              LEFT JOIN workout_set ws on ws.exercise = e.id
-            WHERE ws.id IS NULL
-               OR (:weekStart < ws.time 
-                     AND ws.time < :weekEnd 
-                     AND 1 < ws.intensity
-                     AND ws.intensity < 4)
+              LEFT JOIN (
+                SELECT e.muscle AS muscle_id
+                     , 1 AS count
+                FROM workout_set ws
+                  JOIN exercise e ON e.id = ws.exercise
+                WHERE :weekStart < ws.time 
+                  AND ws.time < :weekEnd 
+                  AND 1 < ws.intensity 
+                  AND ws.intensity < 4
+                ) AS set_counts ON set_counts.muscle_id = m.id
             GROUP BY m.id, m.name
+            ORDER BY m.name
         """
     )
     suspend fun setsInWeek(weekStart: Long, weekEnd: Long): List<MuscleSetCount>

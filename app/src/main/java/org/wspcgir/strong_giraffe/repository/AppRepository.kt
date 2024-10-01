@@ -84,11 +84,11 @@ class AppRepository(private val dao: AppDao) {
     suspend fun newWorkoutSet(
         location: LocationId,
         equipment: EquipmentId,
-        exercise: ExerciseId
+        exercise: ExerciseId,
+        time: Instant = Instant.now(),
     ): WorkoutSet {
         val id = UUID.randomUUID().toString()
         val reps = 10
-        val time = Instant.now()
         val comment = ""
         val weight = 0
         dao.insertWorkoutSet(
