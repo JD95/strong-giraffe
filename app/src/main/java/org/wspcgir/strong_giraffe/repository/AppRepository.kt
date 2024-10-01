@@ -3,6 +3,8 @@ package org.wspcgir.strong_giraffe.repository
 import org.wspcgir.strong_giraffe.model.*
 import org.wspcgir.strong_giraffe.model.ids.*
 import java.time.Instant
+import java.time.OffsetDateTime
+import java.time.ZoneOffset
 import java.util.*
 import org.wspcgir.strong_giraffe.repository.entity.Location as LocationEntity
 import org.wspcgir.strong_giraffe.repository.entity.Equipment as EquipmentEntity
@@ -126,7 +128,10 @@ class AppRepository(private val dao: AppDao) {
                 exerciseId = ExerciseId(e.exerciseId),
                 reps = Reps(e.reps),
                 weight = Weight(e.weight),
-                time = Instant.ofEpochSecond(e.time),
+                time = OffsetDateTime.ofInstant(
+                    Instant.ofEpochSecond(e.time),
+                    TimeZone.getDefault().toZoneId()
+                ),
                 intensity = Intensity.fromInt(e.intensity)!!
             )
         }

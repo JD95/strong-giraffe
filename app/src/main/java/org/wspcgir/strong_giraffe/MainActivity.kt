@@ -20,7 +20,7 @@ import org.wspcgir.strong_giraffe.model.ids.*
 import org.wspcgir.strong_giraffe.repository.AppDatabase
 import org.wspcgir.strong_giraffe.repository.AppRepository
 import org.wspcgir.strong_giraffe.ui.theme.StrongGiraffeTheme
-import org.wspcgir.strong_giraffe.views.PAGE_TITLE_FONTSIZE
+import org.wspcgir.strong_giraffe.views.PAGE_TITLE_FONT_SIZE
 import com.ramcosta.composedestinations.DestinationsNavHost
 import com.ramcosta.composedestinations.annotation.Destination
 import com.ramcosta.composedestinations.manualcomposablecalls.composable
@@ -28,7 +28,6 @@ import com.ramcosta.composedestinations.navigation.DestinationsNavigator
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 import java.time.Instant
-import java.util.*
 
 
 class MainActivity : ComponentActivity() {
@@ -386,8 +385,8 @@ fun HomePage(
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.Center
             ) {
-                Text("Strong", fontSize = PAGE_TITLE_FONTSIZE)
-                Text("Giraffe", fontSize = PAGE_TITLE_FONTSIZE)
+                Text("Strong", fontSize = PAGE_TITLE_FONT_SIZE)
+                Text("Giraffe", fontSize = PAGE_TITLE_FONT_SIZE)
             }
             Spacer(modifier = Modifier
                 .fillMaxWidth()
