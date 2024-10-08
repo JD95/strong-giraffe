@@ -17,6 +17,7 @@ import androidx.lifecycle.ViewModel
 import org.wspcgir.strong_giraffe.model.ids.LocationId
 import org.wspcgir.strong_giraffe.views.FIELD_NAME_FONT_SIZE
 import com.ramcosta.composedestinations.annotation.Destination
+import org.wspcgir.strong_giraffe.views.ModalDrawerScaffold
 
 abstract class EditLocationPageViewModel : ViewModel() {
     abstract val startingName: String
@@ -35,12 +36,20 @@ data class EditLocationPageNavArgs(
 fun EditLocationPage(view: EditLocationPageViewModel) {
     val keyboardController = LocalSoftwareKeyboardController.current
     var name by remember { mutableStateOf(view.startingName) }
-    Scaffold(
-        floatingActionButton = {
+    ModalDrawerScaffold(
+        title = "Edit Location",
+        actionButton = {
             FloatingActionButton(
                 onClick = { view.submit(name) }
             ) {
                 Icon(Icons.Default.Done, contentDescription = "Save Location")
+            }
+        },
+        drawerContent = {
+            Button(onClick = view::delete) {
+                Text("Delete")
+                Spacer(modifier = Modifier.fillMaxWidth(0.03f))
+                Icon(Icons.Default.Delete, contentDescription = "delete location")
             }
         }
     ) { innerPadding ->
@@ -60,12 +69,6 @@ fun EditLocationPage(view: EditLocationPageViewModel) {
                 keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
                 keyboardActions = KeyboardActions(onDone = { keyboardController?.hide() })
             )
-            Spacer(modifier = Modifier.fillMaxHeight(0.1f))
-            Button(onClick = view::delete) {
-                Text("Delete")
-                Spacer(modifier = Modifier.fillMaxWidth(0.03f))
-                Icon(Icons.Default.Delete, contentDescription = "delete location")
-            }
         }
     }
 }

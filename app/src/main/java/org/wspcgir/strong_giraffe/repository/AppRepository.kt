@@ -4,7 +4,6 @@ import org.wspcgir.strong_giraffe.model.*
 import org.wspcgir.strong_giraffe.model.ids.*
 import java.time.Instant
 import java.time.OffsetDateTime
-import java.time.ZoneOffset
 import java.util.*
 import org.wspcgir.strong_giraffe.repository.entity.Location as LocationEntity
 import org.wspcgir.strong_giraffe.repository.entity.Equipment as EquipmentEntity
@@ -287,18 +286,18 @@ class AppRepository(private val dao: AppDao) {
         dao.deleteAllWorkoutSets()
     }
 
-    suspend fun latestSetForExerciseAndEquipmentAtLocationExcluding(
-        set: SetId,
-        location: LocationId,
+    suspend fun setForExerciseAndEquipmentBefore(
+        cutoff: Instant,
         exercise: ExerciseId,
-        equipment: EquipmentId
-    ): WorkoutSet? {
-        val e = dao.latestWorkoutSetForExerciseAndEquipmentAtLocationExcluding(
-            set.value,
-            location.value,
+        equipment: EquipmentId,
+        limit: Int
+    ): List<WorkoutSet> {
+        val es = dao.workoutSetsForExerciseWithEquipmentBefore(
+            cutoff.epochSecond,
             exercise.value,
-            equipment.value
+            equipment.value,
+            limit
         )
-        return if (e != null) { workoutSetFromEntity(e) } else { null }
+        return es.map { e -> workoutSetFromEntity(e) }
     }
 }

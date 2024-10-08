@@ -21,6 +21,7 @@ import org.wspcgir.strong_giraffe.model.ids.MuscleId
 import org.wspcgir.strong_giraffe.views.FIELD_NAME_FONT_SIZE
 import org.wspcgir.strong_giraffe.views.RequiredDataRedirect
 import com.ramcosta.composedestinations.annotation.Destination
+import org.wspcgir.strong_giraffe.views.ModalDrawerScaffold
 
 data class EditExercisePageNavArgs(
     val id: ExerciseId,
@@ -55,12 +56,20 @@ private fun Page(view: EditExercisePageViewModel){
     val keyboardController = LocalSoftwareKeyboardController.current
     var name by remember { mutableStateOf(view.startingName) }
     var selectedMuscle by remember { mutableStateOf(view.startingMuscle) }
-    Scaffold(
-        floatingActionButton = {
+    ModalDrawerScaffold(
+        title = "Edit Exercise",
+        actionButton = {
             FloatingActionButton(
                 onClick = { view.submit(name, selectedMuscle) }
             ) {
                 Icon(Icons.Default.Done, contentDescription = "Save Location")
+            }
+        },
+        drawerContent = {
+            Button(onClick = view::delete) {
+                Text("Delete")
+                Spacer(modifier = Modifier.fillMaxWidth(0.03f))
+                Icon(Icons.Default.Delete, contentDescription = "delete exercise")
             }
         }
     ) { innerPadding ->
@@ -89,12 +98,6 @@ private fun Page(view: EditExercisePageViewModel){
                 onItemSelected = { selectedMuscle = it },
                 selectedIndex = view.muscles.indexOf(selectedMuscle)
             )
-            Spacer(modifier = Modifier.fillMaxHeight(0.1f))
-            Button(onClick = view::delete) {
-                Text("Delete")
-                Spacer(modifier = Modifier.fillMaxWidth(0.03f))
-                Icon(Icons.Default.Delete, contentDescription = "delete exercise")
-            }
         }
     }
 }

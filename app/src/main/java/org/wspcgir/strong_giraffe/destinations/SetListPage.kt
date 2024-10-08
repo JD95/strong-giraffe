@@ -10,7 +10,6 @@ import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
@@ -217,13 +216,8 @@ private fun DaySetsCard(
 
                 FlowRow {
                     listOf(sets.first).plus(sets.rest).forEach { set ->
-                        Button(
-                            colors = ButtonDefaults.buttonColors(
-                                containerColor = intensityColor(set.intensity)
-                            ),
-                            onClick = { goto(set) }
-                        ) {
-                            Text("${set.reps} | ${set.weight}")
+                        PreviousSetButton(set.reps, set.weight, set.intensity)  {
+                            goto(set)
                         }
                         Spacer(modifier = Modifier.width(5.dp))
                     }
