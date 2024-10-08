@@ -243,20 +243,19 @@ interface AppDao {
                  , intensity
                  , comment
             FROM workout_set
-            WHERE id != :set
-              AND location = :location
+            WHERE time < :cutoff
               AND exercise = :exercise
               AND equipment= :equipment
             ORDER BY time DESC
-            LIMIT 1
+            LIMIT :limit
         """
     )
-    suspend fun latestWorkoutSetForExerciseAndEquipmentAtLocationExcluding(
-        set: String,
-        location: String,
+    suspend fun workoutSetsForExerciseWithEquipmentBefore(
+        cutoff: Long,
         exercise: String,
-        equipment: String
-    ): WorkoutSet?
+        equipment: String,
+        limit: Int
+    ): List<WorkoutSet>
 
     @Query(
         """ 

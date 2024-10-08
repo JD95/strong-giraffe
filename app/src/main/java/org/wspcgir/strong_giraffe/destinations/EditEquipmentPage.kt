@@ -22,6 +22,7 @@ import org.wspcgir.strong_giraffe.model.ids.LocationId
 import org.wspcgir.strong_giraffe.views.FIELD_NAME_FONT_SIZE
 import org.wspcgir.strong_giraffe.views.RequiredDataRedirect
 import com.ramcosta.composedestinations.annotation.Destination
+import org.wspcgir.strong_giraffe.views.ModalDrawerScaffold
 
 
 abstract class EditEquipmentPageViewModel : ViewModel() {
@@ -57,12 +58,20 @@ fun Page(view: EditEquipmentPageViewModel) {
     val keyboardController = LocalSoftwareKeyboardController.current
     var name by remember { mutableStateOf(view.startingName) }
     var selectedLocation by remember { mutableStateOf(view.startingLocation) }
-    Scaffold(
-        floatingActionButton = {
+    ModalDrawerScaffold(
+        title = "Edit Equipment",
+        actionButton = {
             FloatingActionButton(
                 onClick = { view.submit(name, selectedLocation.id) }
             ) {
                 Icon(Icons.Default.Done, contentDescription = "Save Location")
+            }
+        },
+        drawerContent = {
+            Button(onClick = view::delete) {
+                Text("Delete")
+                Spacer(modifier = Modifier.fillMaxWidth(0.03f))
+                Icon(Icons.Default.Delete, contentDescription = "delete equipment")
             }
         }
     ) { innerPadding ->
@@ -86,17 +95,11 @@ fun Page(view: EditEquipmentPageViewModel) {
             LargeDropDownFromList(
                 modifier = Modifier.fillMaxWidth(0.8f),
                 items = view.locations,
-                label = selectedLocation.name,
+                label = "",
                 selectedIndex = view.locations.indexOfFirst { it.id == selectedLocation.id },
                 itemToString = { it.name },
                 onItemSelected = { selectedLocation = it }
             )
-            Spacer(modifier = Modifier.fillMaxHeight(0.1f))
-            Button(onClick = view::delete) {
-                Text("Delete")
-                Spacer(modifier = Modifier.fillMaxWidth(0.03f))
-                Icon(Icons.Default.Delete, contentDescription = "delete equipment")
-            }
         }
     }
 }

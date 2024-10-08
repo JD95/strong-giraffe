@@ -17,28 +17,36 @@ import androidx.lifecycle.ViewModel
 import org.wspcgir.strong_giraffe.model.ids.MuscleId
 import org.wspcgir.strong_giraffe.views.FIELD_NAME_FONT_SIZE
 import com.ramcosta.composedestinations.annotation.Destination
+import org.wspcgir.strong_giraffe.views.ModalDrawerScaffold
 
 data class EditMusclePageNavArgs(val muscleId: MuscleId, val startingName: String)
 
-abstract class EditMusclePageViewModel: ViewModel() {
+abstract class EditMusclePageViewModel : ViewModel() {
     abstract val startingName: String
     abstract fun submit(name: String)
     abstract fun delete()
 
 }
 
-@OptIn(ExperimentalMaterial3Api::class, ExperimentalComposeUiApi::class)
 @Composable
 @Destination(navArgsDelegate = EditMusclePageNavArgs::class)
 fun EditMusclePage(view: EditMusclePageViewModel) {
     val keyboardController = LocalSoftwareKeyboardController.current
     var name by remember { mutableStateOf(view.startingName) }
-    Scaffold(
-        floatingActionButton = {
+    ModalDrawerScaffold(
+        title = "Edit Muscle",
+        actionButton = {
             FloatingActionButton(
                 onClick = { view.submit(name) }
             ) {
                 Icon(Icons.Default.Done, contentDescription = "Save Muscle")
+            }
+        },
+        drawerContent = {
+            Button(onClick = view::delete) {
+                Text("Delete")
+                Spacer(modifier = Modifier.fillMaxWidth(0.03f))
+                Icon(Icons.Default.Delete, contentDescription = "delete muscle")
             }
         }
     ) { innerPadding ->
@@ -58,12 +66,6 @@ fun EditMusclePage(view: EditMusclePageViewModel) {
                 keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
                 keyboardActions = KeyboardActions(onDone = { keyboardController?.hide() })
             )
-            Spacer(modifier = Modifier.fillMaxHeight(0.1f))
-            Button(onClick = view::delete) {
-                Text("Delete")
-                Spacer(modifier = Modifier.fillMaxWidth(0.03f))
-                Icon(Icons.Default.Delete, contentDescription = "delete muscle")
-            }
         }
     }
 }
