@@ -1,25 +1,56 @@
 package org.wspcgir.strong_giraffe.destinations
 
 import android.content.res.Configuration
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
+import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.IntrinsicSize
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.wrapContentSize
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
+import androidx.compose.material3.Card
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.FloatingActionButton
+import androidx.compose.material3.Icon
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.lifecycle.ViewModel
-import org.wspcgir.strong_giraffe.model.Muscle
-import org.wspcgir.strong_giraffe.views.EditPageList
 import com.ramcosta.composedestinations.annotation.Destination
+import org.wspcgir.strong_giraffe.model.Muscle
 import org.wspcgir.strong_giraffe.model.MuscleSetHistory
 import org.wspcgir.strong_giraffe.model.ids.MuscleId
+import org.wspcgir.strong_giraffe.ui.theme.Blue
 import org.wspcgir.strong_giraffe.ui.theme.Green
 import org.wspcgir.strong_giraffe.ui.theme.Grey
-import org.wspcgir.strong_giraffe.ui.theme.Red
+import org.wspcgir.strong_giraffe.ui.theme.Orange
 import org.wspcgir.strong_giraffe.ui.theme.StrongGiraffeTheme
+import org.wspcgir.strong_giraffe.views.ModalDrawerScaffold
+import kotlin.math.max
+import androidx.compose.foundation.lazy.items as lazyItems
 
 
-abstract class MuscleListPageViewModel: ViewModel() {
+abstract class MuscleListPageViewModel : ViewModel() {
     abstract val musclesWithSetCounts: Map<MuscleId, MuscleSetHistory>
     abstract fun new()
     abstract fun goto(value: Muscle)
@@ -27,35 +58,129 @@ abstract class MuscleListPageViewModel: ViewModel() {
 
 fun overloadIndicator(thisWeek: Int, lastWeek: Int): Color {
     return if (thisWeek < lastWeek) {
-        Red
+        if (thisWeek in 0 until lastWeek.div(2)) {
+            Grey
+        } else {
+            Blue
+        }
     } else if (thisWeek == lastWeek) {
-        Grey
-    } else {
         Green
+    } else {
+        Orange
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+@Destination
+fun MuscleListPage(view: MuscleListPageViewModel) {
+    val musclesWithSetCounts = view.musclesWithSetCounts.entries.toList()
+    ModalDrawerScaffold(
+        title = "Muscles",
+        actionButton = {
+            FloatingActionButton(
+                onClick = {
+                    view.new()
+                }
+            ) {
+                Icon(Icons.Default.Add, contentDescription = "Create New")
+            }
+        },
+        drawerContent = { },
+    ) { innerPadding ->
+        if (musclesWithSetCounts.isNotEmpty()) {
+            val ordered =
+                musclesWithSetCounts.sortedWith(comparator = { x, y ->
+                    x.value.name.compareTo(y.value.name)
+                })
+            LazyColumn(modifier = Modifier.fillMaxWidth().padding(innerPadding)){
+                lazyItems(ordered) { item ->
+                    Card(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 20.dp, vertical = 10.dp)
+                            .clickable(onClick = {
+                                view.goto(Muscle(item.key, item.value.name))
+                            }),
+                    ) {
+                        Box(
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Row(
+                                modifier = Modifier
+                                    .padding(10.dp)
+                                    .fillMaxWidth(),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                val thisWeek = item.value.thisWeek
+                                val lastWeek = item.value.lastWeek
+                                val name = item.value.name
+                                val percentComplete =
+                                    if (thisWeek < lastWeek && lastWeek > 0) {
+                                        thisWeek.toFloat().div(lastWeek.toFloat())
+                                    } else if (thisWeek >= lastWeek || lastWeek == 0) {
+                                        1.0f
+                                    } else {
+                                        0.0f
+                                    }
+                                Text(name, modifier = Modifier.weight(0.3f))
+                                ProgressBar(thisWeek, lastWeek, percentComplete,
+                                    modifier = Modifier.height(30.dp).weight(0.7f)
+                                )
+                            }
+                        }
+                    }
+                }
+            }
+        } else {
+            Text("There's nothing here yet")
+        }
     }
 }
 
 @Composable
-@Destination
-fun MuscleListPage(view: MuscleListPageViewModel) {
-    EditPageList(
-        title = "Muscles",
-        items = view.musclesWithSetCounts.entries.toList(),
-        gotoNewPage = view::new,
-        gotoEditPage = { view.goto(Muscle(it.key, it.value.name)) },
-        sortBy = { x,y -> x.value.name.compareTo(y.value.name) },
-        rowRender = { onClick, inner, item ->
-            Button(
-                onClick = { onClick(item) },
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = overloadIndicator(item.value.thisWeek, item.value.lastWeek)
-                )
-            ) {
-                inner(item)
-            }
-        }
+private fun ProgressBar(
+    thisWeek: Int,
+    lastWeek: Int,
+    percentComplete: Float,
+    modifier: Modifier = Modifier,
+) {
+
+    Box(
+        modifier = modifier
+            .clip(CircleShape)
     ) {
-        Text(String.format("${it.value.name} | ${it.value.thisWeek}"))
+        val color = overloadIndicator(thisWeek, lastWeek)
+        val rounding = 50.dp
+        Row (modifier = Modifier.fillMaxWidth()) {
+            Box(modifier = Modifier
+                .weight(max(percentComplete, 0.001f))
+                .background(color)
+                .border(BorderStroke(15.dp, SolidColor(color)))
+                .fillMaxHeight()
+            )
+            Box(modifier = Modifier
+                .clip(RoundedCornerShape(topEnd = rounding, bottomEnd = rounding))
+                .width(IntrinsicSize.Min)
+            ) {
+                Box(
+                    modifier = Modifier
+                        .background(color)
+                        .fillMaxHeight()
+                        .width(IntrinsicSize.Min),
+                    contentAlignment = Alignment.CenterEnd
+                ) {
+                    Text(
+                        text = "$thisWeek/$lastWeek",
+                        fontSize = 15.sp,
+                        modifier = Modifier
+                            .padding(horizontal = 10.dp)
+                            .wrapContentSize(unbounded = true),
+                    )
+                }
+            }
+            Spacer(modifier = Modifier.weight(max(1f - percentComplete, 0.001f)))
+        }
     }
 }
 
@@ -72,22 +197,20 @@ fun MuscleListPage(view: MuscleListPageViewModel) {
 @Composable
 private fun Preview() {
     StrongGiraffeTheme {
-        MuscleListPage(object : MuscleListPageViewModel(){
+        MuscleListPage(object : MuscleListPageViewModel() {
             override val musclesWithSetCounts: Map<MuscleId, MuscleSetHistory>
                 get() =
                     mapOf(
-                        MuscleId("a") to MuscleSetHistory("Quads", 12, 12),
-                        MuscleId("b") to MuscleSetHistory("Hamstrings", 5, 2),
-                        MuscleId("c") to MuscleSetHistory("Calves", 0, 0),
-                        MuscleId("d") to MuscleSetHistory("Glutes", 4, 4),
-                        MuscleId("e") to MuscleSetHistory("Chest", 2, 3),
-                        MuscleId("f") to MuscleSetHistory("Triceps", 10, 6),
-                        MuscleId("g") to MuscleSetHistory("Front Delts", 4, 2),
-                        MuscleId("h") to MuscleSetHistory("Side Delts", 3, 3),
-                        MuscleId("i") to MuscleSetHistory("Rear Delts", 3, 1),
-                        MuscleId("j") to MuscleSetHistory("Biceps", 15, 0),
-                        MuscleId("k") to MuscleSetHistory("Traps", 9, 4),
-                        MuscleId("l") to MuscleSetHistory("Lats", 10, 5),
+                        MuscleId("a") to MuscleSetHistory("Quads", 0, 9),
+                        MuscleId("b") to MuscleSetHistory("Hamstrings", 1, 9),
+                        MuscleId("c") to MuscleSetHistory("Calves", 2, 9),
+                        MuscleId("d") to MuscleSetHistory("Glutes", 3, 9),
+                        MuscleId("e") to MuscleSetHistory("Chest", 4, 9),
+                        MuscleId("g") to MuscleSetHistory("Front Delts", 5, 9),
+                        MuscleId("h") to MuscleSetHistory("Side Delts", 6, 9),
+                        MuscleId("i") to MuscleSetHistory("Rear Delts", 10, 9),
+                        MuscleId("j") to MuscleSetHistory("Biceps", 8, 9),
+                        MuscleId("l") to MuscleSetHistory("Lats", 9, 9),
                     )
 
             override fun new() {
