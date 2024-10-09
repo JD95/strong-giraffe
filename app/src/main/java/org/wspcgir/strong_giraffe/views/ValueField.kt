@@ -14,8 +14,14 @@ import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.text.input.KeyboardType
 
 @Composable
-fun IntField(modifier: Modifier = Modifier, start: Int = 0, onChange: (Int?) -> Unit) {
+fun IntField(
+    label: String,
+    modifier: Modifier = Modifier,
+    start: Int = 0,
+    onChange: (Int?) -> Unit
+) {
     ValueField(
+        label = label,
         modifier = modifier,
         start = start,
         fromString = String::toIntOrNull,
@@ -24,8 +30,14 @@ fun IntField(modifier: Modifier = Modifier, start: Int = 0, onChange: (Int?) -> 
 }
 
 @Composable
-fun FloatField(modifier: Modifier = Modifier, start: Float = 0f, onChange: (Float?) -> Unit) {
+fun FloatField(
+    label: String,
+    modifier: Modifier = Modifier,
+    start: Float = 0f,
+    onChange: (Float?) -> Unit
+) {
     ValueField(
+        label = label,
         modifier = modifier,
         start = start,
         fromString = String::toFloatOrNull,
@@ -36,6 +48,7 @@ fun FloatField(modifier: Modifier = Modifier, start: Float = 0f, onChange: (Floa
 @OptIn(ExperimentalComposeUiApi::class)
 @Composable
 fun <T> ValueField(
+    label: String,
     modifier: Modifier = Modifier,
     singleLine: Boolean = true,
     start: T,
@@ -57,6 +70,7 @@ fun <T> ValueField(
     TextField(
         value = text,
         modifier = modifier,
+        label = { Text(label) },
         keyboardOptions = KeyboardOptions.Default.copy(keyboardType = KeyboardType.Number),
         keyboardActions = KeyboardActions(onDone = { keyboardController?.hide() }),
         colors = if (valid) { validStateColors } else { errorStateColors },

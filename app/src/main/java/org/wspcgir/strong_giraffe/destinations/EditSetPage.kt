@@ -7,8 +7,10 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyRow
@@ -298,16 +300,16 @@ fun Page(
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.spacedBy(10.dp),
             ) {
+                Spacer(modifier = Modifier.weight(1.0f))
                 Card() {
                     Column(
                         horizontalAlignment = Alignment.CenterHorizontally,
                         verticalArrangement = Arrangement.spacedBy(10.dp),
                         modifier = Modifier.padding(10.dp)
                     ) {
-                        Text("Location")
                         LargeDropDownFromList(
                             items = locations,
-                            label = "",
+                            label = "Location",
                             itemToString = { it.name },
                             onItemSelected = {
                                 if (starting.value.location != it.id) {
@@ -317,19 +319,17 @@ fun Page(
                             modifier = Modifier.fillMaxWidth(0.8f),
                             selectedIndex = locations.indexOfFirst { it.id == starting.value.location }
                         )
-                        Text("Exercise")
                         LargeDropDownFromList(
                             items = exercises,
-                            label = "",
+                            label = "Exercise",
                             itemToString = { it.name },
                             onItemSelected = { changeExercise(it.id) },
                             modifier = Modifier.fillMaxWidth(0.8f),
                             selectedIndex = exercises.indexOfFirst { it.id == starting.value.exercise }
                         )
-                        Text("Equipment")
                         LargeDropDownFromList(
                             items = equipment.value,
-                            label = "",
+                            label = "Equipment",
                             itemToString = { it.name },
                             onItemSelected = { changeEquipment(it.id) },
                             modifier = Modifier.fillMaxWidth(0.8f),
@@ -353,8 +353,8 @@ fun Page(
                     Column(
                         modifier = Modifier.padding(10.dp)
                     ) {
-                        Text("Comment")
                         TextField(
+                            label = { Text("Comment") },
                             modifier = Modifier.fillMaxWidth(0.8f),
                             value = starting.value.comment.value,
                             onValueChange = { changeComment(Comment(it)) },
@@ -369,6 +369,7 @@ fun Page(
                         PreviousSetButton(set.reps, set.weight, set.intensity) { gotoSet(set) }
                     }
                 }
+                Spacer(modifier = Modifier.fillMaxHeight(0.1f))
             }
         }
     }
@@ -384,10 +385,12 @@ private fun IntensitySelector(
             Intensity.toInt(starting.value.intensity).toFloat()
         )
     }
-    Column(
-        horizontalAlignment = Alignment.CenterHorizontally
-    ) {
-        Text("${starting.value.intensity}")
+    Column {
+        Spacer(modifier = Modifier.height(10.dp))
+        Row {
+            Spacer(modifier = Modifier.width(10.dp))
+            Text("Intensity: ${starting.value.intensity}")
+        }
         Slider(
             modifier = Modifier.fillMaxWidth(0.8f),
             colors = SliderDefaults.colors(
@@ -428,8 +431,8 @@ private fun RepsAndWeightSelector(
                 horizontalAlignment = Alignment.CenterHorizontally,
                 modifier = Modifier.weight(1f)
             ) {
-                Text("Reps")
                 IntField(
+                    label = "Reps",
                     start = starting.value.reps.value,
                 ) { it ->
                     validReps.value = it != null
@@ -442,8 +445,8 @@ private fun RepsAndWeightSelector(
                 horizontalAlignment = Alignment.CenterHorizontally,
                 modifier = Modifier.weight(1f)
             ) {
-                Text("Weight")
                 IntField(
+                    label = "Weight",
                     start = starting.value.weight.value
                 ) { it ->
                     validWeight.value = it != null
