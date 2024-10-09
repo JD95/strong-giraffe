@@ -4,6 +4,7 @@ import android.content.res.Configuration
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.Row
@@ -97,7 +98,10 @@ fun MuscleListPage(view: MuscleListPageViewModel) {
                     Card(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(horizontal = 20.dp, vertical = 10.dp),
+                            .padding(horizontal = 20.dp, vertical = 10.dp)
+                            .clickable(onClick = {
+                                view.goto(Muscle(item.key, item.value.name))
+                            }),
                     ) {
                         Box(
                             contentAlignment = Alignment.Center
@@ -124,12 +128,6 @@ fun MuscleListPage(view: MuscleListPageViewModel) {
                                     modifier = Modifier.height(30.dp).weight(0.7f)
                                 )
                             }
-                            Surface(
-                                onClick = {
-                                    view.goto(Muscle(item.key, item.value.name))
-                                },
-                                content = { },
-                            )
                         }
                     }
                 }
