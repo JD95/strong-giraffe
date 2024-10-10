@@ -5,7 +5,6 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material3.BottomAppBar
-import androidx.compose.material3.Button
 import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.DrawerValue
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -23,11 +22,12 @@ import kotlinx.coroutines.launch
 @Composable
 fun ModalDrawerScaffold(
     title: String,
+    initialDrawerValue: DrawerValue = DrawerValue.Closed,
     drawerContent: @Composable ColumnScope.() -> Unit,
     actionButton: @Composable () -> Unit,
     content: @Composable (PaddingValues) -> Unit,
 ) {
-    val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
+    val drawerState = rememberDrawerState(initialValue = initialDrawerValue)
     val scope = rememberCoroutineScope()
     ModalNavigationDrawer(
         drawerState = drawerState,

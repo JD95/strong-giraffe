@@ -28,6 +28,7 @@ abstract class EditMusclePageViewModel : ViewModel() {
 
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 @Destination(navArgsDelegate = EditMusclePageNavArgs::class)
 fun EditMusclePage(view: EditMusclePageViewModel) {

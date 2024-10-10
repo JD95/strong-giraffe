@@ -17,11 +17,13 @@ import androidx.compose.ui.text.input.KeyboardType
 fun IntField(
     label: String,
     modifier: Modifier = Modifier,
+    enabled: Boolean = true,
     start: Int = 0,
-    onChange: (Int?) -> Unit
+    onChange: (Int?) -> Unit,
 ) {
     ValueField(
         label = label,
+        enabled = enabled,
         modifier = modifier,
         start = start,
         fromString = String::toIntOrNull,
@@ -33,11 +35,13 @@ fun IntField(
 fun FloatField(
     label: String,
     modifier: Modifier = Modifier,
+    enabled: Boolean = true,
     start: Float = 0f,
     onChange: (Float?) -> Unit
 ) {
     ValueField(
         label = label,
+        enabled = enabled,
         modifier = modifier,
         start = start,
         fromString = String::toFloatOrNull,
@@ -50,6 +54,7 @@ fun FloatField(
 fun <T> ValueField(
     label: String,
     modifier: Modifier = Modifier,
+    enabled: Boolean = true,
     singleLine: Boolean = true,
     start: T,
     fromString: (String) -> T?,
@@ -70,6 +75,7 @@ fun <T> ValueField(
     TextField(
         value = text,
         modifier = modifier,
+        enabled = enabled,
         label = { Text(label) },
         keyboardOptions = KeyboardOptions.Default.copy(keyboardType = KeyboardType.Number),
         keyboardActions = KeyboardActions(onDone = { keyboardController?.hide() }),
