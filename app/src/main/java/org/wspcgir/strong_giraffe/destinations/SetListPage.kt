@@ -105,7 +105,7 @@ fun RegisterSetListPage(repo: AppRepository, dest: DestinationsNavigator) {
                     }
                     dest.navigate(
                         EditSetPageDestination(
-                            EditSetPageNavArgs(id = set.id)
+                            EditSetPageNavArgs(id = set.id, false)
                         )
                     )
                 }
@@ -113,7 +113,7 @@ fun RegisterSetListPage(repo: AppRepository, dest: DestinationsNavigator) {
 
             override fun goto(id: SetSummary) {
                 viewModelScope.launch {
-                    dest.navigate(EditSetPageDestination(EditSetPageNavArgs(id = id.id)))
+                    dest.navigate(EditSetPageDestination(EditSetPageNavArgs(id = id.id, false)))
                 }
             }
         })

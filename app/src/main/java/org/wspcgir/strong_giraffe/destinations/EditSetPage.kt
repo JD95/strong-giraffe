@@ -18,6 +18,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Done
 import androidx.compose.material.icons.filled.Warning
@@ -28,6 +29,7 @@ import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Slider
 import androidx.compose.material3.SliderDefaults
+import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.runtime.Composable
@@ -41,6 +43,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.tooling.preview.Preview
@@ -65,16 +68,20 @@ import org.wspcgir.strong_giraffe.model.ids.MuscleId
 import org.wspcgir.strong_giraffe.model.ids.SetId
 import org.wspcgir.strong_giraffe.repository.AppRepository
 import org.wspcgir.strong_giraffe.ui.theme.StrongGiraffeTheme
+import org.wspcgir.strong_giraffe.views.FIELD_NAME_FONT_SIZE
 import org.wspcgir.strong_giraffe.views.IntField
 import org.wspcgir.strong_giraffe.views.LargeDropDownFromList
 import org.wspcgir.strong_giraffe.views.ModalDrawerScaffold
 import org.wspcgir.strong_giraffe.views.PreviousSetButton
 import org.wspcgir.strong_giraffe.views.intensityColor
 import java.time.Instant
+import java.time.OffsetDateTime
+import java.time.format.DateTimeFormatter
+import java.util.TimeZone
 
-data class EditSetPageNavArgs(val id: SetId)
+data class EditSetPageNavArgs(val id: SetId, val locked: Boolean)
 
-val NUM_PREVIOUS_SETS = 6
+const val NUM_PREVIOUS_SETS = 6
 
 class EditSetPageViewModel(
     private val setId: SetId,
@@ -83,6 +90,7 @@ class EditSetPageViewModel(
     private val inProgressMut: MutableState<WorkoutSet>,
     private val equipmentForLocationMut: MutableState<List<Equipment>>,
     private val previousSetsMut: MutableState<List<WorkoutSet>>,
+    private val lockedMut: MutableState<Boolean>,
     val locations: List<Location>,
     val exercises: List<Exercise>,
     val equipment: List<Equipment>,
@@ -161,9 +169,15 @@ class EditSetPageViewModel(
     }
 
     fun gotoSet(set: WorkoutSet) {
-        dest.navigate(EditSetPageDestination(EditSetPageNavArgs(set.id)))
+        dest.navigate(EditSetPageDestination(EditSetPageNavArgs(set.id, true)))
     }
 
+    fun toggleSetLock(new: Boolean) {
+        lockedMut.value = new
+    }
+
+    val locked: State<Boolean>
+        get() = lockedMut
     val inProgress: State<WorkoutSet>
         get() = inProgressMut
 
@@ -186,6 +200,7 @@ fun RegisterEditSetPage(
     var exercises by remember { mutableStateOf<List<Exercise>>(emptyList()) }
     val inProgress = remember { mutableStateOf<WorkoutSet?>(null) }
     val previousSets = remember { mutableStateOf<List<WorkoutSet>>(emptyList()) }
+    val locked = remember { mutableStateOf(navArgs.locked) }
 
     LaunchedEffect(locations, equipment, exercises) {
         locations = repo.getLocationsWithEquipment()
@@ -215,7 +230,8 @@ fun RegisterEditSetPage(
                 locations = locations,
                 exercises = exercises,
                 equipment = equipment,
-                previousSetsMut = previousSets
+                previousSetsMut = previousSets,
+                lockedMut = locked
             )
         )
     }
@@ -225,6 +241,8 @@ fun RegisterEditSetPage(
 @Destination(navArgsDelegate = EditSetPageNavArgs::class)
 fun EditSetPage(view: EditSetPageViewModel) {
     Page(
+        locked = view.locked.value,
+        toggleSetLock = view::toggleSetLock,
         submit = view::submit,
         delete = view::delete,
         changeLocation = view::changeLocation,
@@ -246,6 +264,8 @@ fun EditSetPage(view: EditSetPageViewModel) {
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun Page(
+    locked: Boolean,
+    toggleSetLock: (Boolean) -> Unit,
     starting: State<WorkoutSet>,
     submit: () -> Unit,
     delete: () -> Unit,
@@ -268,14 +288,35 @@ fun Page(
         val validWeight = remember { mutableStateOf(true) }
 
         ModalDrawerScaffold(
-            title = "Edit Set",
+            title = if (locked) {
+                "View Set"
+            } else {
+                "Edit Set"
+            },
             drawerContent = {
                 Column(
                     modifier = Modifier.fillMaxSize(),
                     horizontalAlignment = Alignment.CenterHorizontally,
                     verticalArrangement = Arrangement.Center
                 ) {
-                    Button(onClick = delete) {
+                    Row(
+                        modifier = Modifier
+                            .padding(bottom = 10.dp)
+                            .weight(0.5f),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text("Set Locked", modifier = Modifier.padding(end = 10.dp))
+                        Switch(
+                            checked = locked,
+                            onCheckedChange = toggleSetLock,
+                        )
+                    }
+                    Spacer(modifier = Modifier.weight(0.5f))
+                    Button(
+                        modifier = Modifier
+                            .padding(bottom = 10.dp),
+                        onClick = delete
+                    ) {
                         Text("Delete")
                         Spacer(modifier = Modifier.fillMaxWidth(0.03f))
                         Icon(Icons.Default.Delete, contentDescription = "delete set")
@@ -284,7 +325,9 @@ fun Page(
             },
             actionButton = {
                 FloatingActionButton(onClick = submit) {
-                    if (validReps.value && validWeight.value) {
+                    if (locked) {
+                        Icon(Icons.Default.ArrowBack, contentDescription = "Set Locked")
+                    } else if (validReps.value && validWeight.value) {
                         Icon(Icons.Default.Done, contentDescription = "Save Set")
                     } else {
                         Icon(Icons.Default.Warning, contentDescription = "Invalid fields")
@@ -301,7 +344,13 @@ fun Page(
                 verticalArrangement = Arrangement.spacedBy(10.dp),
             ) {
                 Spacer(modifier = Modifier.weight(1.0f))
-                Card() {
+                val zone = TimeZone.getDefault().toZoneId()
+                val date = OffsetDateTime.ofInstant(starting.value.time, zone)
+                val dateFormat = DateTimeFormatter.ofPattern("MMMM dd, yyyy")
+                val timeFormat = DateTimeFormatter.ofPattern("HH:MM:ss")
+                Text(date.format(dateFormat), fontSize = FIELD_NAME_FONT_SIZE)
+                Text(date.format(timeFormat), fontSize = FIELD_NAME_FONT_SIZE)
+                Card {
                     Column(
                         horizontalAlignment = Alignment.CenterHorizontally,
                         verticalArrangement = Arrangement.spacedBy(10.dp),
@@ -310,6 +359,7 @@ fun Page(
                         LargeDropDownFromList(
                             items = locations,
                             label = "Location",
+                            enabled = !locked,
                             itemToString = { it.name },
                             onItemSelected = {
                                 if (starting.value.location != it.id) {
@@ -322,6 +372,7 @@ fun Page(
                         LargeDropDownFromList(
                             items = exercises,
                             label = "Exercise",
+                            enabled = !locked,
                             itemToString = { it.name },
                             onItemSelected = { changeExercise(it.id) },
                             modifier = Modifier.fillMaxWidth(0.8f),
@@ -330,6 +381,7 @@ fun Page(
                         LargeDropDownFromList(
                             items = equipment.value,
                             label = "Equipment",
+                            enabled = !locked,
                             itemToString = { it.name },
                             onItemSelected = { changeEquipment(it.id) },
                             modifier = Modifier.fillMaxWidth(0.8f),
@@ -337,25 +389,27 @@ fun Page(
                         )
                     }
                 }
-                Card() {
+                Card {
                     RepsAndWeightSelector(
                         starting,
                         validReps,
+                        enabled = !locked,
                         changeReps,
                         validWeight,
-                        changeWeight
+                        changeWeight,
                     )
                 }
-                Card() {
-                    IntensitySelector(changeIntensity, starting)
+                Card {
+                    IntensitySelector(changeIntensity, starting, enabled = !locked)
                 }
-                Card() {
+                Card {
                     Column(
                         modifier = Modifier.padding(10.dp)
                     ) {
                         TextField(
                             label = { Text("Comment") },
                             modifier = Modifier.fillMaxWidth(0.8f),
+                            enabled = !locked,
                             value = starting.value.comment.value,
                             onValueChange = { changeComment(Comment(it)) },
                             keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
@@ -364,7 +418,7 @@ fun Page(
                     }
                 }
                 LazyRow(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                    this.item() { Spacer(modifier = Modifier.width(25.dp)) }
+                    this.item { Spacer(modifier = Modifier.width(25.dp)) }
                     this.items(previousSets.value) { set ->
                         PreviousSetButton(set.reps, set.weight, set.intensity) { gotoSet(set) }
                     }
@@ -378,20 +432,28 @@ fun Page(
 @Composable
 private fun IntensitySelector(
     changeIntensity: (Intensity) -> Unit,
-    starting: State<WorkoutSet>
+    starting: State<WorkoutSet>,
+    enabled: Boolean = true,
 ) {
     var slider by remember(key1 = starting.value.intensity) {
         mutableFloatStateOf(
             Intensity.toInt(starting.value.intensity).toFloat()
         )
     }
-    Column {
+    val columnModifier =
+        if (enabled) {
+            Modifier
+        } else {
+            Modifier.alpha(0.45f)
+        }
+    Column(modifier = columnModifier) {
         Spacer(modifier = Modifier.height(10.dp))
         Row {
             Spacer(modifier = Modifier.width(10.dp))
             Text("Intensity: ${starting.value.intensity}")
         }
         Slider(
+            enabled = enabled,
             modifier = Modifier.fillMaxWidth(0.8f),
             colors = SliderDefaults.colors(
                 thumbColor = intensityColor(starting.value.intensity),
@@ -416,6 +478,7 @@ private fun IntensitySelector(
 private fun RepsAndWeightSelector(
     starting: State<WorkoutSet>,
     validReps: MutableState<Boolean>,
+    enabled: Boolean = true,
     changeReps: (Reps) -> Unit,
     validWeight: MutableState<Boolean>,
     changeWeight: (Weight) -> Unit
@@ -433,8 +496,9 @@ private fun RepsAndWeightSelector(
             ) {
                 IntField(
                     label = "Reps",
+                    enabled = enabled,
                     start = starting.value.reps.value,
-                ) { it ->
+                ) {
                     validReps.value = it != null
                     if (it != null) {
                         changeReps(Reps(it))
@@ -447,13 +511,15 @@ private fun RepsAndWeightSelector(
             ) {
                 IntField(
                     label = "Weight",
-                    start = starting.value.weight.value
-                ) { it ->
-                    validWeight.value = it != null
-                    if (it != null) {
-                        changeWeight(Weight(it))
-                    }
-                }
+                    start = starting.value.weight.value,
+                    onChange = {
+                        validWeight.value = it != null
+                        if (it != null) {
+                            changeWeight(Weight(it))
+                        }
+                    },
+                    enabled = enabled
+                )
             }
         }
     }
@@ -485,6 +551,8 @@ private fun Preview() {
         )
     StrongGiraffeTheme {
         Page(
+            locked = true,
+            toggleSetLock = { },
             starting = remember { mutableStateOf(setTemplate) },
             submit = { },
             delete = { },
