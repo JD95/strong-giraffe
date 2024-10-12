@@ -339,7 +339,7 @@ fun Page(
                 val zone = TimeZone.getDefault().toZoneId()
                 val date = OffsetDateTime.ofInstant(starting.value.time, zone)
                 val dateFormat = DateTimeFormatter.ofPattern("MMMM dd, yyyy")
-                val timeFormat = DateTimeFormatter.ofPattern("HH:MM:SS")
+                val timeFormat = DateTimeFormatter.ofPattern("HH:MM:ss")
                 Text(date.format(dateFormat), fontSize = FIELD_NAME_FONT_SIZE)
                 Text(date.format(timeFormat), fontSize = FIELD_NAME_FONT_SIZE)
                 Card() {
