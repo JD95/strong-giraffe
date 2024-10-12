@@ -18,6 +18,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Done
 import androidx.compose.material.icons.filled.Warning
@@ -42,6 +43,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.tooling.preview.Preview
@@ -79,7 +81,7 @@ import java.util.TimeZone
 
 data class EditSetPageNavArgs(val id: SetId, val locked: Boolean)
 
-val NUM_PREVIOUS_SETS = 6
+const val NUM_PREVIOUS_SETS = 6
 
 class EditSetPageViewModel(
     private val setId: SetId,
@@ -171,7 +173,7 @@ class EditSetPageViewModel(
     }
 
     fun toggleSetLock(new: Boolean) {
-       lockedMut.value = new
+        lockedMut.value = new
     }
 
     val locked: State<Boolean>
@@ -286,7 +288,11 @@ fun Page(
         val validWeight = remember { mutableStateOf(true) }
 
         ModalDrawerScaffold(
-            title = "Edit Set",
+            title = if (locked) {
+                "View Set"
+            } else {
+                "Edit Set"
+            },
             drawerContent = {
                 Column(
                     modifier = Modifier.fillMaxSize(),
@@ -319,7 +325,9 @@ fun Page(
             },
             actionButton = {
                 FloatingActionButton(onClick = submit) {
-                    if (validReps.value && validWeight.value) {
+                    if (locked) {
+                        Icon(Icons.Default.ArrowBack, contentDescription = "Set Locked")
+                    } else if (validReps.value && validWeight.value) {
                         Icon(Icons.Default.Done, contentDescription = "Save Set")
                     } else {
                         Icon(Icons.Default.Warning, contentDescription = "Invalid fields")
@@ -342,7 +350,7 @@ fun Page(
                 val timeFormat = DateTimeFormatter.ofPattern("HH:MM:ss")
                 Text(date.format(dateFormat), fontSize = FIELD_NAME_FONT_SIZE)
                 Text(date.format(timeFormat), fontSize = FIELD_NAME_FONT_SIZE)
-                Card() {
+                Card {
                     Column(
                         horizontalAlignment = Alignment.CenterHorizontally,
                         verticalArrangement = Arrangement.spacedBy(10.dp),
@@ -381,7 +389,7 @@ fun Page(
                         )
                     }
                 }
-                Card() {
+                Card {
                     RepsAndWeightSelector(
                         starting,
                         validReps,
@@ -391,10 +399,10 @@ fun Page(
                         changeWeight,
                     )
                 }
-                Card() {
+                Card {
                     IntensitySelector(changeIntensity, starting, enabled = !locked)
                 }
-                Card() {
+                Card {
                     Column(
                         modifier = Modifier.padding(10.dp)
                     ) {
@@ -410,7 +418,7 @@ fun Page(
                     }
                 }
                 LazyRow(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                    this.item() { Spacer(modifier = Modifier.width(25.dp)) }
+                    this.item { Spacer(modifier = Modifier.width(25.dp)) }
                     this.items(previousSets.value) { set ->
                         PreviousSetButton(set.reps, set.weight, set.intensity) { gotoSet(set) }
                     }
@@ -432,7 +440,13 @@ private fun IntensitySelector(
             Intensity.toInt(starting.value.intensity).toFloat()
         )
     }
-    Column {
+    val columnModifier =
+        if (enabled) {
+            Modifier
+        } else {
+            Modifier.alpha(0.45f)
+        }
+    Column(modifier = columnModifier) {
         Spacer(modifier = Modifier.height(10.dp))
         Row {
             Spacer(modifier = Modifier.width(10.dp))
@@ -484,7 +498,7 @@ private fun RepsAndWeightSelector(
                     label = "Reps",
                     enabled = enabled,
                     start = starting.value.reps.value,
-                ) { it ->
+                ) {
                     validReps.value = it != null
                     if (it != null) {
                         changeReps(Reps(it))
@@ -498,7 +512,7 @@ private fun RepsAndWeightSelector(
                 IntField(
                     label = "Weight",
                     start = starting.value.weight.value,
-                    onChange = { it ->
+                    onChange = {
                         validWeight.value = it != null
                         if (it != null) {
                             changeWeight(Weight(it))
