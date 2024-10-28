@@ -1,21 +1,30 @@
 package org.wspcgir.strong_giraffe.views
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material.icons.filled.KeyboardArrowUp
+import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalSoftwareKeyboardController
+import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
+import org.wspcgir.strong_giraffe.ui.theme.StrongGiraffeTheme
 
 @Composable
 fun <T> LargeDropDownMenu(
@@ -45,7 +54,11 @@ fun <T> LargeDropDownMenu(
             enabled = enabled,
             modifier = Modifier.fillMaxWidth(),
             trailingIcon = {
-                val icon = if (expanded.value) { Icons.Filled.KeyboardArrowUp } else { Icons.Filled.ArrowDropDown }
+                val icon = if (expanded.value) {
+                    Icons.Filled.KeyboardArrowUp
+                } else {
+                    Icons.Filled.ArrowDropDown
+                }
                 Icon(icon, "")
             },
             onValueChange = { },
@@ -67,43 +80,95 @@ fun <T> LargeDropDownMenu(
         Dialog(
             onDismissRequest = { expanded.value = false },
         ) {
-            Surface(
-                shape = RoundedCornerShape(12.dp),
-            ) {
-                val listState = rememberLazyListState()
-                if (selectedIndex > -1) {
-                    LaunchedEffect("ScrollToSelected") {
-                        listState.scrollToItem(index = selectedIndex)
-                    }
-                }
+            var searchString by remember { mutableStateOf("") }
+            Column {
 
-                LazyColumn(modifier = Modifier.fillMaxWidth(), state = listState) {
-                    if (notSetLabel != null) {
-                        item {
-                            LargeDropDownMenuItem(
-                                text = notSetLabel,
-                                selected = false,
-                                enabled = false,
-                                onClick = { },
-                            )
+                Spacer(modifier = Modifier.weight(0.1f))
+
+                Column(
+                    modifier = Modifier.weight(0.9f)
+                            .wrapContentHeight()
+                        .padding(top = 10.dp),
+                    verticalArrangement = Arrangement.Center,
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                ) {
+                    Surface(
+                        shape = RoundedCornerShape(12.dp),
+                    ) {
+                        val listState = rememberLazyListState()
+                        if (selectedIndex > -1) {
+                            LaunchedEffect("ScrollToSelected") {
+                                listState.scrollToItem(index = selectedIndex)
+                            }
                         }
-                    }
-                    itemsIndexed(items) { index, item ->
-                        val selectedItem = index == selectedIndex
-                        drawItem(
-                            item,
-                            selectedItem,
-                            true
+
+                        LazyColumn(
+                            modifier = Modifier.fillMaxWidth(),
+                            state = listState
                         ) {
-                            onItemSelected(index, item)
-                            expanded.value = false
-                        }
+                            if (notSetLabel != null) {
+                                item {
+                                    LargeDropDownMenuItem(
+                                        text = notSetLabel,
+                                        selected = false,
+                                        enabled = false,
+                                        onClick = { },
+                                    )
+                                }
+                            }
 
-                        if (index < items.lastIndex) {
-                            Divider(modifier = Modifier.padding(horizontal = 16.dp))
+                            val visibleItems =
+                                if (searchString.isNotEmpty()) {
+                                    items.filter { t ->
+                                        selectedItemToString(t).contains(
+                                            searchString
+                                        )
+                                    }
+                                } else {
+                                    items
+                                }.withIndex().toList()
+
+                            items(visibleItems) { indexed ->
+                                val item = indexed.value
+                                val index = indexed.index
+                                val selectedItem = index == selectedIndex
+                                val rowModifier =
+                                    if (index.mod(2) == 0) {
+                                        Modifier.background(color = Color.Black.copy(alpha = 0.05f))
+                                    } else {
+                                        Modifier
+                                    }
+
+                                Row(
+                                    modifier = rowModifier,
+                                ) {
+                                    drawItem(
+                                        item,
+                                        selectedItem,
+                                        true
+                                    ) {
+                                        onItemSelected(index, item)
+                                        expanded.value = false
+                                    }
+                                }
+                            }
                         }
                     }
                 }
+
+                val keyboardController = LocalSoftwareKeyboardController.current
+                TextField(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .wrapContentHeight()
+                        .weight(0.1f)
+                        .padding(top = 20.dp),
+                    value = searchString,
+                    onValueChange = { str -> searchString = str },
+                    trailingIcon = { Icon(Icons.Default.Search, contentDescription = "search") },
+                    keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
+                    keyboardActions = KeyboardActions(onDone = { keyboardController?.hide() })
+                )
             }
         }
     }
@@ -133,4 +198,40 @@ fun LargeDropDownMenuItem(
             )
         }
     }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Preview
+@Composable
+private fun Preview() {
+    StrongGiraffeTheme {
+        ModalDrawerScaffold(
+            title = "test",
+            drawerContent = { },
+            actionButton = { },
+        ) {
+            Column(
+                modifier = Modifier.fillMaxSize(),
+                verticalArrangement = Arrangement.Center,
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                LargeDropDownMenu(
+                    modifier = Modifier,
+                    enabled = true,
+                    label = "test",
+                    notSetLabel = null,
+                    items = listOf(
+                        "Apple",
+                        "Apple",
+                        "Banana",
+                        "Rhino"
+                    ),
+                    selectedIndex = 0,
+                    onItemSelected = { _, _ -> },
+                    selectedItemToString = { x -> x },
+                )
+            }
+        }
+    }
+
 }
