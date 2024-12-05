@@ -10,6 +10,7 @@ import org.wspcgir.strong_giraffe.repository.entity.Equipment as EquipmentEntity
 import org.wspcgir.strong_giraffe.repository.entity.Muscle as MuscleEntity
 import org.wspcgir.strong_giraffe.repository.entity.Exercise as ExerciseEntity
 import org.wspcgir.strong_giraffe.repository.entity.WorkoutSet as WorkoutSetEntity
+import org.wspcgir.strong_giraffe.repository.entity.ExerciseVariation as ExerciseVariationEntity
 
 class AppRepository(private val dao: AppDao) {
     suspend fun newLocation(): Location {
@@ -18,13 +19,16 @@ class AppRepository(private val dao: AppDao) {
         dao.insertLocation(LocationEntity(id, name))
         return Location(LocationId(id), name)
     }
+
     suspend fun updateLocation(id: LocationId, newName: String) {
         dao.updateLocation(id.value, newName)
     }
+
     suspend fun getLocations(): List<Location> {
         val entities = dao.getLocations()
         return entities.map { e -> Location(LocationId(e.id), e.name) }
     }
+
     suspend fun getLocationsWithEquipment(): List<Location> {
         val entities = dao.getLocationsWithEquipment()
         return entities.map { e -> Location(LocationId(e.id), e.name) }
@@ -86,6 +90,7 @@ class AppRepository(private val dao: AppDao) {
         location: LocationId,
         equipment: EquipmentId,
         exercise: ExerciseId,
+        exerciseVariation: ExerciseVariationId,
         time: Instant = Instant.now(),
     ): WorkoutSet {
         val id = UUID.randomUUID().toString()
@@ -98,6 +103,7 @@ class AppRepository(private val dao: AppDao) {
                 exercise = exercise.value,
                 location = location.value,
                 equipment = equipment.value,
+                exerciseVariation = exerciseVariation.value,
                 reps = reps,
                 weight = weight,
                 time = time.epochSecond,
@@ -110,6 +116,7 @@ class AppRepository(private val dao: AppDao) {
             exercise = exercise,
             location = location,
             equipment = equipment,
+            exerciseVariation = exerciseVariation,
             reps = Reps(reps),
             weight = Weight(weight),
             time = time,
@@ -141,6 +148,7 @@ class AppRepository(private val dao: AppDao) {
         exercise: ExerciseId? = null,
         location: LocationId? = null,
         equipment: EquipmentId? = null,
+        exerciseVariation: ExerciseVariationId? = null,
         reps: Reps? = null,
         weight: Weight? = null,
         time: Instant? = null,
@@ -152,6 +160,7 @@ class AppRepository(private val dao: AppDao) {
             exercise = exercise ?: original.exercise,
             location = location ?: original.location,
             equipment = equipment ?: original.equipment,
+            exerciseVariation = exerciseVariation ?: original.exerciseVariation,
             reps = reps ?: original.reps,
             weight = weight ?: original.weight,
             time = time ?: original.time,
@@ -164,7 +173,8 @@ class AppRepository(private val dao: AppDao) {
         id: SetId,
         exercise: ExerciseId,
         location: LocationId,
-        equipment: EquipmentId,
+        equipment: EquipmentId?,
+        exerciseVariation: ExerciseVariationId,
         reps: Reps,
         weight: Weight,
         time: Instant,
@@ -175,7 +185,8 @@ class AppRepository(private val dao: AppDao) {
             id = id.value,
             exercise = exercise.value,
             location = location.value,
-            equipment = equipment.value,
+            equipment = equipment?.value,
+            exerciseVariation = exerciseVariation.value,
             reps = reps.value,
             weight = weight.value,
             time = time.epochSecond,
@@ -190,7 +201,12 @@ class AppRepository(private val dao: AppDao) {
             id = SetId(e.id),
             exercise = ExerciseId(e.exercise),
             location = LocationId(e.location),
-            equipment = EquipmentId(e.equipment),
+            equipment = if (e.equipment != null) {
+                EquipmentId(e.equipment)
+            } else {
+                null
+            },
+            exerciseVariation = ExerciseVariationId(e.exerciseVariation),
             reps = Reps(e.reps),
             weight = Weight(e.weight),
             intensity = Intensity.fromInt(e.intensity)!!,
@@ -246,7 +262,12 @@ class AppRepository(private val dao: AppDao) {
             id = SetId(e.id),
             exercise = ExerciseId(e.exercise),
             location = LocationId(e.location),
-            equipment = EquipmentId(e.equipment),
+            equipment = if (e.equipment != null) {
+                EquipmentId(e.equipment)
+            } else {
+                null
+            },
+            exerciseVariation = ExerciseVariationId(e.exerciseVariation),
             reps = Reps(e.reps),
             weight = Weight(e.weight),
             intensity = Intensity.fromInt(e.intensity)!!,
@@ -257,12 +278,20 @@ class AppRepository(private val dao: AppDao) {
 
     suspend fun latestSet(): WorkoutSet? {
         val e = dao.getLatestWorkoutSet()
-        return if (e != null) { workoutSetFromEntity(e) } else { null }
+        return if (e != null) {
+            workoutSetFromEntity(e)
+        } else {
+            null
+        }
     }
 
     suspend fun latestSetNot(set: SetId): WorkoutSet? {
         val e = dao.getLatestWorkoutSetNot(set.value)
-        return if (e != null) { workoutSetFromEntity(e) } else { null }
+        return if (e != null) {
+            workoutSetFromEntity(e)
+        } else {
+            null
+        }
     }
 
     suspend fun latestSetForExerciseAtLocationExcluding(
@@ -275,7 +304,11 @@ class AppRepository(private val dao: AppDao) {
             location.value,
             exercise.value
         )
-        return if (e != null) { workoutSetFromEntity(e) } else { null }
+        return if (e != null) {
+            workoutSetFromEntity(e)
+        } else {
+            null
+        }
     }
 
     suspend fun dropDb() {
@@ -289,15 +322,48 @@ class AppRepository(private val dao: AppDao) {
     suspend fun setForExerciseAndEquipmentBefore(
         cutoff: Instant,
         exercise: ExerciseId,
-        equipment: EquipmentId,
+        equipment: EquipmentId?,
         limit: Int
     ): List<WorkoutSet> {
         val es = dao.workoutSetsForExerciseWithEquipmentBefore(
             cutoff.epochSecond,
             exercise.value,
-            equipment.value,
+            equipment?.value,
             limit
         )
         return es.map { e -> workoutSetFromEntity(e) }
+    }
+
+    suspend fun newExerciseVariation(
+        location: LocationId?,
+        exercise: ExerciseId
+    ): ExerciseVariation {
+        val id = UUID.randomUUID().toString()
+        val name = "New Variation"
+        dao.insertExerciseVariation(
+            ExerciseVariationEntity(
+                id = id,
+                name = name,
+                location = location?.value,
+                exercise = exercise.value
+            )
+        );
+        return ExerciseVariation(ExerciseVariationId(id), name, exercise, location);
+    }
+
+    suspend fun getExerciseVariations(id: ExerciseId): List<ExerciseVariation> {
+        val ids = dao.getExerciseVariations(id.value);
+        return ids.map { i ->
+            ExerciseVariation(
+                id = ExerciseVariationId(i.id),
+                name = i.name,
+                location = if (i.location != null) {
+                    LocationId(i.location)
+                } else {
+                    null
+                },
+                exercise = ExerciseId(i.exercise)
+            )
+        }
     }
 }

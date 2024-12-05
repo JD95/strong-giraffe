@@ -69,7 +69,8 @@ class ExampleInstrumentedTest() {
                 val muscle = repo.newMuscle()
                 val exercise = repo.newExercise(muscle.id)
                 val equipment = repo.newEquipment(location.id)
-                repo.newWorkoutSet(location.id, equipment.id, exercise.id)
+                val exerciseVariation = repo.newExerciseVariation(location.id, exercise.id)
+                repo.newWorkoutSet(location.id, equipment.id, exercise.id, exerciseVariation.id)
 
                 val setCounts = repo.setsForMusclesInWeek(Instant.now()).setCounts
                 val length = repo.setsForMusclesInWeek(Instant.now()).setCounts.size
@@ -87,9 +88,10 @@ class ExampleInstrumentedTest() {
                 val location = repo.newLocation()
                 val muscle = repo.newMuscle()
                 val exercise = repo.newExercise(muscle.id)
+                val exerciseVariation = repo.newExerciseVariation(location.id, exercise.id)
                 val equipment = repo.newEquipment(location.id)
                 for (i in Intensity.range) {
-                    val set = repo.newWorkoutSet(location.id, equipment.id, exercise.id)
+                    val set = repo.newWorkoutSet(location.id, equipment.id, exercise.id, exerciseVariation.id)
                     repo.updateWorkoutSet(set, intensity = i)
                 }
 
@@ -109,9 +111,10 @@ class ExampleInstrumentedTest() {
                 val location = repo.newLocation()
                 val muscle = repo.newMuscle()
                 val exercise = repo.newExercise(muscle.id)
+                val exerciseVariation = repo.newExerciseVariation(location.id, exercise.id)
                 val equipment = repo.newEquipment(location.id)
                 for (i in 1..4) {
-                    repo.newWorkoutSet(location.id, equipment.id, exercise.id)
+                    repo.newWorkoutSet(location.id, equipment.id, exercise.id, exerciseVariation.id)
                 }
 
                 val setCounts = repo.setsForMusclesInWeek(Instant.now()).setCounts
@@ -130,13 +133,14 @@ class ExampleInstrumentedTest() {
 
                 val muscleA = repo.newMuscle()
                 val exerciseA = repo.newExercise(muscleA.id)
+                val exerciseVariationA = repo.newExerciseVariation(null, exerciseA.id)
 
                 val muscleB = repo.newMuscle()
                 repo.newExercise(muscleB.id)
 
                 val location = repo.newLocation()
                 val equipment = repo.newEquipment(location.id)
-                repo.newWorkoutSet(location.id, equipment.id, exerciseA.id)
+                repo.newWorkoutSet(location.id, equipment.id, exerciseA.id, exerciseVariationA.id)
 
                 val muscles = repo.getMuscles()
 
@@ -160,6 +164,7 @@ class ExampleInstrumentedTest() {
 
                 val muscleA = repo.newMuscle()
                 val exerciseA = repo.newExercise(muscleA.id)
+                val exerciseVariationA = repo.newExerciseVariation(null, exerciseA.id)
 
                 val location = repo.newLocation()
                 val equipment = repo.newEquipment(location.id)
@@ -168,6 +173,7 @@ class ExampleInstrumentedTest() {
                     location.id,
                     equipment.id,
                     exerciseA.id,
+                    exerciseVariationA.id,
                     now.minusWeeks(1).toInstant()
                 )
 

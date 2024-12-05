@@ -131,6 +131,7 @@ interface AppDao {
             SET exercise = :exercise
               , location = :location
               , equipment = :equipment
+              , exercise_variation = :exerciseVariation
               , reps = :reps
               , weight = :weight
               , time = :time
@@ -143,7 +144,8 @@ interface AppDao {
         id: String,
         exercise: String,
         location: String,
-        equipment: String,
+        equipment: String?,
+        exerciseVariation: String,
         reps: Int,
         weight: Int,
         time: Long,
@@ -157,6 +159,7 @@ interface AppDao {
                  , exercise
                  , location
                  , equipment
+                 , exercise_variation
                  , reps
                  , weight
                  , time
@@ -175,6 +178,7 @@ interface AppDao {
                  , exercise
                  , location
                  , equipment
+                 , exercise_variation
                  , reps
                  , weight
                  , time
@@ -193,6 +197,7 @@ interface AppDao {
                  , exercise
                  , location
                  , equipment
+                 , exercise_variation
                  , reps
                  , weight
                  , time
@@ -212,6 +217,7 @@ interface AppDao {
                  , exercise
                  , location
                  , equipment
+                 , exercise_variation
                  , reps
                  , weight
                  , time
@@ -237,6 +243,7 @@ interface AppDao {
                  , exercise
                  , location
                  , equipment
+                 , exercise_variation
                  , reps
                  , weight
                  , time
@@ -244,8 +251,8 @@ interface AppDao {
                  , comment
             FROM workout_set
             WHERE time < :cutoff
-              AND exercise = :exercise
-              AND equipment= :equipment
+              AND exercise  = :exercise
+              AND equipment = :equipment
             ORDER BY time DESC
             LIMIT :limit
         """
@@ -253,7 +260,7 @@ interface AppDao {
     suspend fun workoutSetsForExerciseWithEquipmentBefore(
         cutoff: Long,
         exercise: String,
-        equipment: String,
+        equipment: String?,
         limit: Int
     ): List<WorkoutSet>
 
@@ -353,4 +360,16 @@ interface AppDao {
         """
     )
     suspend fun deleteAllWorkoutSets()
+
+    @Insert
+    suspend fun insertExerciseVariation(entity: ExerciseVariation)
+
+    @Query(
+        """
+            SELECT id, name, location, exercise
+            FROM exercise_variation
+            WHERE exercise = :exerciseId
+        """
+    )
+    suspend fun getExerciseVariations(exerciseId: String): List<ExerciseVariation>
 }
