@@ -39,7 +39,6 @@ abstract class SetListPageViewModel : ViewModel() {
     abstract val templateLocation: LocationId
     abstract val templateEquipment: EquipmentId
     abstract val templateExercise: ExerciseId
-    abstract val templateExerciseVariation: ExerciseVariationId
     abstract fun new()
     abstract fun goto(id: SetSummary)
 }
@@ -50,7 +49,6 @@ fun RegisterSetListPage(repo: AppRepository, dest: DestinationsNavigator) {
     var templateEquipment by remember { mutableStateOf<EquipmentId?>(null) }
     var templateMuscle by remember { mutableStateOf<MuscleId?>(null) }
     var templateExercise by remember { mutableStateOf<ExerciseId?>(null) }
-    var templateExerciseVariation by remember { mutableStateOf<ExerciseVariationId?>(null) }
     var setSummaries by remember { mutableStateOf<List<SetSummary>>(emptyList()) }
     val scope = rememberCoroutineScope()
 
@@ -61,9 +59,6 @@ fun RegisterSetListPage(repo: AppRepository, dest: DestinationsNavigator) {
         val exercise = repo.getExercises().firstOrNull()
         templateMuscle = exercise?.muscle ?: repo.getMuscles().firstOrNull()?.id
         templateExercise = exercise?.id
-        templateExerciseVariation = if (exercise != null) {
-            repo.getExerciseVariations(exercise.id).firstOrNull()?.id
-        } else { null }
         setSummaries = repo.getSetSummaries()
     }
 
@@ -86,16 +81,13 @@ fun RegisterSetListPage(repo: AppRepository, dest: DestinationsNavigator) {
                 get() = templateEquipment!!
             override val templateExercise: ExerciseId
                 get() = templateExercise!!
-            override val templateExerciseVariation: ExerciseVariationId
-                get() = templateExerciseVariation!!
 
             override fun new() {
                 viewModelScope.launch {
                     val set = repo.newWorkoutSet(
                         templateLocation!!,
                         templateEquipment!!,
-                        templateExercise!!,
-                        templateExerciseVariation!!
+                        templateExercise!!
                     )
                     val latest = repo.latestSetNot(set.id)
                     if (latest != null) {

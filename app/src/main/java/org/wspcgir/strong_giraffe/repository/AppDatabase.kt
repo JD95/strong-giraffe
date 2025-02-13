@@ -8,7 +8,7 @@ import org.wspcgir.strong_giraffe.repository.entity.*
     entities = [
         WorkoutSet::class, Location::class,
         Exercise::class, Muscle::class,
-        Equipment::class, ExerciseVariation::class
+        Equipment::class,
     ],
     views = [
         SetSummary::class

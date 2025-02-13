@@ -63,7 +63,6 @@ import org.wspcgir.strong_giraffe.model.Weight
 import org.wspcgir.strong_giraffe.model.WorkoutSet
 import org.wspcgir.strong_giraffe.model.ids.EquipmentId
 import org.wspcgir.strong_giraffe.model.ids.ExerciseId
-import org.wspcgir.strong_giraffe.model.ids.ExerciseVariationId
 import org.wspcgir.strong_giraffe.model.ids.LocationId
 import org.wspcgir.strong_giraffe.model.ids.MuscleId
 import org.wspcgir.strong_giraffe.model.ids.SetId
@@ -103,7 +102,6 @@ class EditSetPageViewModel(
                 exercise = inProgress.value.exercise,
                 location = inProgress.value.location,
                 equipment = inProgress.value.equipment,
-                exerciseVariation = inProgress.value.exerciseVariation,
                 reps = inProgress.value.reps,
                 weight = inProgress.value.weight,
                 intensity = inProgress.value.intensity,
@@ -544,7 +542,6 @@ private fun Preview() {
             id = SetId("a"),
             exercise = ExerciseId("a"),
             equipment = EquipmentId("equipA"),
-            exerciseVariation = ExerciseVariationId("variationA"),
             location = LocationId("locationA"),
             reps = Reps(0),
             weight = Weight(0),
