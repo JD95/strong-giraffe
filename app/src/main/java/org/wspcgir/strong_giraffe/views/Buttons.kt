@@ -35,7 +35,7 @@ private fun PreviousSetButtonPreview(){
     StrongGiraffeTheme {
         LazyColumn {
             this.items(Intensity.range) { intensity ->
-                PreviousSetButton(Reps(10), Weight(100), intensity) { }
+                PreviousSetButton(Reps(10), Weight(100f), intensity) { }
             }
         }
     }

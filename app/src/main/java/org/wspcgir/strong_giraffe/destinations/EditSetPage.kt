@@ -78,6 +78,7 @@ import java.time.Instant
 import java.time.OffsetDateTime
 import java.time.format.DateTimeFormatter
 import java.util.TimeZone
+import kotlin.math.roundToInt
 
 data class EditSetPageNavArgs(val id: SetId, val locked: Boolean)
 
@@ -511,11 +512,13 @@ private fun RepsAndWeightSelector(
             ) {
                 IntField(
                     label = "Weight",
-                    start = starting.value.weight.value,
+                    // TODO: Create a Float field
+                    start = starting.value.weight.value.roundToInt(),
                     onChange = {
                         validWeight.value = it != null
                         if (it != null) {
-                            changeWeight(Weight(it))
+                            // TODO: Remove casting
+                            changeWeight(Weight(it.toFloat()))
                         }
                     },
                     enabled = enabled
@@ -544,7 +547,7 @@ private fun Preview() {
             equipment = EquipmentId("equipA"),
             location = LocationId("locationA"),
             reps = Reps(0),
-            weight = Weight(0),
+            weight = Weight(0.0f),
             time = Instant.now(),
             intensity = Intensity.Normal,
             comment = Comment("")

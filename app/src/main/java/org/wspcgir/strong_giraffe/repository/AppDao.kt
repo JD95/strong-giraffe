@@ -145,7 +145,7 @@ interface AppDao {
         location: String,
         equipment: String,
         reps: Int,
-        weight: Int,
+        weight: Float,
         time: Long,
         intensity: Int,
         comment: String

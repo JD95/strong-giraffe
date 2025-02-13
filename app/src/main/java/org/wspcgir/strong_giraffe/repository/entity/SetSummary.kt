@@ -20,7 +20,7 @@ data class SetSummary(
     val exerciseName: String,
     val exerciseId: String,
     val reps: Int,
-    val weight: Int,
+    val weight: Float,
     val time: Long,
     val intensity: Int,
 )

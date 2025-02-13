@@ -244,7 +244,7 @@ private fun Preview() {
             SetSummary(
                 id = SetId("a"),
                 reps = Reps(10),
-                weight = Weight(140),
+                weight = Weight(140f),
                 time = OffsetDateTime.now(),
                 intensity = Intensity.Easy,
                 exerciseName = "Bicep Curls",

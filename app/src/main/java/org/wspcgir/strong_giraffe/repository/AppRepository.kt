@@ -91,7 +91,7 @@ class AppRepository(private val dao: AppDao) {
         val id = UUID.randomUUID().toString()
         val reps = 10
         val comment = ""
-        val weight = 0
+        val weight = 0.0f
         dao.insertWorkoutSet(
             WorkoutSetEntity(
                 id = id,
@@ -189,8 +189,8 @@ class AppRepository(private val dao: AppDao) {
         return WorkoutSet(
             id = SetId(e.id),
             exercise = ExerciseId(e.exercise),
-            location = LocationId(e.location),
-            equipment = EquipmentId(e.equipment),
+            location = LocationId(e.location!!),
+            equipment = EquipmentId(e.equipment!!),
             reps = Reps(e.reps),
             weight = Weight(e.weight),
             intensity = Intensity.fromInt(e.intensity)!!,
@@ -245,8 +245,8 @@ class AppRepository(private val dao: AppDao) {
         return WorkoutSet(
             id = SetId(e.id),
             exercise = ExerciseId(e.exercise),
-            location = LocationId(e.location),
-            equipment = EquipmentId(e.equipment),
+            location = LocationId(e.location!!),
+            equipment = EquipmentId(e.equipment!!),
             reps = Reps(e.reps),
             weight = Weight(e.weight),
             intensity = Intensity.fromInt(e.intensity)!!,

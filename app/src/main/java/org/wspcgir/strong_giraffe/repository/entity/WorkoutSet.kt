@@ -6,7 +6,7 @@ import androidx.room.*
     tableName = "workout_set",
     indices = [
         Index(value = arrayOf("id")),
-        Index(value = arrayOf("location", "exercise", "equipment")),
+        Index(value = arrayOf("exercise")),
         Index(value = arrayOf("time")),
     ],
     foreignKeys = [
@@ -23,22 +23,15 @@ import androidx.room.*
             childColumns = arrayOf("location"),
             onDelete = ForeignKey.CASCADE
         ),
-
-        ForeignKey(
-            entity = Equipment::class,
-            parentColumns = arrayOf("id"),
-            childColumns = arrayOf("equipment"),
-            onDelete = ForeignKey.CASCADE
-        )
     ]
 )
 data class WorkoutSet(
     @PrimaryKey val id: String,
     @ColumnInfo(name="exercise") val exercise: String,
-    @ColumnInfo(name="location") val location: String,
-    @ColumnInfo(name="equipment") val equipment: String,
+    @ColumnInfo(name="location") val location: String?,
+    @ColumnInfo(name="equipment") val equipment: String?,
     @ColumnInfo(name="reps") val reps: Int,
-    @ColumnInfo(name="weight") val weight: Int,
+    @ColumnInfo(name="weight") val weight: Float,
     @ColumnInfo(name="time") val time: Long,
     /**
      * 0 - No Activation
