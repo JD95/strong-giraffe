@@ -26,10 +26,20 @@ abstract class AppDatabase : RoomDatabase() {
 
 val MIGRATION_1_2 = object : Migration(1,2) {
     override fun migrate(database : SupportSQLiteDatabase) {
+        // Step 1. Make location and equipment optional
+
+        // Drop indexes on workout_set
         database.execSQL("DROP INDEX index_workout_set_id;");
         database.execSQL("DROP INDEX index_workout_set_location_exercise_equipment;")
         database.execSQL("DROP INDEX index_workout_set_time;")
 
+        // Create a new table with updated columns,
+        // sqlite doesn't let us alter existing columns
+        //
+        // Changes:
+        // - location is now NULL
+        // - equipment is now NULL
+        // - weight is now REAL
         database.execSQL(
             """
             CREATE TABLE workout_set_new(
@@ -49,15 +59,18 @@ val MIGRATION_1_2 = object : Migration(1,2) {
             """.trimIndent()
         )
 
+        // Insert old values into new table and drop old
         database.execSQL( "INSERT INTO workout_set_new SELECT * FROM workout_set;")
         database.execSQL("ALTER TABLE workout_set RENAME TO workout_set_old;")
         database.execSQL("ALTER TABLE workout_set_new RENAME TO workout_set;")
         database.execSQL("DROP TABLE workout_set_old;")
 
+        // Create new indexes
         database.execSQL("CREATE INDEX IF NOT EXISTS index_workout_set_id ON workout_set(id);")
         database.execSQL("CREATE INDEX IF NOT EXISTS index_workout_set_exercise ON workout_set(exercise);")
         database.execSQL("CREATE INDEX IF NOT EXISTS index_workout_set_time ON workout_set(time);")
 
+        // Step 2. Create and populate the new exercise_variation table with indexes
         database.execSQL(
             """
             CREATE TABLE exercise_variation(
@@ -74,6 +87,7 @@ val MIGRATION_1_2 = object : Migration(1,2) {
         database.execSQL("CREATE INDEX IF NOT EXISTS index_exercise_variation_id ON exercise_variation(id);")
         database.execSQL("CREATE INDEX IF NOT EXISTS index_exercise_variation_exercise ON exercise_variation(exercise);")
 
+        // Step 3. Manually derive variations from existing equipment
         var exercises : Map<String, Set<(Pair<String, String>)>> = emptyMap()
         val cursor = database.query(
             """
