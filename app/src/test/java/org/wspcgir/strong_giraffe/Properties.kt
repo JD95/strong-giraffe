@@ -45,7 +45,7 @@ class Properties: DescribeSpec({
                 exerciseName = "Bicep Curl",
                 exerciseId = ExerciseId("a"),
                 reps = Reps(1),
-                weight = Weight(20),
+                weight = Weight(20f),
                 time =  now,
                 intensity = Intensity.Normal
             )
@@ -60,7 +60,7 @@ class Properties: DescribeSpec({
                 exerciseName = "Bicep Curl",
                 exerciseId = ExerciseId("a"),
                 reps = Reps(1),
-                weight = Weight(20),
+                weight = Weight(20f),
                 time = now,
                 intensity = Intensity.Normal
             )

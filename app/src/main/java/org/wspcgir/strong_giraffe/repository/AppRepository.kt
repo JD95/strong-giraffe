@@ -83,8 +83,6 @@ class AppRepository(private val dao: AppDao) {
     }
 
     suspend fun newWorkoutSet(
-        location: LocationId,
-        equipment: EquipmentId,
         exercise: ExerciseId,
         time: Instant = Instant.now(),
     ): WorkoutSet {
@@ -96,8 +94,9 @@ class AppRepository(private val dao: AppDao) {
             WorkoutSetEntity(
                 id = id,
                 exercise = exercise.value,
-                location = location.value,
-                equipment = equipment.value,
+                location = null,
+                equipment = null,
+                variation = null,
                 reps = reps,
                 weight = weight,
                 time = time.epochSecond,
@@ -108,8 +107,9 @@ class AppRepository(private val dao: AppDao) {
         return WorkoutSet(
             id = SetId(id),
             exercise = exercise,
-            location = location,
-            equipment = equipment,
+            location = null,
+            equipment = null,
+            variation = null,
             reps = Reps(reps),
             weight = Weight(weight),
             time = time,
@@ -163,8 +163,8 @@ class AppRepository(private val dao: AppDao) {
     suspend fun updateWorkoutSet(
         id: SetId,
         exercise: ExerciseId,
-        location: LocationId,
-        equipment: EquipmentId,
+        location: LocationId?,
+        equipment: EquipmentId?,
         reps: Reps,
         weight: Weight,
         time: Instant,
@@ -174,8 +174,8 @@ class AppRepository(private val dao: AppDao) {
         dao.updateWorkoutSet(
             id = id.value,
             exercise = exercise.value,
-            location = location.value,
-            equipment = equipment.value,
+            location = location?.value,
+            equipment = equipment?.value,
             reps = reps.value,
             weight = weight.value,
             time = time.epochSecond,
@@ -189,8 +189,9 @@ class AppRepository(private val dao: AppDao) {
         return WorkoutSet(
             id = SetId(e.id),
             exercise = ExerciseId(e.exercise),
-            location = LocationId(e.location!!),
-            equipment = EquipmentId(e.equipment!!),
+            location = e.location?.let { LocationId(it) },
+            equipment = e.equipment?.let { EquipmentId(it) },
+            variation = e.variation?.let { ExerciseVariationId(it) },
             reps = Reps(e.reps),
             weight = Weight(e.weight),
             intensity = Intensity.fromInt(e.intensity)!!,
@@ -245,8 +246,9 @@ class AppRepository(private val dao: AppDao) {
         return WorkoutSet(
             id = SetId(e.id),
             exercise = ExerciseId(e.exercise),
-            location = LocationId(e.location!!),
-            equipment = EquipmentId(e.equipment!!),
+            location = e.location?.let { LocationId(it) },
+            equipment = e.equipment?.let { EquipmentId(it) },
+            variation  = e.variation?.let { ExerciseVariationId(it) },
             reps = Reps(e.reps),
             weight = Weight(e.weight),
             intensity = Intensity.fromInt(e.intensity)!!,
@@ -286,18 +288,29 @@ class AppRepository(private val dao: AppDao) {
         dao.deleteAllWorkoutSets()
     }
 
-    suspend fun setForExerciseAndEquipmentBefore(
+    suspend fun setForExerciseAndVariationBefore(
         cutoff: Instant,
         exercise: ExerciseId,
-        equipment: EquipmentId,
+        variation: ExerciseVariationId?,
         limit: Int
     ): List<WorkoutSet> {
-        val es = dao.workoutSetsForExerciseWithEquipmentBefore(
+        val es = dao.workoutSetsForExerciseWithVariationBefore(
             cutoff.epochSecond,
             exercise.value,
-            equipment.value,
+            variation?.value,
             limit
         )
         return es.map { e -> workoutSetFromEntity(e) }
+    }
+
+    suspend fun getVariationsForExercise(exercise: ExerciseId): List<ExerciseVariation> {
+        val es = dao.getVariationsForExercise(exercise.value)
+        return es.map { e -> ExerciseVariation(
+            ExerciseVariationId(e.id),
+            e.name,
+            ExerciseId(e.exercise),
+            e.location?.let { LocationId(it) }
+        )
+        }
     }
 }

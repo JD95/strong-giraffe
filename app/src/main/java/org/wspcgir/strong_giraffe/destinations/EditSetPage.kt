@@ -56,6 +56,7 @@ import kotlinx.coroutines.launch
 import org.wspcgir.strong_giraffe.model.Comment
 import org.wspcgir.strong_giraffe.model.Equipment
 import org.wspcgir.strong_giraffe.model.Exercise
+import org.wspcgir.strong_giraffe.model.ExerciseVariation
 import org.wspcgir.strong_giraffe.model.Intensity
 import org.wspcgir.strong_giraffe.model.Location
 import org.wspcgir.strong_giraffe.model.Reps
@@ -63,6 +64,7 @@ import org.wspcgir.strong_giraffe.model.Weight
 import org.wspcgir.strong_giraffe.model.WorkoutSet
 import org.wspcgir.strong_giraffe.model.ids.EquipmentId
 import org.wspcgir.strong_giraffe.model.ids.ExerciseId
+import org.wspcgir.strong_giraffe.model.ids.ExerciseVariationId
 import org.wspcgir.strong_giraffe.model.ids.LocationId
 import org.wspcgir.strong_giraffe.model.ids.MuscleId
 import org.wspcgir.strong_giraffe.model.ids.SetId
@@ -89,12 +91,11 @@ class EditSetPageViewModel(
     private val repo: AppRepository,
     private val dest: DestinationsNavigator,
     private val inProgressMut: MutableState<WorkoutSet>,
-    private val equipmentForLocationMut: MutableState<List<Equipment>>,
+    private val variationsForExerciseMut: MutableState<List<ExerciseVariation>>,
     private val previousSetsMut: MutableState<List<WorkoutSet>>,
     private val lockedMut: MutableState<Boolean>,
     val locations: List<Location>,
     val exercises: List<Exercise>,
-    val equipment: List<Equipment>,
 ) : ViewModel() {
     fun submit() {
         viewModelScope.launch {
@@ -113,36 +114,35 @@ class EditSetPageViewModel(
         dest.popBackStack()
     }
 
+    @Deprecated("Changing location shouldn't do anything now")
     fun changeLocation(location: LocationId) {
-        equipmentForLocationMut.value = equipment.filter { it.location == location }
-        val newEquipment = equipmentForLocationMut.value.first().id
-        viewModelScope.launch {
-            inProgressMut.value = inProgress.value.copy(location = location)
-            changeEquipment(newEquipment)
-        }
     }
 
     fun changeExercise(exercise: ExerciseId) {
         viewModelScope.launch {
-            previousSetsMut.value = repo.setForExerciseAndEquipmentBefore(
+            this@EditSetPageViewModel.variationsForExerciseMut.value =
+                repo.getVariationsForExercise(exercise)
+            // Initially assume no variation until selected
+            inProgressMut.value = inProgressMut.value.copy(variation = null)
+            previousSetsMut.value = repo.setForExerciseAndVariationBefore(
                 inProgress.value.time,
                 exercise,
-                inProgress.value.equipment,
+                inProgress.value.variation,
                 NUM_PREVIOUS_SETS
             )
             inProgressMut.value = inProgress.value.copy(exercise = exercise)
         }
     }
 
-    fun changeEquipment(equipment: EquipmentId) {
+    fun changeVariation(variation: ExerciseVariationId?) {
         viewModelScope.launch {
-            previousSetsMut.value = repo.setForExerciseAndEquipmentBefore(
+            previousSetsMut.value = repo.setForExerciseAndVariationBefore(
                 inProgress.value.time,
                 inProgress.value.exercise,
-                equipment,
+                variation,
                 NUM_PREVIOUS_SETS
             )
-            inProgressMut.value = inProgress.value.copy(equipment = equipment)
+            inProgressMut.value = inProgress.value.copy(variation = variation)
         }
     }
 
@@ -182,8 +182,8 @@ class EditSetPageViewModel(
     val inProgress: State<WorkoutSet>
         get() = inProgressMut
 
-    val equipmentForExercise: State<List<Equipment>>
-        get() = equipmentForLocationMut
+    val variationsForExercise: State<List<ExerciseVariation>>
+        get() = this.variationsForExerciseMut
 
     val previousSets: State<List<WorkoutSet>>
         get() = previousSetsMut
@@ -197,23 +197,25 @@ fun RegisterEditSetPage(
 ) {
 
     var locations by remember { mutableStateOf<List<Location>>(emptyList()) }
-    var equipment by remember { mutableStateOf<List<Equipment>>(emptyList()) }
     var exercises by remember { mutableStateOf<List<Exercise>>(emptyList()) }
+    val variations = remember { mutableStateOf<List<ExerciseVariation>>(emptyList()) }
     val inProgress = remember { mutableStateOf<WorkoutSet?>(null) }
     val previousSets = remember { mutableStateOf<List<WorkoutSet>>(emptyList()) }
     val locked = remember { mutableStateOf(navArgs.locked) }
 
-    LaunchedEffect(locations, equipment, exercises) {
+    LaunchedEffect(locations, exercises) {
         locations = repo.getLocationsWithEquipment()
-        equipment = repo.getEquipment()
         exercises = repo.getExercises()
         inProgress.value = repo.getSetFromId(navArgs.id)
+        variations.value = inProgress.value
+            ?.let { repo.getVariationsForExercise(it.exercise) }
+            ?: emptyList()
         Log.i("SET", "weight is now '${inProgress.value?.weight}")
         if (inProgress.value != null)
-            previousSets.value = repo.setForExerciseAndEquipmentBefore(
+            previousSets.value = repo.setForExerciseAndVariationBefore(
                 cutoff = inProgress.value!!.time,
                 inProgress.value!!.exercise,
-                inProgress.value!!.equipment,
+                inProgress.value!!.variation,
                 NUM_PREVIOUS_SETS
             )
     }
@@ -223,14 +225,11 @@ fun RegisterEditSetPage(
             EditSetPageViewModel(
                 setId = navArgs.id,
                 inProgressMut = remember { mutableStateOf(inProgress.value!!) },
-                equipmentForLocationMut = remember {
-                    mutableStateOf(equipment.filter { it.location == inProgress.value?.location })
-                },
+                variationsForExerciseMut = variations,
                 repo = repo,
                 dest = dest,
                 locations = locations,
                 exercises = exercises,
-                equipment = equipment,
                 previousSetsMut = previousSets,
                 lockedMut = locked
             )
@@ -248,7 +247,7 @@ fun EditSetPage(view: EditSetPageViewModel) {
         delete = view::delete,
         changeLocation = view::changeLocation,
         changeExercise = view::changeExercise,
-        changeEquipment = view::changeEquipment,
+        changeVariation = view::changeVariation,
         changeReps = view::changeReps,
         changeWeight = view::changeWeight,
         changeIntensity = view::changeIntensity,
@@ -256,8 +255,8 @@ fun EditSetPage(view: EditSetPageViewModel) {
         gotoSet = view::gotoSet,
         starting = view.inProgress,
         locations = view.locations,
-        equipment = view.equipmentForExercise,
         exercises = view.exercises,
+        variations = view.variationsForExercise,
         previousSets = view.previousSets
     )
 }
@@ -272,15 +271,15 @@ fun Page(
     delete: () -> Unit,
     changeLocation: (LocationId) -> Unit,
     changeExercise: (ExerciseId) -> Unit,
-    changeEquipment: (EquipmentId) -> Unit,
+    changeVariation: (ExerciseVariationId) -> Unit,
     changeReps: (Reps) -> Unit,
     changeWeight: (Weight) -> Unit,
     changeIntensity: (Intensity) -> Unit,
     changeComment: (Comment) -> Unit,
     gotoSet: (WorkoutSet) -> Unit,
     locations: List<Location>,
-    equipment: State<List<Equipment>>,
     exercises: List<Exercise>,
+    variations: State<List<ExerciseVariation>>,
     previousSets: State<List<WorkoutSet>>
 ) {
     val keyboardController = LocalSoftwareKeyboardController.current
@@ -380,13 +379,13 @@ fun Page(
                             selectedIndex = exercises.indexOfFirst { it.id == starting.value.exercise }
                         )
                         LargeDropDownFromList(
-                            items = equipment.value,
-                            label = "Equipment",
+                            items = variations.value,
+                            label = "Variation",
                             enabled = !locked,
                             itemToString = { it.name },
-                            onItemSelected = { changeEquipment(it.id) },
+                            onItemSelected = { changeVariation(it.id) },
                             modifier = Modifier.fillMaxWidth(0.8f),
-                            selectedIndex = equipment.value.indexOfFirst { it.id == starting.value.equipment }
+                            selectedIndex = variations.value.indexOfFirst { it.id == starting.value.variation }
                         )
                     }
                 }
@@ -545,6 +544,7 @@ private fun Preview() {
             id = SetId("a"),
             exercise = ExerciseId("a"),
             equipment = EquipmentId("equipA"),
+            variation = ExerciseVariationId("variationA"),
             location = LocationId("locationA"),
             reps = Reps(0),
             weight = Weight(0.0f),
@@ -561,7 +561,7 @@ private fun Preview() {
             delete = { },
             changeLocation = { },
             changeExercise = { },
-            changeEquipment = { },
+            changeVariation = { },
             changeReps = { },
             changeWeight = { },
             changeIntensity = { },
@@ -571,11 +571,21 @@ private fun Preview() {
                 Location(LocationId("locationA"), "24 Hour Parkmoore"),
                 Location(LocationId("locationB"), "Fruitdale Apt. Gym"),
             ),
-            equipment = remember {
+            variations = remember {
                 mutableStateOf(
                     listOf(
-                        Equipment(EquipmentId("equipA"), "Barbell", LocationId("locationA")),
-                        Equipment(EquipmentId("equipB"), "Bicep Curl A", LocationId("locationA")),
+                        ExerciseVariation(
+                            ExerciseVariationId("varA"),
+                            "Barbell",
+                            ExerciseId("exerciseA"),
+                            LocationId("locationA")
+                        ),
+                        ExerciseVariation(
+                            ExerciseVariationId("varB"),
+                            "Bicep Curl A",
+                            ExerciseId("exerciseA"),
+                            null
+                        ),
                     )
                 )
             },

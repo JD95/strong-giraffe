@@ -142,8 +142,8 @@ interface AppDao {
     suspend fun updateWorkoutSet(
         id: String,
         exercise: String,
-        location: String,
-        equipment: String,
+        location: String?,
+        equipment: String?,
         reps: Int,
         weight: Float,
         time: Long,
@@ -237,6 +237,7 @@ interface AppDao {
                  , exercise
                  , location
                  , equipment
+                 , variation 
                  , reps
                  , weight
                  , time
@@ -244,16 +245,16 @@ interface AppDao {
                  , comment
             FROM workout_set
             WHERE time < :cutoff
-              AND exercise = :exercise
-              AND equipment= :equipment
+              AND exercise  = :exercise
+              AND variation = :variation
             ORDER BY time DESC
             LIMIT :limit
         """
     )
-    suspend fun workoutSetsForExerciseWithEquipmentBefore(
+    suspend fun workoutSetsForExerciseWithVariationBefore(
         cutoff: Long,
         exercise: String,
-        equipment: String,
+        variation: String?,
         limit: Int
     ): List<WorkoutSet>
 
@@ -353,4 +354,16 @@ interface AppDao {
         """
     )
     suspend fun deleteAllWorkoutSets()
+
+    @Query(
+        """
+            SELECT 
+              id,
+              name,
+              exercise
+            FROM exercise_variation
+            WHERE exercise = :exerciseId
+        """
+    )
+    suspend fun getVariationsForExercise(exerciseId: String): List<ExerciseVariation>
 }

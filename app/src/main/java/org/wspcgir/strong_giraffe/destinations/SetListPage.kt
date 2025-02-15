@@ -36,8 +36,6 @@ import java.time.OffsetDateTime
 
 abstract class SetListPageViewModel : ViewModel() {
     abstract val sets: List<SetSummary>
-    abstract val templateLocation: LocationId
-    abstract val templateEquipment: EquipmentId
     abstract val templateExercise: ExerciseId
     abstract fun new()
     abstract fun goto(id: SetSummary)
@@ -45,28 +43,19 @@ abstract class SetListPageViewModel : ViewModel() {
 
 @Composable
 fun RegisterSetListPage(repo: AppRepository, dest: DestinationsNavigator) {
-    var templateLocation by remember { mutableStateOf<LocationId?>(null) }
-    var templateEquipment by remember { mutableStateOf<EquipmentId?>(null) }
     var templateMuscle by remember { mutableStateOf<MuscleId?>(null) }
     var templateExercise by remember { mutableStateOf<ExerciseId?>(null) }
     var setSummaries by remember { mutableStateOf<List<SetSummary>>(emptyList()) }
     val scope = rememberCoroutineScope()
 
-    LaunchedEffect(templateLocation, templateEquipment, templateMuscle, templateExercise) {
-        val equipment = repo.getEquipment().firstOrNull()
-        templateLocation = equipment?.location ?: repo.getLocations().firstOrNull()?.id
-        templateEquipment = equipment?.id
+    LaunchedEffect(templateMuscle, templateExercise) {
         val exercise = repo.getExercises().firstOrNull()
         templateMuscle = exercise?.muscle ?: repo.getMuscles().firstOrNull()?.id
         templateExercise = exercise?.id
         setSummaries = repo.getSetSummaries()
     }
 
-    if (templateLocation == null) {
-        LocationEditRedirection(scope, repo, dest)
-    } else if (templateEquipment == null) {
-        EquipmentEditRedirection(templateLocation!!, scope, repo, dest)
-    } else if (templateMuscle == null) {
+    if (templateMuscle == null) {
         MuscleEditRedirection(scope, repo, dest)
     } else if (templateExercise == null) {
         ExerciseEditRedirection(templateMuscle!!, scope, repo, dest)
@@ -75,20 +64,12 @@ fun RegisterSetListPage(repo: AppRepository, dest: DestinationsNavigator) {
         SetListPage(object : SetListPageViewModel() {
             override val sets: List<SetSummary>
                 get() = setSummaries
-            override val templateLocation: LocationId
-                get() = templateLocation!!
-            override val templateEquipment: EquipmentId
-                get() = templateEquipment!!
             override val templateExercise: ExerciseId
                 get() = templateExercise!!
 
             override fun new() {
                 viewModelScope.launch {
-                    val set = repo.newWorkoutSet(
-                        templateLocation!!,
-                        templateEquipment!!,
-                        templateExercise!!
-                    )
+                    val set = repo.newWorkoutSet(templateExercise!!)
                     val latest = repo.latestSetNot(set.id)
                     if (latest != null) {
                         Log.i("NEW SET", "Using previous set '${latest.id}'")

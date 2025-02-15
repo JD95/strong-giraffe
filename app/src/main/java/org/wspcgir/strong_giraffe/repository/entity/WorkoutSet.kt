@@ -30,6 +30,7 @@ data class WorkoutSet(
     @ColumnInfo(name="exercise") val exercise: String,
     @ColumnInfo(name="location") val location: String?,
     @ColumnInfo(name="equipment") val equipment: String?,
+    @ColumnInfo(name="variation") val variation: String?,
     @ColumnInfo(name="reps") val reps: Int,
     @ColumnInfo(name="weight") val weight: Float,
     @ColumnInfo(name="time") val time: Long,
