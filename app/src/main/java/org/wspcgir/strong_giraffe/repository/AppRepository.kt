@@ -72,6 +72,11 @@ class AppRepository(private val dao: AppDao) {
         return entities.map { e -> Exercise(ExerciseId(e.id), e.name, MuscleId(e.muscle)) }
     }
 
+    suspend fun getExerciseFromId(id: ExerciseId): Exercise {
+        val e = dao.getExercise(id.value)
+        return Exercise(ExerciseId(e.id), e.name, MuscleId(e.muscle))
+    }
+
     suspend fun newExercise(muscle: MuscleId): Exercise {
         val id = UUID.randomUUID().toString()
         val name = "New Exercise"

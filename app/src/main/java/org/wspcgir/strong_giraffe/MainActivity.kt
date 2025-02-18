@@ -27,6 +27,7 @@ import com.ramcosta.composedestinations.manualcomposablecalls.composable
 import com.ramcosta.composedestinations.navigation.DestinationsNavigator
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
+import org.wspcgir.strong_giraffe.repository.MIGRATION_1_2
 import java.time.Instant
 
 
@@ -34,7 +35,9 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         val db =
-            Room.databaseBuilder(applicationContext, AppDatabase::class.java, "data.db").build()
+            Room.databaseBuilder(applicationContext, AppDatabase::class.java, "data.db")
+                .addMigrations(MIGRATION_1_2)
+                .build()
         val dao = db.dao()
         setContent {
             StrongGiraffeTheme {
@@ -59,8 +62,6 @@ fun MainComponent(repo: AppRepository) {
             HomePage(
                 gotoLocationsList = {
                     destinationsNavigator.navigate(LocationListPageDestination)
-                }, gotoEquipmentList = {
-                    destinationsNavigator.navigate(EquipmentListPageDestination)
                 }, gotoMuscleList = {
                     destinationsNavigator.navigate(MuscleListPageDestination)
                 }, gotoExerciseList = {
@@ -261,7 +262,7 @@ fun MainComponent(repo: AppRepository) {
                         val new = repo.newExercise(muscles[0].id)
                         destinationsNavigator.navigate(
                             EditExercisePageDestination(
-                                EditExercisePageNavArgs(new.id, new.name, new.muscle)
+                                EditExercisePageNavArgs(new.id)
                             )
                         )
                     }
@@ -270,7 +271,7 @@ fun MainComponent(repo: AppRepository) {
                 override fun goto(value: Exercise) {
                     destinationsNavigator.navigate(
                         EditExercisePageDestination(
-                            EditExercisePageNavArgs(value.id, value.name, value.muscle)
+                            EditExercisePageNavArgs(value.id)
                         )
                     )
                 }
@@ -322,16 +323,11 @@ fun locationRedirect(
 @Destination(start = true)
 fun HomePage(
     gotoLocationsList: () -> Unit,
-    gotoEquipmentList: () -> Unit,
     gotoMuscleList: () -> Unit,
     gotoExerciseList: () -> Unit,
     gotoSetList: () -> Unit,
 ) {
-    Scaffold(floatingActionButton = {
-        FloatingActionButton(onClick = { /* create new set */ }) {
-            Icon(Icons.Default.Add, contentDescription = "Record New Set")
-        }
-    }) { innerPadding ->
+    Scaffold() { innerPadding ->
 
         Column(
             modifier = Modifier
@@ -367,10 +363,6 @@ fun HomePage(
                     Button(onClick = gotoLocationsList) {
                         Text(text = "Locations")
                     }
-                    Spacer(modifier = Modifier.width(space))
-                    Button(onClick = gotoEquipmentList) {
-                        Text(text = "Equipment")
-                    }
                 }
                 Spacer(modifier = Modifier.height(space))
                 Row() {
@@ -394,5 +386,5 @@ fun HomePage(
 @Preview
 @Composable
 fun HomePagePreview() {
-    HomePage({}, {}, {}, {}, {})
+    HomePage({}, {}, {}, {})
 }

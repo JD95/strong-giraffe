@@ -85,7 +85,7 @@ fun ExerciseEditRedirection(
             val new = repo.newExercise(muscle)
             dest.navigate(
                 EditExercisePageDestination(
-                    EditExercisePageNavArgs(new.id, new.name, new.muscle)
+                    EditExercisePageNavArgs(new.id)
                 )
             )
         }

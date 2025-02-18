@@ -384,4 +384,15 @@ interface AppDao {
 
     @Insert
     suspend fun insertExerciseVariation(value: ExerciseVariation)
+
+    @Query(
+        """
+        SELECT id,
+               name,
+               muscle
+        FROM Exercise
+        WHERE id = :id
+        """
+    )
+    suspend fun getExercise(id: String): Exercise
 }

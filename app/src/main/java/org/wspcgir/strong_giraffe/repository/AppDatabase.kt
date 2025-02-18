@@ -154,7 +154,7 @@ val MIGRATION_1_2 = object : Migration(1,2) {
                 """
                 UPDATE workout_set
                 SET variation = '${variation.id.value}'
-                WHERE id = '${entry.key}'
+                WHERE id = '${entry.key.value}'
                 """.trimIndent()
             )
         }
