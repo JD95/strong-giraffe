@@ -77,7 +77,7 @@ fun RegisterSetListPage(repo: AppRepository, dest: DestinationsNavigator) {
                             original = set,
                             location = latest.location,
                             exercise = latest.exercise,
-                            equipment = latest.equipment,
+                            variation = latest.variation,
                             reps = latest.reps,
                             weight = latest.weight
                         )

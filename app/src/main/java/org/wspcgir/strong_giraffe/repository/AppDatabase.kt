@@ -63,7 +63,6 @@ val MIGRATION_1_2 = object : Migration(1,2) {
         database.execSQL( "INSERT INTO workout_set_new SELECT * FROM workout_set;")
         database.execSQL("ALTER TABLE workout_set RENAME TO workout_set_old;")
         database.execSQL("ALTER TABLE workout_set_new RENAME TO workout_set;")
-        database.execSQL("DROP TABLE workout_set_old;")
 
         // Create new indexes
         database.execSQL("CREATE INDEX IF NOT EXISTS index_workout_set_id ON workout_set(id);")

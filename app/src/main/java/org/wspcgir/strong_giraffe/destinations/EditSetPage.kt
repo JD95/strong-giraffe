@@ -24,6 +24,7 @@ import androidx.compose.material.icons.filled.Done
 import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
@@ -103,7 +104,7 @@ class EditSetPageViewModel(
                 id = setId,
                 exercise = inProgress.value.exercise,
                 location = inProgress.value.location,
-                equipment = inProgress.value.equipment,
+                variation = inProgress.value.variation,
                 reps = inProgress.value.reps,
                 weight = inProgress.value.weight,
                 intensity = inProgress.value.intensity,
@@ -115,7 +116,7 @@ class EditSetPageViewModel(
     }
 
     @Deprecated("Changing location shouldn't do anything now")
-    fun changeLocation(location: LocationId) {
+    fun changeLocation(location: LocationId?) {
     }
 
     fun changeExercise(exercise: ExerciseId) {
@@ -204,7 +205,7 @@ fun RegisterEditSetPage(
     val locked = remember { mutableStateOf(navArgs.locked) }
 
     LaunchedEffect(locations, exercises) {
-        locations = repo.getLocationsWithEquipment()
+        locations = repo.getLocations()
         exercises = repo.getExercises()
         inProgress.value = repo.getSetFromId(navArgs.id)
         variations.value = inProgress.value
@@ -269,9 +270,9 @@ fun Page(
     starting: State<WorkoutSet>,
     submit: () -> Unit,
     delete: () -> Unit,
-    changeLocation: (LocationId) -> Unit,
+    changeLocation: (LocationId?) -> Unit,
     changeExercise: (ExerciseId) -> Unit,
-    changeVariation: (ExerciseVariationId) -> Unit,
+    changeVariation: (ExerciseVariationId?) -> Unit,
     changeReps: (Reps) -> Unit,
     changeWeight: (Weight) -> Unit,
     changeIntensity: (Intensity) -> Unit,
@@ -357,19 +358,6 @@ fun Page(
                         modifier = Modifier.padding(10.dp)
                     ) {
                         LargeDropDownFromList(
-                            items = locations,
-                            label = "Location",
-                            enabled = !locked,
-                            itemToString = { it.name },
-                            onItemSelected = {
-                                if (starting.value.location != it.id) {
-                                    changeLocation(it.id)
-                                }
-                            },
-                            modifier = Modifier.fillMaxWidth(0.8f),
-                            selectedIndex = locations.indexOfFirst { it.id == starting.value.location }
-                        )
-                        LargeDropDownFromList(
                             items = exercises,
                             label = "Exercise",
                             enabled = !locked,
@@ -378,14 +366,26 @@ fun Page(
                             modifier = Modifier.fillMaxWidth(0.8f),
                             selectedIndex = exercises.indexOfFirst { it.id == starting.value.exercise }
                         )
+                        val variationsWithNull = listOf(null).plus(variations.value)
                         LargeDropDownFromList(
-                            items = variations.value,
+                            items = variationsWithNull,
                             label = "Variation",
                             enabled = !locked,
-                            itemToString = { it.name },
-                            onItemSelected = { changeVariation(it.id) },
+                            itemToString = {
+                                if (it != null) {
+                                    val location = locations.firstOrNull { loc ->
+                                        loc.id == it.location
+                                    }
+                                    val locationQualifier =
+                                        if (location != null) { " (${location.name})" } else { "" }
+                                    "${it.name}${locationQualifier}"
+                                } else {
+                                    "None"
+                                }
+                            },
+                            onItemSelected = { changeVariation(it?.id) },
                             modifier = Modifier.fillMaxWidth(0.8f),
-                            selectedIndex = variations.value.indexOfFirst { it.id == starting.value.variation }
+                            selectedIndex = variationsWithNull.indexOfFirst { it?.id == starting.value.variation }
                         )
                     }
                 }
@@ -426,6 +426,8 @@ fun Page(
                 Spacer(modifier = Modifier.fillMaxHeight(0.1f))
             }
         }
+    } else {
+        CircularProgressIndicator()
     }
 }
 

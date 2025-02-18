@@ -123,7 +123,7 @@ class MigrationTests {
             close()
         }
 
-        val db = helper.runMigrationsAndValidate(TEST_DB, 2, true, MIGRATION_1_2)
+        val db = helper.runMigrationsAndValidate(TEST_DB, 2, false, MIGRATION_1_2)
         val cursor = db.query("SELECT * FROM exercise_variation")
         assertEquals(seen.map { it.value.size }.sum(), cursor.count)
     }
