@@ -293,45 +293,9 @@ fun MainComponent(repo: AppRepository) {
         }
         composable(EditExercisePageDestination) {
             val navArgs = this.navArgs
-            var exercises by remember { mutableStateOf(emptyList<Exercise>()) }
-            var muscles by remember { mutableStateOf(emptyList<Muscle>()) }
-            LaunchedEffect(exercises, muscles) {
-                exercises = repo.getExercises()
-                muscles = repo.getMuscles()
-            }
-            EditExercisePage(view = object : EditExercisePageViewModel() {
-                override val startingName: String
-                    get() = navArgs.startingName
-                override val startingMuscle: Muscle
-                    get() = muscles.first { it.id == navArgs.startingMuscle }
-                override val muscles: List<Muscle>
-                    get() = muscles
-
-                override fun submit(name: String, muscle: Muscle) {
-                    viewModelScope.launch {
-                        repo.updateExercise(navArgs.id, name, muscle)
-                    }
-                    destinationsNavigator.popBackStack()
-                }
-
-                override fun redirectToCreateMuscle() {
-                    viewModelScope.launch {
-                        val new = repo.newMuscle()
-                        destinationsNavigator.navigate(
-                            EditMusclePageDestination(
-                                EditMusclePageNavArgs(new.id, new.name)
-                            )
-                        )
-                    }
-                }
-
-                override fun delete() {
-                    viewModelScope.launch {
-                        repo.deleteExercise(navArgs.id)
-                    }
-                    destinationsNavigator.popBackStack()
-                }
-            })
+            EditExercisePage(
+                view = EditExercisePageViewModelImpl(navArgs.id, repo, destinationsNavigator)
+            )
         }
         composable(SetListPageDestination) {
             RegisterSetListPage(repo, destinationsNavigator)

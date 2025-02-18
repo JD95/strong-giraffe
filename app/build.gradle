@@ -16,8 +16,8 @@ android {
         applicationId "org.wspcgir.strong_giraffe"
         minSdk 33
         targetSdk 34
-        versionCode 14
-        versionName "0.8.0"
+        versionCode 15
+        versionName "0.9.0"
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables {
@@ -40,6 +40,7 @@ android {
     }
     buildFeatures {
         compose true
+        buildConfig true
     }
     composeOptions {
         kotlinCompilerExtensionVersion '1.2.0'
@@ -58,6 +59,27 @@ android {
         unitTests.all {
             useJUnitPlatform()
         }
+    }
+    sourceSets {
+        androidTest.assets.srcDirs += files("$projectDir/schemas".toString())
+    }
+}
+
+class RoomSchemaArgProvider implements CommandLineArgumentProvider {
+
+    @InputDirectory
+    @PathSensitive(PathSensitivity.RELATIVE)
+    File schemaDir
+
+    RoomSchemaArgProvider(File schemaDir) {
+        this.schemaDir = schemaDir
+    }
+
+    @Override
+    Iterable<String> asArguments() {
+        // Note: If you're using KAPT and javac, change the line below to
+        // return ["-Aroom.schemaLocation=${schemaDir.path}".toString()].
+        return ["room.schemaLocation=${schemaDir.path}".toString()]
     }
 }
 
@@ -89,10 +111,13 @@ dependencies {
     implementation 'com.google.devtools.ksp:symbol-processing-api:1.7.0-1.0.6'
     ksp "androidx.room:room-compiler:$room_version"
     implementation "androidx.room:room-ktx:$room_version"
-
-    implementation 'androidx.navigation:navigation-compose:2.4.0'
+    androidTestImplementation "androidx.room:room-testing:$room_version"
 
     def compose_destinations_version = '1.6.38-beta'
     implementation "io.github.raamcosta.compose-destinations:core:$compose_destinations_version"
     ksp "io.github.raamcosta.compose-destinations:ksp:$compose_destinations_version"
+}
+
+ksp {
+    arg(new RoomSchemaArgProvider(new File(projectDir, "schemas")))
 }
