@@ -10,8 +10,14 @@ import junit.framework.TestCase.assertEquals
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
+import org.wspcgir.strong_giraffe.model.ids.EquipmentId
+import org.wspcgir.strong_giraffe.model.ids.ExerciseId
+import org.wspcgir.strong_giraffe.model.ids.LocationId
+import org.wspcgir.strong_giraffe.model.ids.SetId
 import org.wspcgir.strong_giraffe.repository.AppDatabase
+import org.wspcgir.strong_giraffe.repository.ExerciseVariationDerivation
 import org.wspcgir.strong_giraffe.repository.MIGRATION_1_2
+import org.wspcgir.strong_giraffe.repository.deriveExerciseVariation
 import java.io.IOException
 import java.util.UUID
 
@@ -51,33 +57,40 @@ class MigrationTests {
         val allowedChars = ('a'..'z')
         val nameLength = (2..10).random()
         val name = (1..nameLength).map { allowedChars.random() }.joinToString("")
-        db.execSQL( "INSERT INTO Location (id, name) VALUES ('$id', '$name');")
+        db.execSQL("INSERT INTO Location (id, name) VALUES ('$id', '$name');")
         return id
     }
+
     private fun createRandomMuscleV1(db: SupportSQLiteDatabase): String {
         val id = UUID.randomUUID().toString()
         val allowedChars = ('a'..'z')
         val nameLength = (2..10).random()
         val name = (1..nameLength).map { allowedChars.random() }.joinToString("")
-        db.execSQL( "INSERT INTO Muscle (id, name) VALUES('$id', '$name');")
+        db.execSQL("INSERT INTO Muscle (id, name) VALUES('$id', '$name');")
         return id
     }
+
     private fun createRandomExerciseV1(db: SupportSQLiteDatabase, muscle: String): String {
         val id = UUID.randomUUID().toString()
         val allowedChars = ('a'..'z')
         val nameLength = (2..10).random()
         val name = (1..nameLength).map { allowedChars.random() }.joinToString("")
-        db.execSQL( "INSERT INTO Exercise (id, name, muscle) VALUES ('$id', '$name', '$muscle');")
+        db.execSQL("INSERT INTO Exercise (id, name, muscle) VALUES ('$id', '$name', '$muscle');")
         return id
     }
-    private fun createRandomEquipmentV1(db: SupportSQLiteDatabase, location: String): String {
+
+    private fun createRandomEquipmentV1(
+        db: SupportSQLiteDatabase,
+        location: String
+    ): Pair<String, String> {
         val id = UUID.randomUUID().toString()
         val allowedChars = ('a'..'z')
         val nameLength = (2..10).random()
         val name = (1..nameLength).map { allowedChars.random() }.joinToString("")
-        db.execSQL( "INSERT INTO Equipment (id, name, location) VALUES ('$id', '$name', '$location');")
-        return id
+        db.execSQL("INSERT INTO Equipment (id, name, location) VALUES ('$id', '$name', '$location');")
+        return Pair(id, name)
     }
+
     private fun createRandomWorkoutSetV1(
         db: SupportSQLiteDatabase,
         exercise: String,
@@ -101,7 +114,7 @@ class MigrationTests {
     @Test
     @Throws(IOException::class)
     fun migrate_1_2() {
-        var seen: Map<String, Set<Pair<String, String>>> = emptyMap()
+        var seen: List<ExerciseVariationDerivation> = emptyList()
         helper.createDatabase(TEST_DB, 1).apply {
             val muscle = createRandomMuscleV1(this)
             val exercises = (1..10).map { createRandomExerciseV1(this, muscle) }
@@ -114,17 +127,27 @@ class MigrationTests {
             (1..20).map {
                 val exercise = exercises.random()
                 val pair = equipments.random()
-                val equipment = pair.first
+                val equipment = pair.first.first
+                val equipmentName = pair.first.second
                 val location = pair.second
-                val variations = seen[exercise] ?: emptySet()
-                seen = seen.plus(exercise to variations.plus(Pair(equipment, location)))
-                createRandomWorkoutSetV1(this, exercise, equipment, location)
+                val set = createRandomWorkoutSetV1(this, exercise, equipment, location)
+                seen = seen.plus(
+                    ExerciseVariationDerivation(
+                        setId = SetId(set),
+                        exerciseId = ExerciseId(exercise),
+                        locationId = LocationId(location),
+                        equipId = EquipmentId(equipment),
+                        equipName = equipmentName,
+                    )
+                )
             }
             close()
         }
 
+        val assignments = deriveExerciseVariation(seen)
+
         val db = helper.runMigrationsAndValidate(TEST_DB, 2, false, MIGRATION_1_2)
         val cursor = db.query("SELECT * FROM exercise_variation")
-        assertEquals(seen.map { it.value.size }.sum(), cursor.count)
+        assertEquals(assignments.variations.size, cursor.count)
     }
 }

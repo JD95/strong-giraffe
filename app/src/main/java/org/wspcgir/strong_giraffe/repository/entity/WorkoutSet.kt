@@ -16,11 +16,16 @@ import androidx.room.*
             childColumns = arrayOf("exercise"),
             onDelete = ForeignKey.CASCADE
         ),
-
         ForeignKey(
             entity = Location::class,
             parentColumns = arrayOf("id"),
             childColumns = arrayOf("location"),
+            onDelete = ForeignKey.CASCADE
+        ),
+        ForeignKey(
+            entity = ExerciseVariation::class,
+            parentColumns = arrayOf("id"),
+            childColumns = arrayOf("variation"),
             onDelete = ForeignKey.CASCADE
         ),
     ]
