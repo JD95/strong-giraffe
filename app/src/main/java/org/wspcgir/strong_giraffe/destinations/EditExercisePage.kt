@@ -39,8 +39,6 @@ import org.wspcgir.strong_giraffe.views.ModalDrawerScaffold
 
 data class EditExercisePageNavArgs(
     val id: ExerciseId,
-    val startingName: String,
-    val startingMuscle: MuscleId,
 )
 
 abstract class EditExercisePageViewModel() : ViewModel() {
@@ -86,7 +84,7 @@ class EditExercisePageViewModelImpl(
 
     init {
         viewModelScope.launch {
-            exerciseMut.value = repo.getExercises().first()
+            exerciseMut.value = repo.getExerciseFromId(id)
             val vars = repo.getVariationsForExercise(id)
             Log.d("EditExercisePageViewModelImpl.init", "$vars")
             variationsMap = vars

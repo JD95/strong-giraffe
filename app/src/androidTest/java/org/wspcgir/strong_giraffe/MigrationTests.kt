@@ -147,7 +147,11 @@ class MigrationTests {
         val assignments = deriveExerciseVariation(seen)
 
         val db = helper.runMigrationsAndValidate(TEST_DB, 2, false, MIGRATION_1_2)
-        val cursor = db.query("SELECT * FROM exercise_variation")
+        var cursor = db.query("SELECT * FROM exercise_variation")
         assertEquals(assignments.variations.size, cursor.count)
+
+        cursor = db.query("SELECT COUNT(variation) FROM workout_set")
+        cursor.moveToNext()
+        assertEquals(assignments.setAssignments.size, cursor.getInt(0))
     }
 }
