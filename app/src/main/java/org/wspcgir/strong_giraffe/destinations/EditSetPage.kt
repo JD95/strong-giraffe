@@ -55,7 +55,6 @@ import com.ramcosta.composedestinations.annotation.Destination
 import com.ramcosta.composedestinations.navigation.DestinationsNavigator
 import kotlinx.coroutines.launch
 import org.wspcgir.strong_giraffe.model.Comment
-import org.wspcgir.strong_giraffe.model.Equipment
 import org.wspcgir.strong_giraffe.model.Exercise
 import org.wspcgir.strong_giraffe.model.ExerciseVariation
 import org.wspcgir.strong_giraffe.model.Intensity
@@ -246,7 +245,6 @@ fun EditSetPage(view: EditSetPageViewModel) {
         toggleSetLock = view::toggleSetLock,
         submit = view::submit,
         delete = view::delete,
-        changeLocation = view::changeLocation,
         changeExercise = view::changeExercise,
         changeVariation = view::changeVariation,
         changeReps = view::changeReps,
@@ -270,7 +268,6 @@ fun Page(
     starting: State<WorkoutSet>,
     submit: () -> Unit,
     delete: () -> Unit,
-    changeLocation: (LocationId?) -> Unit,
     changeExercise: (ExerciseId) -> Unit,
     changeVariation: (ExerciseVariationId?) -> Unit,
     changeReps: (Reps) -> Unit,
@@ -559,7 +556,6 @@ private fun Preview() {
             starting = remember { mutableStateOf(setTemplate) },
             submit = { },
             delete = { },
-            changeLocation = { },
             changeExercise = { },
             changeVariation = { },
             changeReps = { },
