@@ -2,6 +2,7 @@ package org.wspcgir.strong_giraffe.views
 
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.RowScope
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material3.BottomAppBar
@@ -23,7 +24,7 @@ import kotlinx.coroutines.launch
 fun ModalDrawerScaffold(
     title: String,
     initialDrawerValue: DrawerValue = DrawerValue.Closed,
-    drawerContent: @Composable ColumnScope.() -> Unit,
+    drawerContent: @Composable () -> Unit,
     actionButton: @Composable () -> Unit,
     content: @Composable (PaddingValues) -> Unit,
 ) {
@@ -41,12 +42,12 @@ fun ModalDrawerScaffold(
             },
             bottomBar = {
                 BottomAppBar(
-                    floatingActionButton = actionButton,
-                    icons = {
+                    actions = {
                         IconButton(onClick = { scope.launch { drawerState.open() } }) {
                             Icon(Icons.Default.Menu, contentDescription = "Menu Button")
                         }
-                    }
+                    },
+                    floatingActionButton = actionButton
                 )
             },
             content = content

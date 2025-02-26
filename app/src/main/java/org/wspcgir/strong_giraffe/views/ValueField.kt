@@ -7,11 +7,12 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
-import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.tooling.preview.Preview
+import org.wspcgir.strong_giraffe.ui.theme.StrongGiraffeTheme
 
 @Composable
 fun IntField(
@@ -49,7 +50,6 @@ fun FloatField(
     )
 }
 
-@OptIn(ExperimentalComposeUiApi::class)
 @Composable
 fun <T> ValueField(
     label: String,
@@ -62,15 +62,11 @@ fun <T> ValueField(
 ) {
     val keyboardController = LocalSoftwareKeyboardController.current
     var text by remember(key1 = start) { mutableStateOf(start.toString()) }
-    var valid by remember { mutableStateOf(true) }
-
-    val validStateColors = TextFieldDefaults
-        .textFieldColors()
-    val errorStateColors = TextFieldDefaults.textFieldColors(
-        containerColor = Color.Red.copy(alpha = 0.1f),
-        errorTrailingIconColor = Color.Red,
-        textColor = Color.Red
-    )
+    var valid by remember {
+        mutableStateOf(
+            fromString(start.toString()) != null
+        )
+    }
 
     TextField(
         value = text,
@@ -79,8 +75,18 @@ fun <T> ValueField(
         label = { Text(label) },
         keyboardOptions = KeyboardOptions.Default.copy(keyboardType = KeyboardType.Number),
         keyboardActions = KeyboardActions(onDone = { keyboardController?.hide() }),
-        colors = if (valid) { validStateColors } else { errorStateColors },
-        trailingIcon = { if (!valid) { Icons.Default.Warning } },
+        colors = TextFieldDefaults
+            .colors()
+            .copy(
+                errorContainerColor = Color.Red.copy(alpha = 0.1f),
+                errorTrailingIconColor = Color.Red,
+                errorTextColor = Color.Red
+            ),
+        trailingIcon = {
+            if (!valid) {
+                Icons.Default.Warning
+            }
+        },
         isError = !valid,
         singleLine = singleLine,
         onValueChange = { it ->
@@ -92,4 +98,30 @@ fun <T> ValueField(
             onChange(value)
         }
     )
+}
+
+@Composable
+@Preview
+private fun ValidState() {
+    StrongGiraffeTheme {
+        ValueField(
+            start = "Hi",
+            label = "Test",
+            enabled = true,
+            fromString = { it },
+        )
+    }
+}
+
+@Composable
+@Preview
+private fun InvalidState() {
+    StrongGiraffeTheme {
+        ValueField(
+            start = "Hi",
+            label = "Test",
+            enabled = true,
+            fromString = { null },
+        )
+    }
 }

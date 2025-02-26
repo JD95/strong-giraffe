@@ -12,4 +12,5 @@ plugins {
     id 'org.jetbrains.kotlin.plugin.serialization' version '1.9.23'
     id 'io.kotest' version '0.4.11'
     id 'com.google.dagger.hilt.android' version '2.51.1' apply false
+    id 'androidx.room' version '2.6.1' apply false
 }
