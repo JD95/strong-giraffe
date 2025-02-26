@@ -17,6 +17,7 @@ import org.wspcgir.strong_giraffe.model.ids.SetId
 import org.wspcgir.strong_giraffe.repository.AppDatabase
 import org.wspcgir.strong_giraffe.repository.ExerciseVariationDerivation
 import org.wspcgir.strong_giraffe.repository.MIGRATION_1_2
+import org.wspcgir.strong_giraffe.repository.MIGRATION_2_3
 import org.wspcgir.strong_giraffe.repository.deriveExerciseVariation
 import java.io.IOException
 import java.util.UUID
@@ -26,14 +27,16 @@ class MigrationTests {
     private val TEST_DB = "migration-test"
 
     private val ALL_MIGRATIONS = arrayOf(
-        MIGRATION_1_2
+        MIGRATION_1_2,
+        MIGRATION_2_3
     )
 
     @get:Rule
     val helper: MigrationTestHelper = MigrationTestHelper(
-        InstrumentationRegistry.getInstrumentation(),
-        AppDatabase::class.java.canonicalName,
-        FrameworkSQLiteOpenHelperFactory()
+        instrumentation = InstrumentationRegistry.getInstrumentation(),
+        databaseClass = AppDatabase::class.java,
+        specs = emptyList(),
+        openFactory = FrameworkSQLiteOpenHelperFactory()
     )
 
     @Test

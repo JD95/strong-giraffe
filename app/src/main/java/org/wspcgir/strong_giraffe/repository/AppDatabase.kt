@@ -30,9 +30,9 @@ abstract class AppDatabase : RoomDatabase() {
 }
 
 val MIGRATION_1_2 = object : Migration(1, 2) {
-    override fun migrate(database: SupportSQLiteDatabase) {
+    override fun migrate(db: SupportSQLiteDatabase) {
         // Step 1. Create and populate the new exercise_variation table with indexes
-        database.execSQL(
+        db.execSQL(
             """
             CREATE TABLE exercise_variation(
               id TEXT NOT NULL,
@@ -45,15 +45,15 @@ val MIGRATION_1_2 = object : Migration(1, 2) {
             );
             """.trimIndent()
         )
-        database.execSQL("CREATE INDEX IF NOT EXISTS index_exercise_variation_id ON exercise_variation(id);")
-        database.execSQL("CREATE INDEX IF NOT EXISTS index_exercise_variation_exercise ON exercise_variation(exercise);")
+        db.execSQL("CREATE INDEX IF NOT EXISTS index_exercise_variation_id ON exercise_variation(id);")
+        db.execSQL("CREATE INDEX IF NOT EXISTS index_exercise_variation_exercise ON exercise_variation(exercise);")
 
         // Step 2. Make location and equipment optional, add optional variation column
 
         // Drop indexes on workout_set
-        database.execSQL("DROP INDEX index_workout_set_id;");
-        database.execSQL("DROP INDEX index_workout_set_location_exercise_equipment;")
-        database.execSQL("DROP INDEX index_workout_set_time;")
+        db.execSQL("DROP INDEX index_workout_set_id;");
+        db.execSQL("DROP INDEX index_workout_set_location_exercise_equipment;")
+        db.execSQL("DROP INDEX index_workout_set_time;")
 
         // Create a new table with updated columns,
         // sqlite doesn't let us alter existing columns
@@ -62,7 +62,7 @@ val MIGRATION_1_2 = object : Migration(1, 2) {
         // - location is now NULL
         // - equipment is now NULL
         // - weight is now REAL
-        database.execSQL(
+        db.execSQL(
             """
             CREATE TABLE workout_set_new(
               id TEXT NOT NULL,
@@ -84,7 +84,7 @@ val MIGRATION_1_2 = object : Migration(1, 2) {
         )
 
         // Insert old values into new table and drop old
-        database.execSQL(
+        db.execSQL(
             """
             INSERT INTO workout_set_new 
             SELECT 
@@ -101,17 +101,17 @@ val MIGRATION_1_2 = object : Migration(1, 2) {
             FROM workout_set;
             """.trimIndent()
         )
-        database.execSQL("ALTER TABLE workout_set RENAME TO workout_set_old;")
-        database.execSQL("ALTER TABLE workout_set_new RENAME TO workout_set;")
+        db.execSQL("ALTER TABLE workout_set RENAME TO workout_set_old;")
+        db.execSQL("ALTER TABLE workout_set_new RENAME TO workout_set;")
 
         // Create new indexes
-        database.execSQL("CREATE INDEX IF NOT EXISTS index_workout_set_id ON workout_set(id);")
-        database.execSQL("CREATE INDEX IF NOT EXISTS index_workout_set_exercise ON workout_set(exercise);")
-        database.execSQL("CREATE INDEX IF NOT EXISTS index_workout_set_time ON workout_set(time);")
+        db.execSQL("CREATE INDEX IF NOT EXISTS index_workout_set_id ON workout_set(id);")
+        db.execSQL("CREATE INDEX IF NOT EXISTS index_workout_set_exercise ON workout_set(exercise);")
+        db.execSQL("CREATE INDEX IF NOT EXISTS index_workout_set_time ON workout_set(time);")
 
 
         // Step 3. Manually derive variations from existing equipment
-        val cursor = database.query(
+        val cursor = db.query(
             """
             SELECT
               ws.id AS set_id,
@@ -138,7 +138,7 @@ val MIGRATION_1_2 = object : Migration(1, 2) {
         val assignments = deriveExerciseVariation(derivations)
         for (entry in assignments.variations) {
             val variation = entry.value
-            database.execSQL(
+            db.execSQL(
                 """
                 INSERT INTO exercise_variation
                 VALUES (
@@ -152,7 +152,7 @@ val MIGRATION_1_2 = object : Migration(1, 2) {
         }
         for (entry in assignments.setAssignments) {
             val variation = assignments.variations[entry.value]!!
-            database.execSQL(
+            db.execSQL(
                 """
                 UPDATE workout_set
                 SET variation = '${variation.id.value}'
