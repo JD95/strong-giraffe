@@ -34,6 +34,7 @@ import androidx.lifecycle.viewModelScope
 import androidx.room.Room
 import com.ramcosta.composedestinations.DestinationsNavHost
 import com.ramcosta.composedestinations.annotation.Destination
+import com.ramcosta.composedestinations.annotation.RootNavGraph
 import com.ramcosta.composedestinations.manualcomposablecalls.composable
 import com.ramcosta.composedestinations.navigation.DestinationsNavigator
 import dagger.hilt.android.AndroidEntryPoint
@@ -373,7 +374,8 @@ fun locationRedirect(
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-@Destination(start = true)
+@Destination
+@RootNavGraph(start = true)
 fun HomePage(
     gotoLocationsList: () -> Unit,
     gotoMuscleList: () -> Unit,
