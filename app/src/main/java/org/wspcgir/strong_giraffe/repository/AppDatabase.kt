@@ -51,7 +51,7 @@ val MIGRATION_1_2 = object : Migration(1, 2) {
         // Step 2. Make location and equipment optional, add optional variation column
 
         // Drop indexes on workout_set
-        db.execSQL("DROP INDEX index_workout_set_id;");
+        db.execSQL("DROP INDEX index_workout_set_id;")
         db.execSQL("DROP INDEX index_workout_set_location_exercise_equipment;")
         db.execSQL("DROP INDEX index_workout_set_time;")
 

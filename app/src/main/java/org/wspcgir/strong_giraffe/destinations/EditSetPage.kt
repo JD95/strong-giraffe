@@ -18,6 +18,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Done
@@ -324,7 +325,7 @@ fun Page(
             actionButton = {
                 FloatingActionButton(onClick = submit) {
                     if (locked) {
-                        Icon(Icons.Default.ArrowBack, contentDescription = "Set Locked")
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Set Locked")
                     } else if (validReps.value && validWeight.value) {
                         Icon(Icons.Default.Done, contentDescription = "Save Set")
                     } else {
