@@ -22,15 +22,15 @@ import java.util.UUID
     views = [
         SetSummary::class
     ],
-    version = 2,
+    version = 3,
     exportSchema = true,
 )
 abstract class AppDatabase : RoomDatabase() {
     abstract fun dao(): AppDao
 }
 
-val MIGRATION_1_2 = object : Migration(1,2) {
-    override fun migrate(database : SupportSQLiteDatabase) {
+val MIGRATION_1_2 = object : Migration(1, 2) {
+    override fun migrate(database: SupportSQLiteDatabase) {
         // Step 1. Create and populate the new exercise_variation table with indexes
         database.execSQL(
             """
@@ -99,7 +99,8 @@ val MIGRATION_1_2 = object : Migration(1,2) {
               intensity,
               comment
             FROM workout_set;
-            """.trimIndent())
+            """.trimIndent()
+        )
         database.execSQL("ALTER TABLE workout_set RENAME TO workout_set_old;")
         database.execSQL("ALTER TABLE workout_set_new RENAME TO workout_set;")
 
@@ -120,9 +121,10 @@ val MIGRATION_1_2 = object : Migration(1,2) {
               e.name AS equip_name 
             FROM workout_set ws
               JOIN Equipment e ON ws.equipment = e.id
-            """.trimIndent())
+            """.trimIndent()
+        )
         var derivations: List<ExerciseVariationDerivation> = emptyList()
-        while (cursor.moveToNext()){
+        while (cursor.moveToNext()) {
             derivations = derivations.plus(
                 ExerciseVariationDerivation(
                     setId = SetId(cursor.getString(0)),
@@ -161,6 +163,12 @@ val MIGRATION_1_2 = object : Migration(1,2) {
     }
 }
 
+val MIGRATION_2_3 = object : Migration(2, 3) {
+    override fun migrate(db: SupportSQLiteDatabase) {
+        // Just adding indexes, nothing to do here
+    }
+}
+
 data class ExerciseVariationDerivation(
     val setId: SetId,
     val exerciseId: ExerciseId,
@@ -177,27 +185,27 @@ data class ExerciseVariationAssignments(
 fun deriveExerciseVariation(
     items: List<ExerciseVariationDerivation>
 ): ExerciseVariationAssignments {
-    var exerciseAssignments :
+    var exerciseAssignments:
             Map<ExerciseId, Map<LocationId, Map<EquipmentId, ExerciseVariationId>>> = emptyMap()
-    var setAssignments : Map<SetId, ExerciseVariationId> = emptyMap()
-    var variations : Map<ExerciseVariationId, Variation> = emptyMap()
+    var setAssignments: Map<SetId, ExerciseVariationId> = emptyMap()
+    var variations: Map<ExerciseVariationId, Variation> = emptyMap()
     for (item in items) {
 
-    val locationAssignments = exerciseAssignments[item.exerciseId] ?: emptyMap()
-    val equipmentAssignments = locationAssignments[item.locationId] ?: emptyMap()
-    val variationId = equipmentAssignments[item.equipId]
-        ?: ExerciseVariationId(UUID.randomUUID().toString())
-    val variation = Variation(variationId, item.equipName, item.exerciseId, item.locationId)
-    variations = variations.plus(variationId to variation)
-    setAssignments = setAssignments.plus(item.setId to variationId)
-    exerciseAssignments = exerciseAssignments
-        .plus(
-            item.exerciseId to locationAssignments
-                .plus(
-                    item.locationId to equipmentAssignments
-                        .plus(item.equipId to variationId)
-                )
-        )
+        val locationAssignments = exerciseAssignments[item.exerciseId] ?: emptyMap()
+        val equipmentAssignments = locationAssignments[item.locationId] ?: emptyMap()
+        val variationId = equipmentAssignments[item.equipId]
+            ?: ExerciseVariationId(UUID.randomUUID().toString())
+        val variation = Variation(variationId, item.equipName, item.exerciseId, item.locationId)
+        variations = variations.plus(variationId to variation)
+        setAssignments = setAssignments.plus(item.setId to variationId)
+        exerciseAssignments = exerciseAssignments
+            .plus(
+                item.exerciseId to locationAssignments
+                    .plus(
+                        item.locationId to equipmentAssignments
+                            .plus(item.equipId to variationId)
+                    )
+            )
     }
 
     return ExerciseVariationAssignments(variations, setAssignments)

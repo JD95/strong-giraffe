@@ -10,6 +10,7 @@ import dagger.hilt.components.SingletonComponent
 import org.wspcgir.strong_giraffe.repository.AppDatabase
 import org.wspcgir.strong_giraffe.repository.AppRepository
 import org.wspcgir.strong_giraffe.repository.MIGRATION_1_2
+import org.wspcgir.strong_giraffe.repository.MIGRATION_2_3
 import javax.inject.Singleton
 
 @Module
@@ -22,7 +23,7 @@ object AppRepositoryModule {
     ): AppRepository {
         val db =
             Room.databaseBuilder(context, AppDatabase::class.java, "data.db")
-                .addMigrations(MIGRATION_1_2)
+                .addMigrations(MIGRATION_1_2, MIGRATION_2_3)
                 .build()
         val dao = db.dao()
         return AppRepository(dao)

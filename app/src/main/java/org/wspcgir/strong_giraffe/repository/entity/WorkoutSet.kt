@@ -8,6 +8,8 @@ import androidx.room.*
         Index(value = arrayOf("id")),
         Index(value = arrayOf("exercise")),
         Index(value = arrayOf("time")),
+        Index(value = arrayOf("location")),
+        Index(value = arrayOf("variation"))
     ],
     foreignKeys = [
         ForeignKey(

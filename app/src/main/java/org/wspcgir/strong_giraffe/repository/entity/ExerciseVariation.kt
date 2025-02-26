@@ -10,7 +10,8 @@ import androidx.room.PrimaryKey
     tableName = "exercise_variation",
     indices = [
         Index(value = arrayOf("id")),
-        Index(value = arrayOf("exercise"))
+        Index(value = arrayOf("exercise")),
+        Index(value = arrayOf("location"))
     ],
     foreignKeys = [
         ForeignKey(
