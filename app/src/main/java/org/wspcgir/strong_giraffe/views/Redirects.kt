@@ -84,9 +84,7 @@ fun ExerciseEditRedirection(
         scope.launch {
             val new = repo.newExercise(muscle)
             dest.navigate(
-                EditExercisePageDestination(
-                    EditExercisePageNavArgs(new.id)
-                )
+                EditExercisePageDestination(new.id)
             )
         }
     }

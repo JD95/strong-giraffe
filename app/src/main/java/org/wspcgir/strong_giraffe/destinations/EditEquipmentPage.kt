@@ -95,7 +95,6 @@ fun Page(view: EditEquipmentPageViewModel) {
             LargeDropDownFromList(
                 modifier = Modifier.fillMaxWidth(0.8f),
                 items = view.locations,
-                label = "",
                 selectedIndex = view.locations.indexOfFirst { it.id == selectedLocation.id },
                 itemToString = { it.name },
                 onItemSelected = { selectedLocation = it }

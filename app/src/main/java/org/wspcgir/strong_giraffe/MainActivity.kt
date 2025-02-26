@@ -25,12 +25,14 @@ import com.ramcosta.composedestinations.DestinationsNavHost
 import com.ramcosta.composedestinations.annotation.Destination
 import com.ramcosta.composedestinations.manualcomposablecalls.composable
 import com.ramcosta.composedestinations.navigation.DestinationsNavigator
+import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 import org.wspcgir.strong_giraffe.repository.MIGRATION_1_2
 import java.time.Instant
 
 
+@AndroidEntryPoint
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -261,18 +263,14 @@ fun MainComponent(repo: AppRepository) {
                     viewModelScope.launch {
                         val new = repo.newExercise(muscles[0].id)
                         destinationsNavigator.navigate(
-                            EditExercisePageDestination(
-                                EditExercisePageNavArgs(new.id)
-                            )
+                            EditExercisePageDestination(new.id)
                         )
                     }
                 }
 
                 override fun goto(value: Exercise) {
                     destinationsNavigator.navigate(
-                        EditExercisePageDestination(
-                            EditExercisePageNavArgs(value.id)
-                        )
+                        EditExercisePageDestination(value.id)
                     )
                 }
 
@@ -295,7 +293,8 @@ fun MainComponent(repo: AppRepository) {
         composable(EditExercisePageDestination) {
             val navArgs = this.navArgs
             EditExercisePage(
-                view = EditExercisePageViewModelImpl(navArgs.id, repo, destinationsNavigator)
+                navArgs.id,
+                view = EditExercisePageViewModelImpl(repo, destinationsNavigator)
             )
         }
         composable(SetListPageDestination) {

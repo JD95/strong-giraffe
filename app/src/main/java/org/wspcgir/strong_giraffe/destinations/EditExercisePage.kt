@@ -13,18 +13,19 @@ import androidx.compose.material.icons.filled.Done
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
-import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
+import androidx.compose.ui.platform.SoftwareKeyboardController
 import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import org.wspcgir.strong_giraffe.views.LargeDropDownFromList
 import org.wspcgir.strong_giraffe.model.Muscle
 import org.wspcgir.strong_giraffe.model.ids.ExerciseId
-import org.wspcgir.strong_giraffe.model.ids.MuscleId
 import org.wspcgir.strong_giraffe.views.FIELD_NAME_FONT_SIZE
 import org.wspcgir.strong_giraffe.views.RequiredDataRedirect
 import com.ramcosta.composedestinations.annotation.Destination
@@ -34,91 +35,72 @@ import org.wspcgir.strong_giraffe.model.Exercise
 import org.wspcgir.strong_giraffe.model.ExerciseVariation
 import org.wspcgir.strong_giraffe.model.Location
 import org.wspcgir.strong_giraffe.model.ids.ExerciseVariationId
+import org.wspcgir.strong_giraffe.model.previewLocations
+import org.wspcgir.strong_giraffe.model.previewMuscles
 import org.wspcgir.strong_giraffe.repository.AppRepository
+import org.wspcgir.strong_giraffe.ui.theme.StrongGiraffeTheme
+import org.wspcgir.strong_giraffe.util.Maybe
+import org.wspcgir.strong_giraffe.util.Value
 import org.wspcgir.strong_giraffe.views.ModalDrawerScaffold
 
-data class EditExercisePageNavArgs(
-    val id: ExerciseId,
-)
-
 abstract class EditExercisePageViewModel() : ViewModel() {
-    abstract val exercise: State<Exercise?>
-    abstract val selectedMuscle: State<Muscle?>
+    abstract val exercise: Value<Exercise?>
     abstract val muscles: State<List<Muscle>>
-    abstract val variations: State<List<State<ExerciseVariation>>>
+    abstract val variations: State<List<Value<ExerciseVariation>>>
     abstract val locations: State<List<Location>>
 
-    abstract fun submit(name: String, muscle: MuscleId)
+    abstract fun init(id: ExerciseId)
+    abstract fun backPage()
     abstract fun redirectToCreateMuscle()
     abstract fun delete()
-    abstract fun updateVariationLocation(
-        variation: ExerciseVariation,
-        location: Location?
-    )
-
-    abstract fun updateVariationName(
-        variation: ExerciseVariation,
-        name: String
-    )
-
+    abstract fun saveVariation(id: ExerciseVariationId)
+    abstract fun saveExercise()
     abstract fun addNewVariation()
-    abstract fun changeName(name: String)
-    abstract fun selectMuscle(muscle: Muscle)
 }
 
+
 class EditExercisePageViewModelImpl(
-    private val id: ExerciseId,
     private val repo: AppRepository,
     private val nav: DestinationsNavigator
 ) : EditExercisePageViewModel() {
 
     private var variationsMap:
-            Map<ExerciseVariationId, MutableState<ExerciseVariation>> = emptyMap()
+            Map<ExerciseVariationId, Value<ExerciseVariation>> = emptyMap()
 
-    private val exerciseMut: MutableState<Exercise?> = mutableStateOf(null)
-    private val selectedMuscleMut: MutableState<Muscle?> = mutableStateOf(null)
-    private val variationsMut: MutableState<List<State<ExerciseVariation>>> =
+    private val exerciseMut: Value<Exercise?> = Value(mutableStateOf(null))
+    private val variationsMut: MutableState<List<Value<ExerciseVariation>>> =
         mutableStateOf(emptyList())
     private val musclesMut: MutableState<List<Muscle>> = mutableStateOf(emptyList())
     private val locationsMut: MutableState<List<Location>> = mutableStateOf(emptyList())
 
-    init {
-        viewModelScope.launch {
-            exerciseMut.value = repo.getExerciseFromId(id)
-            val vars = repo.getVariationsForExercise(id)
-            Log.d("EditExercisePageViewModelImpl.init", "$vars")
-            variationsMap = vars
-                .foldRight(emptyMap()) { x, xs -> xs.plus(x.id to mutableStateOf(x)) }
-            rebuildVariationsListFromMap()
-            musclesMut.value = repo.getMuscles()
-            selectedMuscleMut.value = musclesMut.value
-                .first { it.id == exerciseMut.value?.muscle }
-            locationsMut.value = repo.getLocations()
-            Log.i("DEBUG", "EditExercisePageViewModel initialized")
-            Log.i("DEBUG", "The exercise is ${exerciseMut.value}")
-            Log.i("DEBUG", "The muscle is ${selectedMuscleMut.value}")
-        }
-    }
-
-    override val exercise: State<Exercise?>
+    override val exercise: Value<Exercise?>
         get() = exerciseMut
-
-    override val selectedMuscle: State<Muscle?>
-        get() = selectedMuscleMut
 
     override val muscles: State<List<Muscle>>
         get() = musclesMut
 
-    override val variations: State<List<State<ExerciseVariation>>>
+    override val variations: State<List<Value<ExerciseVariation>>>
         get() = variationsMut
 
     override val locations: State<List<Location>>
         get() = locationsMut
 
-    override fun submit(name: String, muscle: MuscleId) {
+    override fun init(id: ExerciseId) {
         viewModelScope.launch {
-            repo.updateExercise(id, name, muscle)
+            exerciseMut.state.value = repo.getExerciseFromId(id)
+            val vars = repo.getVariationsForExercise(id)
+            Log.d("EditExercisePageViewModelImpl.init", "$vars")
+            variationsMap = vars
+                .foldRight(emptyMap()) { x, xs -> xs.plus(x.id to Value(mutableStateOf(x))) }
+            rebuildVariationsListFromMap()
+            musclesMut.value = repo.getMuscles()
+            locationsMut.value = repo.getLocations()
+            Log.i("DEBUG", "EditExercisePageViewModel initialized")
+            Log.i("DEBUG", "The exercise is ${exerciseMut.state.value}")
         }
+    }
+
+    override fun backPage() {
         nav.popBackStack()
     }
 
@@ -134,45 +116,39 @@ class EditExercisePageViewModelImpl(
     }
 
     override fun delete() {
-        viewModelScope.launch {
-            repo.deleteExercise(id)
+        exercise.state.value?.let {
+            viewModelScope.launch {
+                repo.deleteExercise(it.id)
+            }
         }
         nav.popBackStack()
     }
 
-    override fun updateVariationLocation(variation: ExerciseVariation, location: Location?) {
-        viewModelScope.launch {
-            variationsMap[variation.id]?.let {
-                it.value = it.value.copy(location = location?.id)
+    override fun saveVariation(id: ExerciseVariationId) {
+        val variation = variationsMap[id]
+        if (variation != null) {
+            val v = variation.state.value
+            viewModelScope.launch {
+                repo.updateVariation(v.id, v.name, v.location)
             }
-            repo.updateVariation(variation.id, variation.name, location?.id)
         }
     }
 
-    override fun updateVariationName(variation: ExerciseVariation, name: String) {
+    override fun saveExercise() {
         viewModelScope.launch {
-            variationsMap[variation.id]?.let {
-                it.value = it.value.copy(name = name)
-            }
-            repo.updateVariation(variation.id, name, variation.location)
+            val e = exercise.state.value
+            e?.let { repo.updateExercise(it.id, it.name, it.muscle) }
         }
     }
 
     override fun addNewVariation() {
-        viewModelScope.launch {
-            val variation = repo.newExerciseVariation(id)
-            variationsMap = variationsMap.plus(variation.id to mutableStateOf(variation))
-            rebuildVariationsListFromMap()
+        exercise.state.value?.let {
+            viewModelScope.launch {
+                val variation = repo.newExerciseVariation(it.id)
+                variationsMap = variationsMap.plus(variation.id to Value(mutableStateOf(variation)))
+                rebuildVariationsListFromMap()
+            }
         }
-    }
-
-    override fun changeName(name: String) {
-        exerciseMut.value = exerciseMut.value?.copy(name = name)
-    }
-
-    override fun selectMuscle(muscle: Muscle) {
-        exerciseMut.value = exerciseMut.value?.copy(muscle = muscle.id)
-        selectedMuscleMut.value = muscle
     }
 
     private fun rebuildVariationsListFromMap() {
@@ -182,66 +158,37 @@ class EditExercisePageViewModelImpl(
 
 
 @Composable
-@Destination(navArgsDelegate = EditExercisePageNavArgs::class)
-fun EditExercisePage(view: EditExercisePageViewModel) {
+@Destination
+fun EditExercisePage(id: ExerciseId, view: EditExercisePageViewModel = hiltViewModel()) {
+    view.init(id)
     if (view.muscles.value.isEmpty()) {
         RequiredDataRedirect(missing = "Muscle") {
             view.redirectToCreateMuscle()
         }
     } else {
-        key(view.exercise.value, view.selectedMuscle.value) {
-            if (view.exercise.value != null && view.selectedMuscle.value != null) {
-                Page(view)
-            } else {
-                Column(
-                    modifier = Modifier.fillMaxSize(),
-                    verticalArrangement = Arrangement.Center,
-                    horizontalAlignment = Alignment.CenterHorizontally
-                ) {
-                    CircularProgressIndicator(modifier = Modifier.fillMaxSize(0.6f))
-                }
+        if (view.exercise.state.value != null) {
+            Page(view)
+        } else {
+            Column(
+                modifier = Modifier.fillMaxSize(),
+                verticalArrangement = Arrangement.Center,
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                CircularProgressIndicator(modifier = Modifier.fillMaxSize(0.6f))
             }
         }
     }
 }
 
 @Composable
-@OptIn(ExperimentalMaterial3Api::class, ExperimentalComposeUiApi::class)
+@OptIn(ExperimentalMaterial3Api::class)
 private fun Page(view: EditExercisePageViewModel) {
     val keyboardController = LocalSoftwareKeyboardController.current
     ModalDrawerScaffold(
         title = "Edit Exercise",
-        actionButton = {
-            Row(
-                horizontalArrangement = Arrangement.spacedBy(20.dp)
-            ) {
-                FloatingActionButton(
-                    onClick = { view.addNewVariation() }
-                ) {
-                    Icon(Icons.Default.Add, contentDescription = "Add Variation")
-                }
-
-                FloatingActionButton(
-                    onClick = {
-                        view.submit(
-                            view.exercise.value!!.name,
-                            view.exercise.value!!.muscle
-                        )
-                    }
-                ) {
-                    Icon(Icons.Default.Done, contentDescription = "Save Location")
-                }
-            }
-        },
-        drawerContent = {
-            Button(onClick = view::delete) {
-                Text("Delete")
-                Spacer(modifier = Modifier.fillMaxWidth(0.03f))
-                Icon(Icons.Default.Delete, contentDescription = "delete exercise")
-            }
-        }
+        actionButton = { ActionButtons(view) },
+        drawerContent = { Drawer(view) }
     ) { innerPadding ->
-
         Column(
             modifier = Modifier
                 .padding(innerPadding)
@@ -249,56 +196,122 @@ private fun Page(view: EditExercisePageViewModel) {
             verticalArrangement = Arrangement.spacedBy(10.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            Column {
-                Text("Name", fontSize = FIELD_NAME_FONT_SIZE)
-                var exerciseName by remember { mutableStateOf(view.exercise.value!!.name) }
-                TextField(
-                    modifier = Modifier
-                        .fillMaxWidth(0.8f)
-                        .onFocusChanged { if (!it.isFocused) { view.changeName(exerciseName) } },
-                    value = exerciseName,
-                    onValueChange = { exerciseName = it },
-                    keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
-                    keyboardActions = KeyboardActions(
-                        onDone = {
-                            view.changeName(exerciseName)
-                            keyboardController?.hide()
-                        }
-                    )
-                )
-            }
-            Column {
-                Text("Muscle", fontSize = FIELD_NAME_FONT_SIZE)
-                LargeDropDownFromList(
-                    modifier = Modifier.fillMaxWidth(0.8f),
-                    items = view.muscles.value,
-                    label = view.selectedMuscle.value!!.name,
-                    itemToString = { it.name },
-                    onItemSelected = { view.selectMuscle(it) },
-                    selectedIndex = view.muscles.value.indexOf(view.selectedMuscle.value)
-                )
-            }
-            Column {
-                Text("Variations", fontSize = FIELD_NAME_FONT_SIZE)
-                LazyColumn(
-                    modifier = Modifier.fillMaxWidth(0.8f),
-                    verticalArrangement = Arrangement.spacedBy(10.dp)
-                ) {
-                    items(view.variations.value) { variation ->
-                        VariationCard(
-                            value = variation.value,
-                            locations = view.locations.value,
-                            onChangeLocation = {
-                                view.updateVariationLocation(variation.value, it)
-                                Log.d("EditExercisePage", "Location Updated")
-                            },
-                            onChangeName = { view.updateVariationName(variation.value, it) }
-                        )
-                    }
-                }
-            }
+            Column { NameField(view, keyboardController) }
+            Column { MuscleField(view) }
+            Column { Variations(view) }
         }
     }
+}
+
+@Composable
+private fun ActionButtons(view: EditExercisePageViewModel) {
+    Row(
+        horizontalArrangement = Arrangement.spacedBy(20.dp)
+    ) {
+        FloatingActionButton(
+            onClick = { view.addNewVariation() }
+        ) {
+            Icon(Icons.Default.Add, contentDescription = "Add Variation")
+        }
+
+        FloatingActionButton(
+            onClick = {
+                view.saveExercise()
+                view.backPage()
+            }
+        ) {
+            Icon(Icons.Default.Done, contentDescription = "Save Location")
+        }
+    }
+}
+
+@Composable
+private fun Drawer(view: EditExercisePageViewModel) {
+    Button(onClick = view::delete) {
+        Text("Delete")
+        Spacer(modifier = Modifier.fillMaxWidth(0.03f))
+        Icon(Icons.Default.Delete, contentDescription = "delete exercise")
+    }
+}
+
+@Composable
+private fun Variations(view: EditExercisePageViewModel) {
+    Text("Variations", fontSize = FIELD_NAME_FONT_SIZE)
+    LazyColumn(
+        modifier = Modifier.fillMaxWidth(0.8f),
+        verticalArrangement = Arrangement.spacedBy(10.dp)
+    ) {
+        items(view.variations.value) { variation ->
+            VariationCard(
+                value = variation.state.value,
+                locations = view.locations.value,
+                onChangeLocation = { location ->
+                    variation.modify {
+                        it.copy(location = location?.id)
+                    }
+                    view.saveVariation(variation.state.value.id)
+                    Log.d("EditExercisePage", "Location Updated")
+                },
+                onChangeName = { name ->
+                    variation.modify { it.copy(name = name) }
+                    view.saveVariation(variation.state.value.id)
+                }
+            )
+        }
+    }
+}
+
+@Composable
+private fun MuscleField(view: EditExercisePageViewModel) {
+    val muscle = remember {
+        view.exercise.child(
+            { it?.muscle },
+            { p, c -> c?.let { p?.copy(muscle = it) } ?: p }
+        )
+    }
+    Text("Muscle", fontSize = FIELD_NAME_FONT_SIZE)
+    LargeDropDownFromList(
+        modifier = Modifier.fillMaxWidth(0.8f),
+        items = view.muscles.value,
+        itemToString = { it.name },
+        onItemSelected = {
+            muscle.set(it.id)
+            view.saveExercise()
+        },
+        selectedIndex = view.muscles.value.map { it.id }.indexOf(muscle.state.value)
+    )
+}
+
+@Composable
+private fun NameField(
+    view: EditExercisePageViewModel,
+    keyboardController: SoftwareKeyboardController?
+) {
+    Text("Name", fontSize = FIELD_NAME_FONT_SIZE)
+    val exerciseName = remember {
+        view.exercise.child(
+            { it?.name ?: "N/A" },
+            { parent, child -> parent?.copy(name = child) }
+        )
+    }
+    TextField(
+        modifier = Modifier
+            .fillMaxWidth(0.8f)
+            .onFocusChanged {
+                if (!it.isFocused) {
+                    view.saveExercise()
+                }
+            },
+        value = exerciseName.state.value,
+        onValueChange = { exerciseName.set(it) },
+        keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
+        keyboardActions = KeyboardActions(
+            onDone = {
+                view.saveExercise()
+                keyboardController?.hide()
+            }
+        )
+    )
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -309,9 +322,7 @@ fun VariationCard(
     onChangeLocation: (Location?) -> Unit,
     onChangeName: (String) -> Unit
 ) {
-    val locationsAndNull = listOf(null).plus(locations)
     val keyboardController = LocalSoftwareKeyboardController.current
-    var name by remember { mutableStateOf(value.name) }
     key(value.name, value.location) {
         Card(
             modifier = Modifier
@@ -321,7 +332,10 @@ fun VariationCard(
                 modifier = Modifier.padding(10.dp),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                TextField(name, onValueChange = { name = it },
+                var name by remember { mutableStateOf(value.name) }
+                TextField(
+                    name,
+                    onValueChange = { name = it },
                     keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
                     keyboardActions = KeyboardActions(
                         onDone = {
@@ -329,18 +343,28 @@ fun VariationCard(
                             onChangeName(name)
                         }
                     ),
-                    modifier = Modifier.onFocusChanged {
-                        if (!it.isFocused) {
-                            onChangeName(name)
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .onFocusChanged {
+                            if (!it.isFocused) {
+                                onChangeName(name)
+                            }
                         }
-                    }
                 )
+                val locationsAndNull =
+                    listOf(Maybe.Nothing<Location>()).plus(locations.map { Maybe.Just(it) })
                 LargeDropDownFromList(
                     items = locationsAndNull,
-                    label = "Location",
-                    selectedIndex = locationsAndNull.map { it?.id }.indexOf(value.location),
-                    itemToString = { it?.name ?: "None" },
-                    onItemSelected = onChangeLocation,
+                    selectedIndex = locationsAndNull
+                        .map { it.over { location -> location.id }.toNull() }
+                        .indexOf(value.location),
+                    itemToString = {
+                        when (it) {
+                            is Maybe.Nothing -> "Any Location"
+                            is Maybe.Just -> it.some.name
+                        }
+                    },
+                    onItemSelected = { onChangeLocation(it.toNull()) },
                     modifier = Modifier
                 )
             }
@@ -348,59 +372,68 @@ fun VariationCard(
     }
 }
 
-// @Composable
-// @Preview
-// private fun Preview() {
-//     val bicep = Muscle(MuscleId("bicep"), "bicep")
-//     val exercise = ExerciseId("exercise")
-//     StrongGiraffeTheme {
-//         Page(object : EditExercisePageViewModel(exercise) {
-//             override val startingName: String
-//                 get() = "Bicep Curl"
-//             override val startingMuscle: Muscle
-//                 get() = bicep
-//             override val muscles: List<Muscle>
-//                 get() = listOf(bicep)
-//             override val variations: State<List<ExerciseVariation>>
-//                 get() = mutableStateOf(
-//                     "Really Fucking Long Name,b,c,d,e,f,g".split(',').map {
-//                         ExerciseVariation(
-//                             id = ExerciseVariationId("variation$it"),
-//                             name = it,
-//                             exercise = ExerciseId("a"),
-//                             location = null
-//                         )
-//                     }
-//                 )
-//             override val locations: State<List<Location>>
-//                 get() = mutableStateOf(listOf(Location(LocationId("place"), "place")))
-//
-//             override fun submit(name: String, muscle: Muscle) {
-//                 TODO("Not yet implemented")
-//             }
-//
-//             override fun redirectToCreateMuscle() {
-//                 TODO("Not yet implemented")
-//             }
-//
-//             override fun delete() {
-//                 TODO("Not yet implemented")
-//             }
-//
-//             override fun updateVariationLocation(
-//                 variation: ExerciseVariation,
-//                 location: Location?
-//             ) {
-//                 TODO("Not yet implemented")
-//             }
-//
-//             override fun updateVariationName(variation: ExerciseVariation, name: String) {
-//                 TODO("Not yet implemented")
-//             }
-//
-//             override fun addNewVariation() {
-//                 TODO("Not yet implemented")
-//             }
-//         })
-//     }
-// }
+
+@Composable
+@Preview
+private fun Unfilled() {
+    val exercise = ExerciseId("exercise")
+    StrongGiraffeTheme {
+        EditExercisePage(
+            exercise,
+            previewViewModel(null, emptyList())
+        )
+    }
+}
+
+@Composable
+@Preview
+private fun Filled() {
+    val exercise = ExerciseId("exercise")
+    StrongGiraffeTheme {
+        EditExercisePage(
+            exercise,
+            previewViewModel(
+                Exercise(exercise, "Action", previewMuscles.random().id),
+                listOf(
+                    ExerciseVariation(
+                        id = ExerciseVariationId("a"),
+                        name = "Bench",
+                        exercise = exercise,
+                        location = previewLocations.random().id
+                    ),
+                    ExerciseVariation(
+                        id = ExerciseVariationId("b"),
+                        name = "Dumbbell",
+                        exercise = exercise,
+                        location = null
+                    )
+                )
+            )
+        )
+    }
+}
+
+@Composable
+private fun previewViewModel(
+    exercise: Exercise?,
+    variations: List<ExerciseVariation>
+) = object : EditExercisePageViewModel() {
+    override val exercise: Value<Exercise?>
+        get() = Value(mutableStateOf(exercise))
+    override val muscles: State<List<Muscle>>
+        get() = mutableStateOf(previewMuscles)
+    override val variations: State<List<Value<ExerciseVariation>>>
+        get() = mutableStateOf(
+            variations.map { Value(mutableStateOf(it)) }
+        )
+    override val locations: State<List<Location>>
+        get() = mutableStateOf(previewLocations)
+
+    override fun init(id: ExerciseId) {}
+    override fun backPage() {}
+    override fun redirectToCreateMuscle() {}
+    override fun delete() {}
+    override fun saveVariation(id: ExerciseVariationId) {}
+    override fun saveExercise() {}
+    override fun addNewVariation() {}
+}

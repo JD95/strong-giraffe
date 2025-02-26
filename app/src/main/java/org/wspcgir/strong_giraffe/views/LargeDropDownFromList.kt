@@ -6,7 +6,6 @@ import androidx.compose.ui.Modifier
 @Composable
 fun <T> LargeDropDownFromList(
     items: List<T>,
-    label: String,
     enabled: Boolean = true,
     selectedIndex: Int,
     itemToString: (T) -> String,
@@ -16,16 +15,15 @@ fun <T> LargeDropDownFromList(
     LargeDropDownMenu(
         modifier = modifier,
         enabled = enabled,
-        label = label,
         items = items,
         onItemSelected = { _, x -> onItemSelected(x) },
         selectedItemToString = itemToString,
         selectedIndex = selectedIndex,
-        drawItem = { item, selected, enabled, onClick ->
+        drawItem = { item, selected, isEnabled, onClick ->
             LargeDropDownMenuItem(
                 text = itemToString(item),
                 selected = selected,
-                enabled = enabled,
+                enabled = isEnabled,
                 onClick = onClick
             )
         }

@@ -30,7 +30,6 @@ import org.wspcgir.strong_giraffe.ui.theme.StrongGiraffeTheme
 fun <T> LargeDropDownMenu(
     modifier: Modifier = Modifier,
     enabled: Boolean = true,
-    label: String,
     notSetLabel: String? = null,
     items: List<T>,
     selectedIndex: Int = -1,
@@ -48,8 +47,8 @@ fun <T> LargeDropDownMenu(
     val expanded = remember { mutableStateOf(false) }
 
     Box(modifier = modifier.height(IntrinsicSize.Min)) {
-        OutlinedTextField(
-            label = { Text(label) },
+        TextField(
+            label = {},
             value = items.getOrNull(selectedIndex)?.let { selectedItemToString(it) } ?: "",
             enabled = enabled,
             modifier = Modifier.fillMaxWidth(),
@@ -218,7 +217,6 @@ private fun Preview() {
                 LargeDropDownMenu(
                     modifier = Modifier,
                     enabled = true,
-                    label = "test",
                     notSetLabel = null,
                     items = listOf(
                         "Apple",

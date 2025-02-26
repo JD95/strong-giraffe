@@ -359,7 +359,6 @@ fun Page(
                     ) {
                         LargeDropDownFromList(
                             items = exercises,
-                            label = "Exercise",
                             enabled = !locked,
                             itemToString = { it.name },
                             onItemSelected = { changeExercise(it.id) },
@@ -369,7 +368,6 @@ fun Page(
                         val variationsWithNull = listOf(null).plus(variations.value)
                         LargeDropDownFromList(
                             items = variationsWithNull,
-                            label = "Variation",
                             enabled = !locked,
                             itemToString = {
                                 if (it != null) {
