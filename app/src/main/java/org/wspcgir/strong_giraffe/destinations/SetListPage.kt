@@ -24,13 +24,13 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import androidx.navigation.NavController
 import org.wspcgir.strong_giraffe.model.*
 import org.wspcgir.strong_giraffe.model.ids.*
 import org.wspcgir.strong_giraffe.repository.AppRepository
 import org.wspcgir.strong_giraffe.views.*
-import com.ramcosta.composedestinations.annotation.Destination
-import com.ramcosta.composedestinations.navigation.DestinationsNavigator
 import kotlinx.coroutines.launch
+import kotlinx.serialization.Serializable
 import org.wspcgir.strong_giraffe.ui.theme.StrongGiraffeTheme
 import java.time.OffsetDateTime
 
@@ -41,8 +41,12 @@ abstract class SetListPageViewModel : ViewModel() {
     abstract fun goto(id: SetSummary)
 }
 
+@Serializable
+object RegisterSetListDest
+
+
 @Composable
-fun RegisterSetListPage(repo: AppRepository, dest: DestinationsNavigator) {
+fun RegisterSetListPage(repo: AppRepository, dest: NavController) {
     var templateMuscle by remember { mutableStateOf<MuscleId?>(null) }
     var templateExercise by remember { mutableStateOf<ExerciseId?>(null) }
     var setSummaries by remember { mutableStateOf<List<SetSummary>>(emptyList()) }
@@ -85,8 +89,8 @@ fun RegisterSetListPage(repo: AppRepository, dest: DestinationsNavigator) {
                         Log.i("NEW SET", "No previous set available.")
                     }
                     dest.navigate(
-                        EditSetPageDestination(
-                            EditSetPageNavArgs(id = set.id, false)
+                        EditSetPageDest(
+                            id = set.id.value, false
                         )
                     )
                 }
@@ -94,7 +98,8 @@ fun RegisterSetListPage(repo: AppRepository, dest: DestinationsNavigator) {
 
             override fun goto(id: SetSummary) {
                 viewModelScope.launch {
-                    dest.navigate(EditSetPageDestination(EditSetPageNavArgs(id = id.id, false)))
+                    dest.navigate(
+                        route = EditSetPageDest(id = id.id.value, locked = false))
                 }
             }
         })
@@ -102,7 +107,6 @@ fun RegisterSetListPage(repo: AppRepository, dest: DestinationsNavigator) {
 }
 
 @Composable
-@Destination
 fun SetListPage(view: SetListPageViewModel) {
     Page(
         sets = view.sets,

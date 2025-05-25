@@ -34,7 +34,7 @@ import androidx.lifecycle.viewModelScope
 import androidx.room.Room
 import com.ramcosta.composedestinations.DestinationsNavHost
 import com.ramcosta.composedestinations.annotation.Destination
-import com.ramcosta.composedestinations.annotation.RootNavGraph
+import com.ramcosta.composedestinations.annotation.RootGraph
 import com.ramcosta.composedestinations.manualcomposablecalls.composable
 import com.ramcosta.composedestinations.navigation.DestinationsNavigator
 import dagger.hilt.android.AndroidEntryPoint
@@ -91,18 +91,14 @@ import java.time.Instant
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        val db =
-            Room.databaseBuilder(applicationContext, AppDatabase::class.java, "data.db")
-                .addMigrations(MIGRATION_1_2)
-                .build()
-        val dao = db.dao()
+        val repo = AppRepositoryModule.provideAppRepository(applicationContext)
         setContent {
             StrongGiraffeTheme {
                 // A surface container using the 'background' color from the theme
                 Surface(
                     modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background
                 ) {
-                    MainComponent(repo = AppRepository(dao))
+                    MainComponent(repo)
                 }
             }
         }
@@ -111,254 +107,129 @@ class MainActivity : ComponentActivity() {
 
 @Composable
 fun MainComponent(repo: AppRepository) {
-    DestinationsNavHost(
-        navGraph = NavGraphs.root,
+    DestinationsNavHost(navGraph = NavGraphs.root)
 
-        ) {
-        composable(HomePageDestination) {
-            HomePage(
-                gotoLocationsList = {
-                    destinationsNavigator.navigate(LocationListPageDestination)
-                }, gotoMuscleList = {
-                    destinationsNavigator.navigate(MuscleListPageDestination)
-                }, gotoExerciseList = {
-                    destinationsNavigator.navigate(ExerciseListPageDestination)
-                }, gotoSetList = {
-                    destinationsNavigator.navigate(SetListPageDestination)
-                }
-            )
-        }
-        composable(LocationListPageDestination) {
-            var locations by remember { mutableStateOf(emptyList<Location>()) }
-            val scope = rememberCoroutineScope()
-            LaunchedEffect(locations) {
-                locations = repo.getLocations()
-            }
-            LocationListPage(object : LocationListPageViewModel() {
-                override val locations: List<Location>
-                    get() = locations
-
-                override fun newLocation() {
-                    scope.launch {
-                        val loc = repo.newLocation()
-                        destinationsNavigator.navigate(
-                            EditLocationPageDestination(
-                                EditLocationPageNavArgs(loc.name, loc.id)
-                            )
-                        )
-                    }
-                }
-
-                override fun gotoEditLocationPage(loc: Location) {
-                    destinationsNavigator.navigate(
-                        EditLocationPageDestination(
-                            EditLocationPageNavArgs(loc.name, loc.id)
-                        )
-                    )
-                }
-            })
-        }
-        composable(EditLocationPageDestination) {
-            val navArgs = this.navArgs
-            val scope = rememberCoroutineScope()
-            EditLocationPage(object : EditLocationPageViewModel() {
-                override val startingName: String
-                    get() = navArgs.startingName
-                override val submit: (String) -> Unit
-                    get() = { newName ->
-                        scope.launch { repo.updateLocation(navArgs.id, newName) }
-                        destinationsNavigator.popBackStack()
-                    }
-
-                override fun delete() {
-                    viewModelScope.launch {
-                        repo.deleteLocation(navArgs.id)
-                    }
-                    destinationsNavigator.popBackStack()
-                }
-            })
-        }
-        composable(EquipmentListPageDestination) {
-            var locations by remember { mutableStateOf(emptyList<Location>()) }
-            var equipment by remember { mutableStateOf(emptyList<Equipment>()) }
-            LaunchedEffect(equipment) {
-                locations = repo.getLocations()
-                equipment = repo.getEquipment()
-            }
-            EquipmentListPage(view = object : EquipmentListPageViewModel() {
-                override val equipment: List<Equipment>
-                    get() = equipment
-
-                override val locations: List<Location>
-                    get() = locations
-
-                override fun gotoNew() {
-                    viewModelScope.launch {
-                        val new = repo.newEquipment(locations[0].id)
-                        destinationsNavigator.navigate(
-                            EditEquipmentPageDestination(
-                                EditEquipmentPageNavArgs(new.id, new.name, new.location)
-                            )
-                        )
-                    }
-                }
-
-                override fun goto(value: Equipment) {
-                    destinationsNavigator.navigate(
-                        EditEquipmentPageDestination(
-                            EditEquipmentPageNavArgs(value.id, value.name, value.location)
-                        )
-                    )
-                }
-
-                override fun redirectToCreateLocation() {
-                    locationRedirect(viewModelScope, repo, destinationsNavigator)
-                }
-            })
-        }
-        composable(EditEquipmentPageDestination) {
-            val navArgs = this.navArgs
-            var locations by remember { mutableStateOf(emptyList<Location>()) }
-            var equipment by remember { mutableStateOf(emptyList<Equipment>()) }
-            LaunchedEffect(equipment) {
-                locations = repo.getLocations()
-                equipment = repo.getEquipment()
-            }
-            EditEquipmentPage(view = object : EditEquipmentPageViewModel() {
-                override val startingName: String
-                    get() = navArgs.name
-
-                override val startingLocation: Location
-                    get() = locations.first { it.id == navArgs.location }
-
-                override val locations: List<Location>
-                    get() = locations
-
-                override fun submit(name: String, location: LocationId) {
-                    viewModelScope.launch {
-                        repo.updateEquipment(navArgs.id, name, location)
-                    }
-                    destinationsNavigator.popBackStack()
-                }
-
-                override fun redirectToCreateLocation() {
-                    locationRedirect(viewModelScope, repo, destinationsNavigator)
-                }
-
-                override fun delete() {
-                    viewModelScope.launch {
-                        repo.deleteEquipment(navArgs.id)
-                    }
-                    destinationsNavigator.popBackStack()
-                }
-            })
-        }
-        composable(MuscleListPageDestination) {
-            var muscles by remember { mutableStateOf(emptyMap<MuscleId, MuscleSetHistory>()) }
-            LaunchedEffect(muscles) {
-                muscles = repo.setsForMusclesInWeek(Instant.now()).setCounts
-            }
-            MuscleListPage(view = object : MuscleListPageViewModel() {
-                override val musclesWithSetCounts: Map<MuscleId, MuscleSetHistory>
-                    get() = muscles
-
-                override fun new() {
-                    viewModelScope.launch {
-                        val new = repo.newMuscle()
-                        destinationsNavigator.navigate(
-                            EditMusclePageDestination(
-                                EditMusclePageNavArgs(new.id, new.name)
-                            )
-                        )
-                    }
-                }
-
-                override fun goto(value: Muscle) {
-                    destinationsNavigator.navigate(
-                        EditMusclePageDestination(
-                            EditMusclePageNavArgs(value.id, value.name)
-                        )
-                    )
-                }
-            })
-        }
-        composable(EditMusclePageDestination) {
-            val navArgs = this.navArgs
-            EditMusclePage(view = object : EditMusclePageViewModel() {
-                override val startingName: String
-                    get() = navArgs.startingName
-
-                override fun submit(name: String) {
-                    viewModelScope.launch {
-                        repo.updateMuscle(navArgs.muscleId, name)
-                    }
-                    destinationsNavigator.popBackStack()
-                }
-
-                override fun delete() {
-                    viewModelScope.launch {
-                        repo.deleteMuscle(navArgs.muscleId)
-                    }
-                    destinationsNavigator.popBackStack()
-                }
-            })
-        }
-        composable(ExerciseListPageDestination) {
-            var exercises by remember { mutableStateOf(emptyList<Exercise>()) }
-            var muscles by remember { mutableStateOf(emptyList<Muscle>()) }
-            LaunchedEffect(exercises, muscles) {
-                exercises = repo.getExercises()
-                muscles = repo.getMuscles()
-            }
-            ExerciseListPage(view = object : ExerciseListPageViewModel() {
-                override val exercises: List<Exercise>
-                    get() = exercises
-
-                override fun gotoNew() {
-                    viewModelScope.launch {
-                        val new = repo.newExercise(muscles[0].id)
-                        destinationsNavigator.navigate(
-                            EditExercisePageDestination(new.id)
-                        )
-                    }
-                }
-
-                override fun goto(value: Exercise) {
-                    destinationsNavigator.navigate(
-                        EditExercisePageDestination(value.id)
-                    )
-                }
-
-                override fun redirectToCreateMuscle() {
-                    viewModelScope.launch {
-                        val new = repo.newMuscle()
-
-                        destinationsNavigator.navigate(
-                            EditMusclePageDestination(
-                                EditMusclePageNavArgs(new.id, new.name)
-                            )
-                        )
-                    }
-                }
-
-                override val muscles: List<Muscle>
-                    get() = muscles
-            })
-        }
-        composable(EditExercisePageDestination) {
-            val navArgs = this.navArgs
-            EditExercisePage(
-                navArgs.id,
-                view = EditExercisePageViewModelImpl(repo, destinationsNavigator)
-            )
-        }
-        composable(SetListPageDestination) {
-            RegisterSetListPage(repo, destinationsNavigator)
-        }
-        composable(EditSetPageDestination) {
-            RegisterEditSetPage(navArgs, repo, destinationsNavigator)
-        }
-    }
+//    {
+//        composable(HomePageDestination) {
+//            HomePage(
+//                gotoLocationsList = {
+//                    destinationsNavigator.navigate(LocationListPageDestination)
+//                }, gotoMuscleList = {
+//                    destinationsNavigator.navigate(MuscleListPageDestination)
+//                }, gotoExerciseList = {
+//                    destinationsNavigator.navigate(ExerciseListPageDestination)
+//                }, gotoSetList = {
+//                    destinationsNavigator.navigate(SetListPageDestination)
+//                }
+//            )
+//        }
+//        composable(LocationListPageDestination) {
+//            var locations by remember { mutableStateOf(emptyList<Location>()) }
+//            val scope = rememberCoroutineScope()
+//            LaunchedEffect(locations) {
+//                locations = repo.getLocations()
+//            }
+//            LocationListPage(object : LocationListPageViewModel() {
+//                override val locations: List<Location>
+//                    get() = locations
+//
+//                override fun newLocation() {
+//                    scope.launch {
+//                        val loc = repo.newLocation()
+//                        destinationsNavigator.navigate(
+//                            EditLocationPageDestination(
+//                                EditLocationPageNavArgs(loc.name, loc.id)
+//                            )
+//                        )
+//                    }
+//                }
+//
+//                override fun gotoEditLocationPage(loc: Location) {
+//                    destinationsNavigator.navigate(
+//                        EditLocationPageDestination(
+//                            EditLocationPageNavArgs(loc.name, loc.id)
+//                        )
+//                    )
+//                }
+//            })
+//        }
+//        composable(EditLocationPageDestination) {
+//            val navArgs = this.navArgs
+//            val scope = rememberCoroutineScope()
+//            EditLocationPage(object : EditLocationPageViewModel() {
+//                override val startingName: String
+//                    get() = navArgs.startingName
+//                override val submit: (String) -> Unit
+//                    get() = { newName ->
+//                        scope.launch { repo.updateLocation(navArgs.id, newName) }
+//                        destinationsNavigator.popBackStack()
+//                    }
+//
+//                override fun delete() {
+//                    viewModelScope.launch {
+//                        repo.deleteLocation(navArgs.id)
+//                    }
+//                    destinationsNavigator.popBackStack()
+//                }
+//            })
+//        }
+//        composable(MuscleListPageDestination) {
+//            var muscles by remember { mutableStateOf(emptyMap<MuscleId, MuscleSetHistory>()) }
+//            LaunchedEffect(muscles) {
+//                muscles = repo.setsForMusclesInWeek(Instant.now()).setCounts
+//            }
+//            MuscleListPage(view = object : MuscleListPageViewModel() {
+//                override val musclesWithSetCounts: Map<MuscleId, MuscleSetHistory>
+//                    get() = muscles
+//
+//                override fun new() {
+//                    viewModelScope.launch {
+//                        val new = repo.newMuscle()
+//                        destinationsNavigator.navigate(
+//                            EditMusclePageDestination(
+//                                EditMusclePageNavArgs(new.id, new.name)
+//                            )
+//                        )
+//                    }
+//                }
+//
+//                override fun goto(value: Muscle) {
+//                    destinationsNavigator.navigate(
+//                        EditMusclePageDestination(
+//                            EditMusclePageNavArgs(value.id, value.name)
+//                        )
+//                    )
+//                }
+//            })
+//        }
+//        composable(EditMusclePageDestination) {
+//            val navArgs = this.navArgs
+//            EditMusclePage(view = object : EditMusclePageViewModel() {
+//                override val startingName: String
+//                    get() = navArgs.startingName
+//
+//                override fun submit(name: String) {
+//                    viewModelScope.launch {
+//                        repo.updateMuscle(navArgs.muscleId, name)
+//                    }
+//                    destinationsNavigator.popBackStack()
+//                }
+//
+//                override fun delete() {
+//                    viewModelScope.launch {
+//                        repo.deleteMuscle(navArgs.muscleId)
+//                    }
+//                    destinationsNavigator.popBackStack()
+//                }
+//            })
+//        }
+//        composable(SetListPageDestination) {
+//            RegisterSetListPage(repo, destinationsNavigator)
+//        }
+//        composable(EditSetPageDestination) {
+//            RegisterEditSetPage(navArgs, repo, destinationsNavigator)
+//        }
+//    }
 }
 
 fun locationRedirect(
@@ -374,8 +245,7 @@ fun locationRedirect(
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-@Destination
-@RootNavGraph(start = true)
+@Destination<RootGraph>(start = true)
 fun HomePage(
     gotoLocationsList: () -> Unit,
     gotoMuscleList: () -> Unit,

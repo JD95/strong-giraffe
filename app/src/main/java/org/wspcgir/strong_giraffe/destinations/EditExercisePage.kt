@@ -23,13 +23,16 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import androidx.navigation.NavController
 import org.wspcgir.strong_giraffe.views.LargeDropDownFromList
 import org.wspcgir.strong_giraffe.model.Muscle
 import org.wspcgir.strong_giraffe.model.ids.ExerciseId
 import org.wspcgir.strong_giraffe.views.FIELD_NAME_FONT_SIZE
 import org.wspcgir.strong_giraffe.views.RequiredDataRedirect
 import com.ramcosta.composedestinations.annotation.Destination
+import com.ramcosta.composedestinations.annotation.RootGraph
 import com.ramcosta.composedestinations.navigation.DestinationsNavigator
+import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.launch
 import org.wspcgir.strong_giraffe.model.Exercise
 import org.wspcgir.strong_giraffe.model.ExerciseVariation
@@ -42,6 +45,7 @@ import org.wspcgir.strong_giraffe.ui.theme.StrongGiraffeTheme
 import org.wspcgir.strong_giraffe.util.Maybe
 import org.wspcgir.strong_giraffe.util.Value
 import org.wspcgir.strong_giraffe.views.ModalDrawerScaffold
+import javax.inject.Inject
 
 abstract class EditExercisePageViewModel() : ViewModel() {
     abstract val exercise: Value<Exercise?>
@@ -58,10 +62,10 @@ abstract class EditExercisePageViewModel() : ViewModel() {
     abstract fun addNewVariation()
 }
 
-
-class EditExercisePageViewModelImpl(
+@HiltViewModel
+class EditExercisePageViewModelImpl @Inject constructor(
     private val repo: AppRepository,
-    private val nav: DestinationsNavigator
+    private val nav: NavController
 ) : EditExercisePageViewModel() {
 
     private var variationsMap:
@@ -108,7 +112,7 @@ class EditExercisePageViewModelImpl(
         viewModelScope.launch {
             val new = repo.newMuscle()
             nav.navigate(
-                EditMusclePageDestination(
+                route = EditMusclePageDestination(
                     EditMusclePageNavArgs(new.id, new.name)
                 )
             )
@@ -158,7 +162,7 @@ class EditExercisePageViewModelImpl(
 
 
 @Composable
-@Destination
+@Destination<RootGraph>
 fun EditExercisePage(id: ExerciseId, view: EditExercisePageViewModel = hiltViewModel()) {
     view.init(id)
     if (view.muscles.value.isEmpty()) {

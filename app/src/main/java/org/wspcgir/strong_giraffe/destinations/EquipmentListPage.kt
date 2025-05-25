@@ -9,7 +9,6 @@ import org.wspcgir.strong_giraffe.model.Location
 import org.wspcgir.strong_giraffe.model.ids.LocationId
 import org.wspcgir.strong_giraffe.views.EditPageList
 import org.wspcgir.strong_giraffe.views.RequiredDataRedirect
-import com.ramcosta.composedestinations.annotation.Destination
 
 abstract class EquipmentListPageViewModel : ViewModel() {
     abstract val equipment: List<Equipment>
@@ -21,7 +20,6 @@ abstract class EquipmentListPageViewModel : ViewModel() {
 }
 
 @Composable
-@Destination
 fun EquipmentListPage(view: EquipmentListPageViewModel) {
     if (view.locations.isEmpty()) {
         RequiredDataRedirect(missing = "Location") {

@@ -6,7 +6,6 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.lifecycle.ViewModel
 import org.wspcgir.strong_giraffe.model.Location
 import org.wspcgir.strong_giraffe.views.EditPageList
-import com.ramcosta.composedestinations.annotation.Destination
 
 abstract class LocationListPageViewModel : ViewModel() {
     abstract val locations: List<Location>
@@ -15,7 +14,6 @@ abstract class LocationListPageViewModel : ViewModel() {
 }
 
 @Composable
-@Destination
 fun LocationListPage(view: LocationListPageViewModel) {
     EditPageList(
         title = "Locations",

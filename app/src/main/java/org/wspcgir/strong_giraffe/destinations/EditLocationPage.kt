@@ -9,14 +9,11 @@ import androidx.compose.material.icons.filled.Done
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
-import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.text.input.ImeAction
 import androidx.lifecycle.ViewModel
-import org.wspcgir.strong_giraffe.model.ids.LocationId
 import org.wspcgir.strong_giraffe.views.FIELD_NAME_FONT_SIZE
-import com.ramcosta.composedestinations.annotation.Destination
 import org.wspcgir.strong_giraffe.views.ModalDrawerScaffold
 
 abstract class EditLocationPageViewModel : ViewModel() {
@@ -25,14 +22,7 @@ abstract class EditLocationPageViewModel : ViewModel() {
     abstract fun delete()
 }
 
-data class EditLocationPageNavArgs(
-    val startingName: String,
-    val id: LocationId,
-)
-
-@OptIn(ExperimentalMaterial3Api::class, ExperimentalComposeUiApi::class)
 @Composable
-@Destination(navArgsDelegate = EditLocationPageNavArgs::class)
 fun EditLocationPage(view: EditLocationPageViewModel) {
     val keyboardController = LocalSoftwareKeyboardController.current
     var name by remember { mutableStateOf(view.startingName) }
