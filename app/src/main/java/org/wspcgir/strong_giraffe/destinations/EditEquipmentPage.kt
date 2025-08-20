@@ -15,15 +15,14 @@ import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.lifecycle.ViewModel
+import kotlinx.serialization.Serializable
 import org.wspcgir.strong_giraffe.views.LargeDropDownFromList
 import org.wspcgir.strong_giraffe.model.Location
 import org.wspcgir.strong_giraffe.model.ids.EquipmentId
 import org.wspcgir.strong_giraffe.model.ids.LocationId
 import org.wspcgir.strong_giraffe.views.FIELD_NAME_FONT_SIZE
 import org.wspcgir.strong_giraffe.views.RequiredDataRedirect
-import com.ramcosta.composedestinations.annotation.Destination
 import org.wspcgir.strong_giraffe.views.ModalDrawerScaffold
-
 
 abstract class EditEquipmentPageViewModel : ViewModel() {
     abstract val startingName: String
@@ -34,14 +33,14 @@ abstract class EditEquipmentPageViewModel : ViewModel() {
     abstract fun delete()
 }
 
-data class EditEquipmentPageNavArgs(
+@Serializable
+data class EditEquipment(
     val id: EquipmentId,
     val name: String,
     val location: LocationId,
 )
 
 @Composable
-@Destination(navArgsDelegate = EditEquipmentPageNavArgs::class)
 fun EditEquipmentPage(view: EditEquipmentPageViewModel) {
     if (view.locations.isEmpty()) {
         RequiredDataRedirect(missing = "Location") {

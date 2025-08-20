@@ -1,18 +1,6 @@
 package org.wspcgir.strong_giraffe.model.ids
 
-import com.ramcosta.composedestinations.navargs.DestinationsNavTypeSerializer
-import com.ramcosta.composedestinations.navargs.NavTypeSerializer
+import kotlinx.serialization.Serializable
 
-
-@NavTypeSerializer
-class ExerciseIdSerializer : DestinationsNavTypeSerializer<ExerciseId> {
-    override fun fromRouteString(routeStr: String): ExerciseId {
-        return ExerciseId(routeStr)
-    }
-
-    override fun toRouteString(value: ExerciseId): String {
-        return value.value
-    }
-}
-
+@Serializable
 data class ExerciseId(val value: String)

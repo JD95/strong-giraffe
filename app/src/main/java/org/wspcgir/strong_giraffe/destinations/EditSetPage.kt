@@ -51,11 +51,9 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.ramcosta.composedestinations.annotation.Destination
-import com.ramcosta.composedestinations.navigation.DestinationsNavigator
+import androidx.navigation.NavController
 import kotlinx.coroutines.launch
 import org.wspcgir.strong_giraffe.model.Comment
-import org.wspcgir.strong_giraffe.model.Equipment
 import org.wspcgir.strong_giraffe.model.Exercise
 import org.wspcgir.strong_giraffe.model.ExerciseVariation
 import org.wspcgir.strong_giraffe.model.Intensity
@@ -83,14 +81,14 @@ import java.time.format.DateTimeFormatter
 import java.util.TimeZone
 import kotlin.math.roundToInt
 
-data class EditSetPageNavArgs(val id: SetId, val locked: Boolean)
+data class EditSet(val id: SetId, val locked: Boolean)
 
 const val NUM_PREVIOUS_SETS = 6
 
 class EditSetPageViewModel(
     private val setId: SetId,
     private val repo: AppRepository,
-    private val dest: DestinationsNavigator,
+    private val dest: NavController,
     private val inProgressMut: MutableState<WorkoutSet>,
     private val variationsForExerciseMut: MutableState<List<ExerciseVariation>>,
     private val previousSetsMut: MutableState<List<WorkoutSet>>,
@@ -171,7 +169,7 @@ class EditSetPageViewModel(
     }
 
     fun gotoSet(set: WorkoutSet) {
-        dest.navigate(EditSetPageDestination(EditSetPageNavArgs(set.id, true)))
+        dest.navigate(EditSet(set.id, true))
     }
 
     fun toggleSetLock(new: Boolean) {
@@ -192,9 +190,9 @@ class EditSetPageViewModel(
 
 @Composable
 fun RegisterEditSetPage(
-    navArgs: EditSetPageNavArgs,
+    navArgs: EditSet,
     repo: AppRepository,
-    dest: DestinationsNavigator
+    dest: NavController
 ) {
 
     var locations by remember { mutableStateOf<List<Location>>(emptyList()) }
@@ -239,7 +237,6 @@ fun RegisterEditSetPage(
 }
 
 @Composable
-@Destination(navArgsDelegate = EditSetPageNavArgs::class)
 fun EditSetPage(view: EditSetPageViewModel) {
     Page(
         locked = view.locked.value,

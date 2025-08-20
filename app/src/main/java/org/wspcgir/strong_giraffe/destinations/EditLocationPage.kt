@@ -16,7 +16,6 @@ import androidx.compose.ui.text.input.ImeAction
 import androidx.lifecycle.ViewModel
 import org.wspcgir.strong_giraffe.model.ids.LocationId
 import org.wspcgir.strong_giraffe.views.FIELD_NAME_FONT_SIZE
-import com.ramcosta.composedestinations.annotation.Destination
 import org.wspcgir.strong_giraffe.views.ModalDrawerScaffold
 
 abstract class EditLocationPageViewModel : ViewModel() {
@@ -25,14 +24,13 @@ abstract class EditLocationPageViewModel : ViewModel() {
     abstract fun delete()
 }
 
-data class EditLocationPageNavArgs(
+data class EditLocation(
     val startingName: String,
     val id: LocationId,
 )
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalComposeUiApi::class)
 @Composable
-@Destination(navArgsDelegate = EditLocationPageNavArgs::class)
 fun EditLocationPage(view: EditLocationPageViewModel) {
     val keyboardController = LocalSoftwareKeyboardController.current
     var name by remember { mutableStateOf(view.startingName) }

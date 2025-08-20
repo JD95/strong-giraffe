@@ -4,9 +4,12 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.lifecycle.ViewModel
+import kotlinx.serialization.Serializable
 import org.wspcgir.strong_giraffe.model.Location
 import org.wspcgir.strong_giraffe.views.EditPageList
-import com.ramcosta.composedestinations.annotation.Destination
+
+@Serializable
+object LocationList
 
 abstract class LocationListPageViewModel : ViewModel() {
     abstract val locations: List<Location>
@@ -15,7 +18,6 @@ abstract class LocationListPageViewModel : ViewModel() {
 }
 
 @Composable
-@Destination
 fun LocationListPage(view: LocationListPageViewModel) {
     EditPageList(
         title = "Locations",
