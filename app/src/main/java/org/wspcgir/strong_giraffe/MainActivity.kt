@@ -1,6 +1,7 @@
 package org.wspcgir.strong_giraffe
 
 import android.os.Bundle
+import android.os.Parcelable
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.layout.*
@@ -12,6 +13,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewModelScope
 import androidx.navigation.NavController
+import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
@@ -31,6 +33,7 @@ import java.time.Instant
 import java.util.Collections.emptyList
 import kotlinx.serialization.*
 import kotlinx.serialization.json.*
+import kotlin.reflect.typeOf
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -57,10 +60,40 @@ class MainActivity : ComponentActivity() {
 @Serializable
 object Home
 
+inline fun <reified T : Parcelable> parcelableType(
+    isNullableAllowed: Boolean = false,
+    json: Json = Json
+) = object : NavType<T>(isNullableAllowed = isNullableAllowed) {
+    override fun get(bundle: Bundle, key: String): T? {
+       return bundle.getParcelable(key, T::class.java)
+    }
+
+    override fun parseValue(value: String): T {
+        return json.decodeFromString(value)
+    }
+
+    override fun put(bundle: Bundle, key: String, value: T) {
+        return bundle.putParcelable(key, value)
+    }
+
+    override fun serializeAsValue(value: T): String = Json.encodeToString(value)
+}
+
 @Composable
 fun MainComponent(repo: AppRepository) {
     val navController = rememberNavController()
-    NavHost(navController = navController, startDestination = Home) {
+    val typeMap = mapOf(
+        typeOf<SetId>() to parcelableType<SetId>(),
+        typeOf<MuscleId>() to parcelableType<MuscleId>(),
+        typeOf<LocationId>() to parcelableType<LocationId>(),
+        typeOf<ExerciseId>() to parcelableType<ExerciseId>(),
+        typeOf<EquipmentId>() to parcelableType<EquipmentId>(),
+        typeOf<EditLocation>() to parcelableType<EditLocation>(),
+        typeOf<EditSet>() to parcelableType<EditSet>(),
+        typeOf<EditMuscle>() to parcelableType<EditMuscle>(),
+        typeOf<EditExercise>() to parcelableType<EditExercise>(),
+    )
+    NavHost(navController = navController, startDestination = Home, typeMap = typeMap) {
         composable<Home> {
             HomePage(
                 gotoLocationsList = {
@@ -96,7 +129,7 @@ fun MainComponent(repo: AppRepository) {
                 }
             })
         }
-        composable<EditLocation> {
+        composable<EditLocation>(typeMap = typeMap) {
             val navArgs: EditLocation = it.toRoute()
             val scope = rememberCoroutineScope()
             EditLocationPage(object : EditLocationPageViewModel() {
@@ -154,7 +187,7 @@ fun MainComponent(repo: AppRepository) {
                 }
             })
         }
-        composable<EditEquipment> {
+        composable<EditEquipment>(typeMap = typeMap) {
             val navArgs: EditEquipment = it.toRoute()
             var locations by remember { mutableStateOf(emptyList<Location>()) }
             var equipment by remember { mutableStateOf(emptyList<Equipment>()) }
@@ -212,7 +245,7 @@ fun MainComponent(repo: AppRepository) {
                 }
             })
         }
-        composable<EditMuscle> {
+        composable<EditMuscle>(typeMap = typeMap) {
             val navArgs: EditMuscle = it.toRoute()
             EditMusclePage(view = object : EditMusclePageViewModel() {
                 override val startingName: String
@@ -267,7 +300,7 @@ fun MainComponent(repo: AppRepository) {
                     get() = muscles
             })
         }
-        composable<EditExercise> {
+        composable<EditExercise>(typeMap = typeMap) {
             val navArgs: EditExercise = it.toRoute()
             EditExercisePage(
                 view = EditExercisePageViewModelImpl(navArgs.id, repo, navController)
@@ -276,7 +309,7 @@ fun MainComponent(repo: AppRepository) {
         composable<SetList> {
             RegisterSetListPage(repo, navController)
         }
-        composable<EditSet> {
+        composable<EditSet>(typeMap = typeMap) {
             val navArgs: EditSet = it.toRoute()
             RegisterEditSetPage(navArgs, repo, navController)
         }

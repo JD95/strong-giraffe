@@ -1,5 +1,7 @@
 package org.wspcgir.strong_giraffe.destinations
 
+import android.os.Bundle
+import android.os.Parcelable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
@@ -14,6 +16,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.text.input.ImeAction
 import androidx.lifecycle.ViewModel
+import androidx.navigation.NavType
+import kotlinx.parcelize.Parcelize
+import kotlinx.serialization.Serializable
+import kotlinx.serialization.json.Json
 import org.wspcgir.strong_giraffe.model.ids.LocationId
 import org.wspcgir.strong_giraffe.views.FIELD_NAME_FONT_SIZE
 import org.wspcgir.strong_giraffe.views.ModalDrawerScaffold
@@ -24,10 +30,29 @@ abstract class EditLocationPageViewModel : ViewModel() {
     abstract fun delete()
 }
 
+@Serializable
+@Parcelize
 data class EditLocation(
     val startingName: String,
     val id: LocationId,
-)
+) : Parcelable
+
+val EditLocationType = object : NavType<EditLocation>(
+    isNullableAllowed = false
+) {
+    override fun get(bundle: Bundle, key: String): EditLocation? {
+        return bundle.getParcelable(key, EditLocation::class.java)
+    }
+
+    override fun parseValue(value: String): EditLocation {
+        return Json.decodeFromString<EditLocation>(value)
+    }
+
+    override fun put(bundle: Bundle, key: String, value: EditLocation) {
+        bundle.putParcelable(key, value)
+    }
+
+}
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalComposeUiApi::class)
 @Composable

@@ -1,6 +1,7 @@
 plugins {
     id 'com.android.application'
     id 'org.jetbrains.kotlin.android'
+    id 'org.jetbrains.kotlin.plugin.parcelize'
 
     // For Room
     id 'com.google.devtools.ksp'
@@ -16,8 +17,8 @@ android {
         applicationId "org.wspcgir.strong_giraffe"
         minSdk 33
         targetSdk 34
-        versionCode 17
-        versionName "0.9.2"
+        versionCode 18
+        versionName "0.9.3"
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables {
@@ -29,6 +30,10 @@ android {
         release {
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+        }
+        beta {
+            applicationIdSuffix ".beta"
+            versionNameSuffix "-beta"
         }
     }
     compileOptions {

@@ -1,5 +1,6 @@
 package org.wspcgir.strong_giraffe.destinations
 
+import android.os.Parcelable
 import android.util.Log
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -29,6 +30,8 @@ import org.wspcgir.strong_giraffe.model.ids.MuscleId
 import org.wspcgir.strong_giraffe.views.FIELD_NAME_FONT_SIZE
 import org.wspcgir.strong_giraffe.views.RequiredDataRedirect
 import kotlinx.coroutines.launch
+import kotlinx.parcelize.Parcelize
+import kotlinx.serialization.Serializable
 import org.wspcgir.strong_giraffe.model.Exercise
 import org.wspcgir.strong_giraffe.model.ExerciseVariation
 import org.wspcgir.strong_giraffe.model.Location
@@ -36,9 +39,11 @@ import org.wspcgir.strong_giraffe.model.ids.ExerciseVariationId
 import org.wspcgir.strong_giraffe.repository.AppRepository
 import org.wspcgir.strong_giraffe.views.ModalDrawerScaffold
 
+@Serializable
+@Parcelize
 data class EditExercise(
     val id: ExerciseId,
-)
+) : Parcelable
 
 abstract class EditExercisePageViewModel() : ViewModel() {
     abstract val exercise: State<Exercise?>

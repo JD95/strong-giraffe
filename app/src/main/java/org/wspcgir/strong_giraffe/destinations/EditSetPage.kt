@@ -2,6 +2,7 @@ package org.wspcgir.strong_giraffe.destinations
 
 import android.content.res.Configuration.UI_MODE_NIGHT_NO
 import android.content.res.Configuration.UI_MODE_NIGHT_YES
+import android.os.Parcelable
 import android.util.Log
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -53,6 +54,8 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.navigation.NavController
 import kotlinx.coroutines.launch
+import kotlinx.parcelize.Parcelize
+import kotlinx.serialization.Serializable
 import org.wspcgir.strong_giraffe.model.Comment
 import org.wspcgir.strong_giraffe.model.Exercise
 import org.wspcgir.strong_giraffe.model.ExerciseVariation
@@ -81,7 +84,9 @@ import java.time.format.DateTimeFormatter
 import java.util.TimeZone
 import kotlin.math.roundToInt
 
-data class EditSet(val id: SetId, val locked: Boolean)
+@Serializable
+@Parcelize
+data class EditSet(val id: SetId, val locked: Boolean) : Parcelable
 
 const val NUM_PREVIOUS_SETS = 6
 

@@ -1,5 +1,6 @@
 package org.wspcgir.strong_giraffe.destinations
 
+import android.os.Parcelable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
@@ -13,11 +14,15 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.text.input.ImeAction
 import androidx.lifecycle.ViewModel
+import kotlinx.parcelize.Parcelize
+import kotlinx.serialization.Serializable
 import org.wspcgir.strong_giraffe.model.ids.MuscleId
 import org.wspcgir.strong_giraffe.views.FIELD_NAME_FONT_SIZE
 import org.wspcgir.strong_giraffe.views.ModalDrawerScaffold
 
-data class EditMuscle(val muscleId: MuscleId, val startingName: String)
+@Serializable
+@Parcelize
+data class EditMuscle(val muscleId: MuscleId, val startingName: String) : Parcelable
 
 abstract class EditMusclePageViewModel : ViewModel() {
     abstract val startingName: String
