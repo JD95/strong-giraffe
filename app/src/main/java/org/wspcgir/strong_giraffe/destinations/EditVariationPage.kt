@@ -26,11 +26,10 @@ abstract class EditVariationPageViewModel(val id: ExerciseId) : ViewModel() {
     abstract val variations: State<List<ExerciseVariation>>
 }
 
-data class EditVariationPageNavArgs(val id: ExerciseId)
+data class EditVariation(val id: ExerciseId)
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-//@Destination(navArgsDelegate = EditVariationPageNavArgs::class)
 fun EditVariationpage(view: EditVariationPageViewModel = viewModel()) {
     ModalDrawerScaffold(
         title = "Edit Variations",

@@ -1,5 +1,6 @@
 package org.wspcgir.strong_giraffe.destinations
 
+import android.os.Parcelable
 import android.util.Log
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -21,15 +22,16 @@ import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import androidx.navigation.NavController
 import org.wspcgir.strong_giraffe.views.LargeDropDownFromList
 import org.wspcgir.strong_giraffe.model.Muscle
 import org.wspcgir.strong_giraffe.model.ids.ExerciseId
 import org.wspcgir.strong_giraffe.model.ids.MuscleId
 import org.wspcgir.strong_giraffe.views.FIELD_NAME_FONT_SIZE
 import org.wspcgir.strong_giraffe.views.RequiredDataRedirect
-import com.ramcosta.composedestinations.annotation.Destination
-import com.ramcosta.composedestinations.navigation.DestinationsNavigator
 import kotlinx.coroutines.launch
+import kotlinx.parcelize.Parcelize
+import kotlinx.serialization.Serializable
 import org.wspcgir.strong_giraffe.model.Exercise
 import org.wspcgir.strong_giraffe.model.ExerciseVariation
 import org.wspcgir.strong_giraffe.model.Location
@@ -37,9 +39,11 @@ import org.wspcgir.strong_giraffe.model.ids.ExerciseVariationId
 import org.wspcgir.strong_giraffe.repository.AppRepository
 import org.wspcgir.strong_giraffe.views.ModalDrawerScaffold
 
-data class EditExercisePageNavArgs(
+@Serializable
+@Parcelize
+data class EditExercise(
     val id: ExerciseId,
-)
+) : Parcelable
 
 abstract class EditExercisePageViewModel() : ViewModel() {
     abstract val exercise: State<Exercise?>
@@ -69,7 +73,7 @@ abstract class EditExercisePageViewModel() : ViewModel() {
 class EditExercisePageViewModelImpl(
     private val id: ExerciseId,
     private val repo: AppRepository,
-    private val nav: DestinationsNavigator
+    private val nav: NavController
 ) : EditExercisePageViewModel() {
 
     private var variationsMap:
@@ -125,11 +129,7 @@ class EditExercisePageViewModelImpl(
     override fun redirectToCreateMuscle() {
         viewModelScope.launch {
             val new = repo.newMuscle()
-            nav.navigate(
-                EditMusclePageDestination(
-                    EditMusclePageNavArgs(new.id, new.name)
-                )
-            )
+            nav.navigate(EditMuscle(new.id, new.name))
         }
     }
 
@@ -182,7 +182,6 @@ class EditExercisePageViewModelImpl(
 
 
 @Composable
-@Destination(navArgsDelegate = EditExercisePageNavArgs::class)
 fun EditExercisePage(view: EditExercisePageViewModel) {
     if (view.muscles.value.isEmpty()) {
         RequiredDataRedirect(missing = "Muscle") {

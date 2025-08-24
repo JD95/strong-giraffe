@@ -1,5 +1,6 @@
 package org.wspcgir.strong_giraffe.destinations
 
+import android.os.Parcelable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
@@ -9,17 +10,19 @@ import androidx.compose.material.icons.filled.Done
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
-import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.text.input.ImeAction
 import androidx.lifecycle.ViewModel
+import kotlinx.parcelize.Parcelize
+import kotlinx.serialization.Serializable
 import org.wspcgir.strong_giraffe.model.ids.MuscleId
 import org.wspcgir.strong_giraffe.views.FIELD_NAME_FONT_SIZE
-import com.ramcosta.composedestinations.annotation.Destination
 import org.wspcgir.strong_giraffe.views.ModalDrawerScaffold
 
-data class EditMusclePageNavArgs(val muscleId: MuscleId, val startingName: String)
+@Serializable
+@Parcelize
+data class EditMuscle(val muscleId: MuscleId, val startingName: String) : Parcelable
 
 abstract class EditMusclePageViewModel : ViewModel() {
     abstract val startingName: String
@@ -30,7 +33,6 @@ abstract class EditMusclePageViewModel : ViewModel() {
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-@Destination(navArgsDelegate = EditMusclePageNavArgs::class)
 fun EditMusclePage(view: EditMusclePageViewModel) {
     val keyboardController = LocalSoftwareKeyboardController.current
     var name by remember { mutableStateOf(view.startingName) }

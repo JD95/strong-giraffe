@@ -1,11 +1,10 @@
 package org.wspcgir.strong_giraffe
 
 import android.os.Bundle
+import android.os.Parcelable
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.layout.*
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Add
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -13,6 +12,12 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewModelScope
+import androidx.navigation.NavController
+import androidx.navigation.NavType
+import androidx.navigation.compose.NavHost
+import androidx.navigation.compose.composable
+import androidx.navigation.compose.rememberNavController
+import androidx.navigation.toRoute
 import androidx.room.Room
 import org.wspcgir.strong_giraffe.destinations.*
 import org.wspcgir.strong_giraffe.model.*
@@ -21,15 +26,14 @@ import org.wspcgir.strong_giraffe.repository.AppDatabase
 import org.wspcgir.strong_giraffe.repository.AppRepository
 import org.wspcgir.strong_giraffe.ui.theme.StrongGiraffeTheme
 import org.wspcgir.strong_giraffe.views.PAGE_TITLE_FONT_SIZE
-import com.ramcosta.composedestinations.DestinationsNavHost
-import com.ramcosta.composedestinations.annotation.Destination
-import com.ramcosta.composedestinations.manualcomposablecalls.composable
-import com.ramcosta.composedestinations.navigation.DestinationsNavigator
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 import org.wspcgir.strong_giraffe.repository.MIGRATION_1_2
 import java.time.Instant
-
+import java.util.Collections.emptyList
+import kotlinx.serialization.*
+import kotlinx.serialization.json.*
+import kotlin.reflect.typeOf
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -52,26 +56,58 @@ class MainActivity : ComponentActivity() {
     }
 }
 
+
+@Serializable
+object Home
+
+inline fun <reified T : Parcelable> parcelableType(
+    isNullableAllowed: Boolean = false,
+    json: Json = Json
+) = object : NavType<T>(isNullableAllowed = isNullableAllowed) {
+    override fun get(bundle: Bundle, key: String): T? {
+       return bundle.getParcelable(key, T::class.java)
+    }
+
+    override fun parseValue(value: String): T {
+        return json.decodeFromString(value)
+    }
+
+    override fun put(bundle: Bundle, key: String, value: T) {
+        return bundle.putParcelable(key, value)
+    }
+
+    override fun serializeAsValue(value: T): String = Json.encodeToString(value)
+}
+
 @Composable
 fun MainComponent(repo: AppRepository) {
-    DestinationsNavHost(
-        navGraph = NavGraphs.root,
-
-        ) {
-        composable(HomePageDestination) {
+    val navController = rememberNavController()
+    val typeMap = mapOf(
+        typeOf<SetId>() to parcelableType<SetId>(),
+        typeOf<MuscleId>() to parcelableType<MuscleId>(),
+        typeOf<LocationId>() to parcelableType<LocationId>(),
+        typeOf<ExerciseId>() to parcelableType<ExerciseId>(),
+        typeOf<EquipmentId>() to parcelableType<EquipmentId>(),
+        typeOf<EditLocation>() to parcelableType<EditLocation>(),
+        typeOf<EditSet>() to parcelableType<EditSet>(),
+        typeOf<EditMuscle>() to parcelableType<EditMuscle>(),
+        typeOf<EditExercise>() to parcelableType<EditExercise>(),
+    )
+    NavHost(navController = navController, startDestination = Home, typeMap = typeMap) {
+        composable<Home> {
             HomePage(
                 gotoLocationsList = {
-                    destinationsNavigator.navigate(LocationListPageDestination)
+                    navController.navigate(LocationList)
                 }, gotoMuscleList = {
-                    destinationsNavigator.navigate(MuscleListPageDestination)
+                    navController.navigate(MuscleList)
                 }, gotoExerciseList = {
-                    destinationsNavigator.navigate(ExerciseListPageDestination)
+                    navController.navigate(ExerciseList)
                 }, gotoSetList = {
-                    destinationsNavigator.navigate(SetListPageDestination)
+                    navController.navigate(SetList)
                 }
             )
         }
-        composable(LocationListPageDestination) {
+        composable<LocationList> {
             var locations by remember { mutableStateOf(emptyList<Location>()) }
             val scope = rememberCoroutineScope()
             LaunchedEffect(locations) {
@@ -84,25 +120,17 @@ fun MainComponent(repo: AppRepository) {
                 override fun newLocation() {
                     scope.launch {
                         val loc = repo.newLocation()
-                        destinationsNavigator.navigate(
-                            EditLocationPageDestination(
-                                EditLocationPageNavArgs(loc.name, loc.id)
-                            )
-                        )
+                        navController.navigate(EditLocation(loc.name, loc.id))
                     }
                 }
 
                 override fun gotoEditLocationPage(loc: Location) {
-                    destinationsNavigator.navigate(
-                        EditLocationPageDestination(
-                            EditLocationPageNavArgs(loc.name, loc.id)
-                        )
-                    )
+                    navController.navigate(EditLocation(loc.name, loc.id))
                 }
             })
         }
-        composable(EditLocationPageDestination) {
-            val navArgs = this.navArgs
+        composable<EditLocation>(typeMap = typeMap) {
+            val navArgs: EditLocation = it.toRoute()
             val scope = rememberCoroutineScope()
             EditLocationPage(object : EditLocationPageViewModel() {
                 override val startingName: String
@@ -110,18 +138,18 @@ fun MainComponent(repo: AppRepository) {
                 override val submit: (String) -> Unit
                     get() = { newName ->
                         scope.launch { repo.updateLocation(navArgs.id, newName) }
-                        destinationsNavigator.popBackStack()
+                        navController.popBackStack()
                     }
 
                 override fun delete() {
                     viewModelScope.launch {
                         repo.deleteLocation(navArgs.id)
                     }
-                    destinationsNavigator.popBackStack()
+                    navController.popBackStack()
                 }
             })
         }
-        composable(EquipmentListPageDestination) {
+        composable<EquipmentList> {
             var locations by remember { mutableStateOf(emptyList<Location>()) }
             var equipment by remember { mutableStateOf(emptyList<Equipment>()) }
             LaunchedEffect(equipment) {
@@ -138,29 +166,29 @@ fun MainComponent(repo: AppRepository) {
                 override fun gotoNew() {
                     viewModelScope.launch {
                         val new = repo.newEquipment(locations[0].id)
-                        destinationsNavigator.navigate(
-                            EditEquipmentPageDestination(
-                                EditEquipmentPageNavArgs(new.id, new.name, new.location)
+                        navController.navigate(
+                            EditEquipment(
+                                new.id,
+                                new.name,
+                                new.location
                             )
                         )
                     }
                 }
 
                 override fun goto(value: Equipment) {
-                    destinationsNavigator.navigate(
-                        EditEquipmentPageDestination(
-                            EditEquipmentPageNavArgs(value.id, value.name, value.location)
-                        )
+                    navController.navigate(
+                            EditEquipment(value.id, value.name, value.location)
                     )
                 }
 
                 override fun redirectToCreateLocation() {
-                    locationRedirect(viewModelScope, repo, destinationsNavigator)
+                    locationRedirect(viewModelScope, repo, navController)
                 }
             })
         }
-        composable(EditEquipmentPageDestination) {
-            val navArgs = this.navArgs
+        composable<EditEquipment>(typeMap = typeMap) {
+            val navArgs: EditEquipment = it.toRoute()
             var locations by remember { mutableStateOf(emptyList<Location>()) }
             var equipment by remember { mutableStateOf(emptyList<Equipment>()) }
             LaunchedEffect(equipment) {
@@ -181,22 +209,22 @@ fun MainComponent(repo: AppRepository) {
                     viewModelScope.launch {
                         repo.updateEquipment(navArgs.id, name, location)
                     }
-                    destinationsNavigator.popBackStack()
+                    navController.popBackStack()
                 }
 
                 override fun redirectToCreateLocation() {
-                    locationRedirect(viewModelScope, repo, destinationsNavigator)
+                    locationRedirect(viewModelScope, repo, navController)
                 }
 
                 override fun delete() {
                     viewModelScope.launch {
                         repo.deleteEquipment(navArgs.id)
                     }
-                    destinationsNavigator.popBackStack()
+                    navController.popBackStack()
                 }
             })
         }
-        composable(MuscleListPageDestination) {
+        composable<MuscleList> {
             var muscles by remember { mutableStateOf(emptyMap<MuscleId, MuscleSetHistory>()) }
             LaunchedEffect(muscles) {
                 muscles = repo.setsForMusclesInWeek(Instant.now()).setCounts
@@ -208,25 +236,17 @@ fun MainComponent(repo: AppRepository) {
                 override fun new() {
                     viewModelScope.launch {
                         val new = repo.newMuscle()
-                        destinationsNavigator.navigate(
-                            EditMusclePageDestination(
-                                EditMusclePageNavArgs(new.id, new.name)
-                            )
-                        )
+                        navController.navigate(EditMuscle(new.id, new.name))
                     }
                 }
 
                 override fun goto(value: Muscle) {
-                    destinationsNavigator.navigate(
-                        EditMusclePageDestination(
-                            EditMusclePageNavArgs(value.id, value.name)
-                        )
-                    )
+                    navController.navigate(EditMuscle(value.id, value.name))
                 }
             })
         }
-        composable(EditMusclePageDestination) {
-            val navArgs = this.navArgs
+        composable<EditMuscle>(typeMap = typeMap) {
+            val navArgs: EditMuscle = it.toRoute()
             EditMusclePage(view = object : EditMusclePageViewModel() {
                 override val startingName: String
                     get() = navArgs.startingName
@@ -235,18 +255,18 @@ fun MainComponent(repo: AppRepository) {
                     viewModelScope.launch {
                         repo.updateMuscle(navArgs.muscleId, name)
                     }
-                    destinationsNavigator.popBackStack()
+                    navController.popBackStack()
                 }
 
                 override fun delete() {
                     viewModelScope.launch {
                         repo.deleteMuscle(navArgs.muscleId)
                     }
-                    destinationsNavigator.popBackStack()
+                    navController.popBackStack()
                 }
             })
         }
-        composable(ExerciseListPageDestination) {
+        composable<ExerciseList> {
             var exercises by remember { mutableStateOf(emptyList<Exercise>()) }
             var muscles by remember { mutableStateOf(emptyList<Muscle>()) }
             LaunchedEffect(exercises, muscles) {
@@ -260,31 +280,19 @@ fun MainComponent(repo: AppRepository) {
                 override fun gotoNew() {
                     viewModelScope.launch {
                         val new = repo.newExercise(muscles[0].id)
-                        destinationsNavigator.navigate(
-                            EditExercisePageDestination(
-                                EditExercisePageNavArgs(new.id)
-                            )
-                        )
+                        navController.navigate(EditExercise(new.id))
                     }
                 }
 
                 override fun goto(value: Exercise) {
-                    destinationsNavigator.navigate(
-                        EditExercisePageDestination(
-                            EditExercisePageNavArgs(value.id)
-                        )
-                    )
+                    navController.navigate(EditExercise(value.id))
                 }
 
                 override fun redirectToCreateMuscle() {
                     viewModelScope.launch {
                         val new = repo.newMuscle()
 
-                        destinationsNavigator.navigate(
-                            EditMusclePageDestination(
-                                EditMusclePageNavArgs(new.id, new.name)
-                            )
-                        )
+                        navController.navigate(EditMuscle(new.id, new.name))
                     }
                 }
 
@@ -292,35 +300,33 @@ fun MainComponent(repo: AppRepository) {
                     get() = muscles
             })
         }
-        composable(EditExercisePageDestination) {
-            val navArgs = this.navArgs
+        composable<EditExercise>(typeMap = typeMap) {
+            val navArgs: EditExercise = it.toRoute()
             EditExercisePage(
-                view = EditExercisePageViewModelImpl(navArgs.id, repo, destinationsNavigator)
+                view = EditExercisePageViewModelImpl(navArgs.id, repo, navController)
             )
         }
-        composable(SetListPageDestination) {
-            RegisterSetListPage(repo, destinationsNavigator)
+        composable<SetList> {
+            RegisterSetListPage(repo, navController)
         }
-        composable(EditSetPageDestination) {
-            RegisterEditSetPage(navArgs, repo, destinationsNavigator)
+        composable<EditSet>(typeMap = typeMap) {
+            val navArgs: EditSet = it.toRoute()
+            RegisterEditSetPage(navArgs, repo, navController)
         }
     }
 }
 
 fun locationRedirect(
-    scope: CoroutineScope, repo: AppRepository, destinationsNavigator: DestinationsNavigator
+    scope: CoroutineScope, repo: AppRepository, navController: NavController
 ) {
     scope.launch {
         val new = repo.newLocation()
-        destinationsNavigator.navigate(
-            EditLocationPageDestination(new.name, new.id)
-        )
+        navController.navigate(EditLocation(new.name, new.id))
     }
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-@Destination(start = true)
 fun HomePage(
     gotoLocationsList: () -> Unit,
     gotoMuscleList: () -> Unit,

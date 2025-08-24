@@ -1,18 +1,10 @@
 package org.wspcgir.strong_giraffe.model.ids
 
-import com.ramcosta.composedestinations.navargs.DestinationsNavTypeSerializer
-import com.ramcosta.composedestinations.navargs.NavTypeSerializer
+import android.os.Parcelable
+import kotlinx.parcelize.Parcelize
+import kotlinx.serialization.Serializable
 
-@NavTypeSerializer
-class MuscleIdSerializer : DestinationsNavTypeSerializer<MuscleId> {
-    override fun fromRouteString(routeStr: String): MuscleId {
-        return MuscleId(routeStr)
-    }
-
-    override fun toRouteString(value: MuscleId): String {
-        return value.value
-    }
-}
-
-data class MuscleId(val value: String)
+@Serializable
+@Parcelize
+data class MuscleId(val value: String) : Parcelable
 

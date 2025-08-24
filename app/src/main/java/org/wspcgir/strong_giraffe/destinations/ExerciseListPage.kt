@@ -4,13 +4,16 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.lifecycle.ViewModel
+import kotlinx.serialization.Serializable
 import org.wspcgir.strong_giraffe.model.Exercise
 import org.wspcgir.strong_giraffe.model.Muscle
 import org.wspcgir.strong_giraffe.model.ids.MuscleId
 import org.wspcgir.strong_giraffe.views.EditPageList
 import org.wspcgir.strong_giraffe.views.RequiredDataRedirect
-import com.ramcosta.composedestinations.annotation.Destination
 import org.wspcgir.strong_giraffe.model.ids.ExerciseId
+
+@Serializable
+object ExerciseList
 
 abstract class ExerciseListPageViewModel : ViewModel() {
     abstract val exercises: List<Exercise>
@@ -22,7 +25,6 @@ abstract class ExerciseListPageViewModel : ViewModel() {
 }
 
 @Composable
-@Destination
 fun ExerciseListPage(view: ExerciseListPageViewModel) {
     if (view.muscles.isEmpty()) {
         RequiredDataRedirect(missing = "Muscle") {

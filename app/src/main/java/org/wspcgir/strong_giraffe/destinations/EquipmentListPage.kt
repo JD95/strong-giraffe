@@ -4,12 +4,15 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.lifecycle.ViewModel
+import kotlinx.serialization.Serializable
 import org.wspcgir.strong_giraffe.model.Equipment
 import org.wspcgir.strong_giraffe.model.Location
 import org.wspcgir.strong_giraffe.model.ids.LocationId
 import org.wspcgir.strong_giraffe.views.EditPageList
 import org.wspcgir.strong_giraffe.views.RequiredDataRedirect
-import com.ramcosta.composedestinations.annotation.Destination
+
+@Serializable
+object EquipmentList
 
 abstract class EquipmentListPageViewModel : ViewModel() {
     abstract val equipment: List<Equipment>
@@ -21,7 +24,6 @@ abstract class EquipmentListPageViewModel : ViewModel() {
 }
 
 @Composable
-@Destination
 fun EquipmentListPage(view: EquipmentListPageViewModel) {
     if (view.locations.isEmpty()) {
         RequiredDataRedirect(missing = "Location") {
