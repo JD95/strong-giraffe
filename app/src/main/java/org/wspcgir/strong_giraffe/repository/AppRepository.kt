@@ -340,4 +340,42 @@ class AppRepository(private val dao: AppDao) {
         return ExerciseVariation(ExerciseVariationId(id), name, exercise, null)
     }
 
+    suspend fun getSets(): List<WorkoutSet> {
+        return dao.getSets().map {
+            WorkoutSet(
+                id = SetId(it.id),
+                exercise = ExerciseId(it.exercise),
+                variation = it.variation?.let { v -> ExerciseVariationId(v)},
+                location = it.location?.let { l -> LocationId(l) },
+                comment = Comment(it.comment),
+                reps = Reps(it.reps),
+                time = Instant.ofEpochSecond(it.time),
+                equipment = it.equipment?.let { e -> EquipmentId(e) },
+                weight = Weight(it.weight),
+                intensity = Intensity.fromInt(it.intensity)!!
+            )
+        }
+    }
+
+    suspend fun getVariations(): List<ExerciseVariation> {
+        return dao.getVariations().map {
+            ExerciseVariation(
+                id = ExerciseVariationId(it.id),
+                exercise = ExerciseId(it.exercise),
+                name = it.name,
+                location = it.location?.let { l -> LocationId(l) }
+            )
+        }
+    }
+
+    suspend fun createBackup(): Backup {
+        return Backup(
+            locations = getLocations(),
+            muscles = getMuscles(),
+            exercises = getExercises(),
+            sets = getSets(),
+            variations = getVariations()
+        )
+    }
+
 }

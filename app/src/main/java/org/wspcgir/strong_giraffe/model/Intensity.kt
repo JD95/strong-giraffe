@@ -1,6 +1,28 @@
 package org.wspcgir.strong_giraffe.model
 
+import kotlinx.serialization.KSerializer
+import kotlinx.serialization.Serializable
+import kotlinx.serialization.descriptors.SerialDescriptor
+import kotlinx.serialization.encoding.Decoder
+import kotlinx.serialization.encoding.Encoder
+
+@Serializable(with = Intensity.Serializer::class)
 sealed class Intensity {
+
+    object Serializer : KSerializer<Intensity> {
+        override val descriptor: SerialDescriptor
+            get() = TODO("Not yet implemented")
+
+        override fun deserialize(decoder: Decoder): Intensity {
+            TODO("Not yet implemented")
+        }
+
+        override fun serialize(encoder: Encoder, value: Intensity) {
+            TODO("Not yet implemented")
+        }
+
+    }
+
     /**
      * No Muscle activation, too light.
      */

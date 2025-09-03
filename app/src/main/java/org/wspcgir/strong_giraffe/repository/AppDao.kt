@@ -122,6 +122,20 @@ interface AppDao {
     @Insert
     suspend fun insertWorkoutSet(workoutSetEntity: WorkoutSet)
 
+    @Query(
+        """ 
+            SELECT exercise 
+                 , location
+                 , variation
+                 , reps
+                 , weight
+                 , time
+                 , intensity
+                 , comment
+            FROM workout_set
+        """)
+    suspend fun getSets(): List<WorkoutSet>
+
     @Query("SELECT * FROM SetSummary")
     suspend fun getSetSummaries(): List<SetSummary>
 
@@ -371,6 +385,17 @@ interface AppDao {
         """
     )
     suspend fun getVariationsForExercise(exerciseId: String): List<ExerciseVariation>
+
+    @Query(
+        """
+            SELECT id
+                 , name
+                 , exercise 
+                 , location 
+            FROM exercise_variation
+        """
+    )
+    suspend fun getVariations(): List<ExerciseVariation>
 
     @Query(
         """
