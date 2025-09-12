@@ -62,6 +62,7 @@ import org.wspcgir.strong_giraffe.model.ExerciseVariation
 import org.wspcgir.strong_giraffe.model.Intensity
 import org.wspcgir.strong_giraffe.model.Location
 import org.wspcgir.strong_giraffe.model.Reps
+import org.wspcgir.strong_giraffe.model.Time
 import org.wspcgir.strong_giraffe.model.Weight
 import org.wspcgir.strong_giraffe.model.WorkoutSet
 import org.wspcgir.strong_giraffe.model.ids.EquipmentId
@@ -248,7 +249,6 @@ fun EditSetPage(view: EditSetPageViewModel) {
         toggleSetLock = view::toggleSetLock,
         submit = view::submit,
         delete = view::delete,
-        changeLocation = view::changeLocation,
         changeExercise = view::changeExercise,
         changeVariation = view::changeVariation,
         changeReps = view::changeReps,
@@ -272,7 +272,6 @@ fun Page(
     starting: State<WorkoutSet>,
     submit: () -> Unit,
     delete: () -> Unit,
-    changeLocation: (LocationId?) -> Unit,
     changeExercise: (ExerciseId) -> Unit,
     changeVariation: (ExerciseVariationId?) -> Unit,
     changeReps: (Reps) -> Unit,
@@ -348,7 +347,7 @@ fun Page(
             ) {
                 Spacer(modifier = Modifier.weight(1.0f))
                 val zone = TimeZone.getDefault().toZoneId()
-                val date = OffsetDateTime.ofInstant(starting.value.time, zone)
+                val date = OffsetDateTime.ofInstant(starting.value.time.value, zone)
                 val dateFormat = DateTimeFormatter.ofPattern("MMMM dd, yyyy")
                 val timeFormat = DateTimeFormatter.ofPattern("HH:MM:ss")
                 Text(date.format(dateFormat), fontSize = FIELD_NAME_FONT_SIZE)
@@ -552,7 +551,7 @@ private fun Preview() {
             location = LocationId("locationA"),
             reps = Reps(0),
             weight = Weight(0.0f),
-            time = Instant.now(),
+            time = Time(Instant.now()),
             intensity = Intensity.Normal,
             comment = Comment("")
         )
@@ -563,7 +562,6 @@ private fun Preview() {
             starting = remember { mutableStateOf(setTemplate) },
             submit = { },
             delete = { },
-            changeLocation = { },
             changeExercise = { },
             changeVariation = { },
             changeReps = { },

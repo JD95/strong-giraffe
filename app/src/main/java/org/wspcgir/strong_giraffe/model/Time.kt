@@ -2,6 +2,7 @@ package org.wspcgir.strong_giraffe.model
 
 import kotlinx.serialization.KSerializer
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.builtins.serializer
 import kotlinx.serialization.descriptors.PrimitiveKind
 import kotlinx.serialization.descriptors.PrimitiveSerialDescriptor
 import kotlinx.serialization.descriptors.SerialDescriptor
@@ -14,14 +15,14 @@ data class Time(val value: Instant) {
 
     object Serializer : KSerializer<Time> {
         override val descriptor: SerialDescriptor
-            get() = PrimitiveSerialDescriptor("org.wspcgir.strong_giraffe.model.Time", PrimitiveKind.INT)
+            get() = PrimitiveSerialDescriptor("org.wspcgir.strong_giraffe.model.Time", PrimitiveKind.LONG)
 
         override fun deserialize(decoder: Decoder): Time {
-            TODO("Not yet implemented")
+            return Time(Instant.ofEpochSecond(Long.serializer().deserialize(decoder)))
         }
 
         override fun serialize(encoder: Encoder, value: Time) {
-            TODO("Not yet implemented")
+            Long.serializer().serialize(encoder, value.value.epochSecond)
         }
 
     }

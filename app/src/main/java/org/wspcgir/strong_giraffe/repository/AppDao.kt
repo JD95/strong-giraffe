@@ -124,7 +124,8 @@ interface AppDao {
 
     @Query(
         """ 
-            SELECT exercise 
+            SELECT id
+                 , exercise 
                  , location
                  , variation
                  , reps
