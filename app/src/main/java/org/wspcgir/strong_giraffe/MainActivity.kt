@@ -95,6 +95,7 @@ fun MainComponent(repo: AppRepository) {
     )
     NavHost(navController = navController, startDestination = Home, typeMap = typeMap) {
         composable<Home> {
+            var scope = rememberCoroutineScope()
             HomePage(
                 gotoLocationsList = {
                     navController.navigate(LocationList)
@@ -104,8 +105,17 @@ fun MainComponent(repo: AppRepository) {
                     navController.navigate(ExerciseList)
                 }, gotoSetList = {
                     navController.navigate(SetList)
-                }, createBackup = {},
-                restoreFromBackup = {}
+                }, createBackup = {
+                    scope.launch {
+                        val backup = repo.createBackup()
+                    }
+                },
+                restoreFromBackup = {
+                    scope.launch {
+                        val backup = null
+                        repo.restoreFromBackup(backup!!)
+                    }
+                }
             )
         }
         composable<LocationList> {
