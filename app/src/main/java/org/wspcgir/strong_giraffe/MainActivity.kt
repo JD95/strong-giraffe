@@ -5,6 +5,9 @@ import android.os.Parcelable
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.layout.*
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.KeyboardArrowDown
+import androidx.compose.material.icons.filled.Star
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -104,7 +107,8 @@ fun MainComponent(repo: AppRepository) {
                     navController.navigate(ExerciseList)
                 }, gotoSetList = {
                     navController.navigate(SetList)
-                }
+                }, gotoBackupPage = {},
+                gotoRestorePage = {}
             )
         }
         composable<LocationList> {
@@ -325,6 +329,22 @@ fun locationRedirect(
     }
 }
 
+@Composable
+fun HomePageTopBar(
+    gotoBackupPage: () -> Unit,
+    gotoRestorePage: () -> Unit
+) {
+    BottomAppBar() {
+        Button(onClick = gotoBackupPage) {
+            Text("Backup")
+        }
+        Spacer(modifier = Modifier.width(5.dp))
+        Button(onClick = gotoRestorePage) {
+            Text("Restore")
+        }
+    }
+}
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HomePage(
@@ -332,8 +352,12 @@ fun HomePage(
     gotoMuscleList: () -> Unit,
     gotoExerciseList: () -> Unit,
     gotoSetList: () -> Unit,
+    gotoBackupPage: () -> Unit,
+    gotoRestorePage: () -> Unit
 ) {
-    Scaffold() { innerPadding ->
+    Scaffold(
+        bottomBar = { HomePageTopBar(gotoBackupPage, gotoRestorePage) }
+    ) { innerPadding ->
 
         Column(
             modifier = Modifier
@@ -392,5 +416,5 @@ fun HomePage(
 @Preview
 @Composable
 fun HomePagePreview() {
-    HomePage({}, {}, {}, {})
+    HomePage({}, {}, {}, {}, {}, {})
 }
