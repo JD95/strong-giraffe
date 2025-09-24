@@ -1,6 +1,7 @@
 package org.wspcgir.strong_giraffe.repository
 
 import androidx.room.Insert
+import androidx.room.OnConflictStrategy
 import androidx.room.Query
 import org.wspcgir.strong_giraffe.repository.entity.*
 
@@ -9,6 +10,9 @@ interface AppDao {
 
     @Insert
     suspend fun insertLocation(value: Location)
+
+    @Insert(onConflict = OnConflictStrategy.IGNORE)
+    suspend fun insertLocations(values: List<Location>)
 
     @Query(
         """
@@ -36,6 +40,9 @@ interface AppDao {
         """
     )
     suspend fun getAllMuscles(): List<Muscle>
+
+    @Insert(onConflict = OnConflictStrategy.IGNORE)
+    suspend fun insertMuscles(values: List<Muscle>)
 
     @Query(
         """
@@ -88,6 +95,9 @@ interface AppDao {
     @Insert
     suspend fun insertExercise(value: Exercise)
 
+    @Insert(onConflict = OnConflictStrategy.IGNORE)
+    suspend fun insertExercises(values: List<Exercise>)
+
     @Query(
         """
             UPDATE exercise
@@ -100,6 +110,9 @@ interface AppDao {
 
     @Insert
     suspend fun insertWorkoutSet(workoutSetEntity: WorkoutSet)
+
+    @Insert(onConflict = OnConflictStrategy.IGNORE)
+    suspend fun insertWorkoutSets(values: List<WorkoutSet>)
 
     @Query(
         """ 
@@ -389,6 +402,9 @@ interface AppDao {
 
     @Insert
     suspend fun insertExerciseVariation(value: ExerciseVariation)
+
+    @Insert(onConflict = OnConflictStrategy.IGNORE)
+    suspend fun insertExerciseVariations(values: List<ExerciseVariation>)
 
     @Query(
         """

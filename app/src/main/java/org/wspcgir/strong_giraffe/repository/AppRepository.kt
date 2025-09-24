@@ -355,26 +355,29 @@ class AppRepository(private val dao: AppDao) {
     }
 
     suspend fun restoreFromBackup(backup: Backup) {
-        for (muscle in backup.muscles) {
-            newMuscle(muscle.id.value)
-            updateMuscle(muscle.id, muscle.name)
-        }
-        for (location in backup.locations) {
-            newLocation(location.id.value)
-            updateLocation(location.id, location.name)
-        }
-        for (exercise in backup.exercises) {
-            newExercise(exercise.muscle, exercise.id)
-            updateExercise(exercise.id, exercise.name, exercise.muscle)
-        }
-        for (variation in backup.variations) {
-            newExerciseVariation(variation.exercise, variation.id)
-            updateVariation(variation.id, variation.name, variation.location)
-        }
-        for (set in backup.sets) {
-            newWorkoutSet(set.exercise, id = set.id)
-            updateWorkoutSet(set)
-        }
+        dao.insertMuscles(backup.muscles.map {
+            MuscleEntity(it.id.value, it.name)
+        });
+        dao.insertExercises(backup.exercises.map {
+            ExerciseEntity(it.id.value, it.name, it.muscle.value)
+        });
+        dao.insertExerciseVariations(backup.variations.map {
+            ExerciseVariationEntity(it.id.value, it.name, it.exercise.value, it.location?.value)
+        });
+        dao.insertWorkoutSets(backup.sets.map {
+                WorkoutSetEntity(
+                    id = it.id.value,
+                    exercise = it.exercise.value,
+                    location = it.location?.value,
+                    equipment = null,
+                    variation = it.variation?.value,
+                    reps = it.reps.value,
+                    weight = it.weight.value,
+                    time = it.time.value.epochSecond,
+                    intensity = Intensity.toInt(it.intensity),
+                    comment = it.comment.value
+                )
+        });
     }
 
 }

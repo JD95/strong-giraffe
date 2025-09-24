@@ -5,6 +5,7 @@ import android.os.Bundle
 import android.os.Parcelable
 import android.widget.Toast
 import androidx.activity.ComponentActivity
+import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.fillMaxSize
@@ -18,6 +19,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.viewModelScope
 import androidx.navigation.NavController
@@ -76,6 +78,7 @@ import org.wspcgir.strong_giraffe.repository.AppDatabase
 import org.wspcgir.strong_giraffe.repository.AppRepository
 import org.wspcgir.strong_giraffe.repository.MIGRATION_1_2
 import org.wspcgir.strong_giraffe.ui.theme.StrongGiraffeTheme
+import java.net.URI
 import java.time.Instant
 import java.util.Collections.emptyList
 import kotlin.reflect.typeOf
@@ -181,6 +184,21 @@ fun MainComponent(
     NavHost(navController = navController, startDestination = Home, typeMap = typeMap) {
         composable<Home> {
             val scope = rememberCoroutineScope()
+            val contentResolver = LocalContext.current.contentResolver
+            val pickFileLauncher = rememberLauncherForActivityResult(
+                ActivityResultContracts.OpenDocument()
+            ) { uri: Uri? ->
+                if (uri != null) {
+                    contentResolver.openInputStream(uri).use { inStream ->
+                        inStream?.bufferedReader()?.use { it.readText() }?.let {
+                            val backup = Json.decodeFromString(Backup.serializer(), it)
+                            scope.launch {
+                                repo.restoreFromBackup(backup)
+                            }
+                        }
+                    }
+                }
+            }
             HomePage(
                 gotoLocationsList = {
                     navController.navigate(LocationList)
@@ -191,12 +209,7 @@ fun MainComponent(
                 }, gotoSetList = {
                     navController.navigate(SetList)
                 }, createBackup = createBackup,
-                restoreFromBackup = {
-                    scope.launch {
-                        val backup = null
-                        repo.restoreFromBackup(backup!!)
-                    }
-                }
+                restoreFromBackup = { pickFileLauncher.launch(arrayOf("text/plain")) }
             )
         }
         composable<LocationList> {
