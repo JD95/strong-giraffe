@@ -19,7 +19,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.viewModelScope
 import androidx.navigation.NavController
@@ -32,6 +31,7 @@ import androidx.room.Room
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.SerializationException
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import org.wspcgir.strong_giraffe.destinations.EditEquipment
@@ -78,7 +78,6 @@ import org.wspcgir.strong_giraffe.repository.AppDatabase
 import org.wspcgir.strong_giraffe.repository.AppRepository
 import org.wspcgir.strong_giraffe.repository.MIGRATION_1_2
 import org.wspcgir.strong_giraffe.ui.theme.StrongGiraffeTheme
-import java.net.URI
 import java.time.Instant
 import java.util.Collections.emptyList
 import kotlin.reflect.typeOf
@@ -117,6 +116,15 @@ class MainActivity : ComponentActivity() {
                             scope.launch {
                                 createBackup.launch("strong-giraffe-backup.json")
                             }
+                        },
+                        restoreFromBackup = { uri ->
+                            if (uri != null) {
+                                loadBackupFromFileSystem(uri)?.let {
+                                    scope.launch {
+                                        repo.restoreFromBackup(it)
+                                    }
+                                }
+                            }
                         }
                     )
                 }
@@ -138,6 +146,24 @@ class MainActivity : ComponentActivity() {
                 Toast.LENGTH_LONG
             ).show()
         }
+    }
+
+    private fun loadBackupFromFileSystem(uri: Uri): Backup? {
+        contentResolver.openInputStream(uri).use { inStream ->
+            inStream?.bufferedReader()?.use { it.readText() }?.let {
+                try {
+                    val backup = Json.decodeFromString(Backup.serializer(), it)
+                    return backup
+                } catch (e: SerializationException) {
+                    Toast.makeText(
+                        this,
+                        "Backup was malformed: ${e.message}",
+                        Toast.LENGTH_LONG
+                    ).show()
+                }
+            }
+        }
+        return null
     }
 }
 
@@ -167,7 +193,8 @@ inline fun <reified T : Parcelable> parcelableType(
 @Composable
 fun MainComponent(
     repo: AppRepository,
-    createBackup: () -> Unit
+    createBackup: () -> Unit,
+    restoreFromBackup: (Uri?) -> Unit,
 ) {
     val navController = rememberNavController()
     val typeMap = mapOf(
@@ -183,22 +210,9 @@ fun MainComponent(
     )
     NavHost(navController = navController, startDestination = Home, typeMap = typeMap) {
         composable<Home> {
-            val scope = rememberCoroutineScope()
-            val contentResolver = LocalContext.current.contentResolver
             val pickFileLauncher = rememberLauncherForActivityResult(
                 ActivityResultContracts.OpenDocument()
-            ) { uri: Uri? ->
-                if (uri != null) {
-                    contentResolver.openInputStream(uri).use { inStream ->
-                        inStream?.bufferedReader()?.use { it.readText() }?.let {
-                            val backup = Json.decodeFromString(Backup.serializer(), it)
-                            scope.launch {
-                                repo.restoreFromBackup(backup)
-                            }
-                        }
-                    }
-                }
-            }
+            ) { restoreFromBackup(it) }
             HomePage(
                 gotoLocationsList = {
                     navController.navigate(LocationList)
