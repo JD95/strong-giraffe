@@ -355,6 +355,9 @@ class AppRepository(private val dao: AppDao) {
     }
 
     suspend fun restoreFromBackup(backup: Backup) {
+        dao.insertLocations(backup.locations.map {
+            LocationEntity(it.id.value, it.name)
+        })
         dao.insertMuscles(backup.muscles.map {
             MuscleEntity(it.id.value, it.name)
         })
