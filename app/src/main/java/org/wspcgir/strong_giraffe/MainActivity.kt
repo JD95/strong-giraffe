@@ -1,16 +1,25 @@
 package org.wspcgir.strong_giraffe
 
+import android.net.Uri
 import android.os.Bundle
 import android.os.Parcelable
+import android.widget.Toast
 import androidx.activity.ComponentActivity
+import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
-import androidx.compose.foundation.layout.*
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
-import androidx.compose.ui.Alignment
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.tooling.preview.Preview
-import androidx.compose.ui.unit.dp
+import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.viewModelScope
 import androidx.navigation.NavController
 import androidx.navigation.NavType
@@ -19,20 +28,58 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.toRoute
 import androidx.room.Room
-import org.wspcgir.strong_giraffe.destinations.*
-import org.wspcgir.strong_giraffe.model.*
-import org.wspcgir.strong_giraffe.model.ids.*
-import org.wspcgir.strong_giraffe.repository.AppDatabase
-import org.wspcgir.strong_giraffe.repository.AppRepository
-import org.wspcgir.strong_giraffe.ui.theme.StrongGiraffeTheme
-import org.wspcgir.strong_giraffe.views.PAGE_TITLE_FONT_SIZE
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
+import kotlinx.serialization.Serializable
+import kotlinx.serialization.SerializationException
+import kotlinx.serialization.encodeToString
+import kotlinx.serialization.json.Json
+import org.wspcgir.strong_giraffe.destinations.EditEquipment
+import org.wspcgir.strong_giraffe.destinations.EditEquipmentPage
+import org.wspcgir.strong_giraffe.destinations.EditEquipmentPageViewModel
+import org.wspcgir.strong_giraffe.destinations.EditExercise
+import org.wspcgir.strong_giraffe.destinations.EditExercisePage
+import org.wspcgir.strong_giraffe.destinations.EditExercisePageViewModelImpl
+import org.wspcgir.strong_giraffe.destinations.EditLocation
+import org.wspcgir.strong_giraffe.destinations.EditLocationPage
+import org.wspcgir.strong_giraffe.destinations.EditLocationPageViewModel
+import org.wspcgir.strong_giraffe.destinations.EditMuscle
+import org.wspcgir.strong_giraffe.destinations.EditMusclePage
+import org.wspcgir.strong_giraffe.destinations.EditMusclePageViewModel
+import org.wspcgir.strong_giraffe.destinations.EditSet
+import org.wspcgir.strong_giraffe.destinations.EquipmentList
+import org.wspcgir.strong_giraffe.destinations.EquipmentListPage
+import org.wspcgir.strong_giraffe.destinations.EquipmentListPageViewModel
+import org.wspcgir.strong_giraffe.destinations.ExerciseList
+import org.wspcgir.strong_giraffe.destinations.ExerciseListPage
+import org.wspcgir.strong_giraffe.destinations.ExerciseListPageViewModel
+import org.wspcgir.strong_giraffe.destinations.HomePage
+import org.wspcgir.strong_giraffe.destinations.LocationList
+import org.wspcgir.strong_giraffe.destinations.LocationListPage
+import org.wspcgir.strong_giraffe.destinations.LocationListPageViewModel
+import org.wspcgir.strong_giraffe.destinations.MuscleList
+import org.wspcgir.strong_giraffe.destinations.MuscleListPage
+import org.wspcgir.strong_giraffe.destinations.MuscleListPageViewModel
+import org.wspcgir.strong_giraffe.destinations.RegisterEditSetPage
+import org.wspcgir.strong_giraffe.destinations.RegisterSetListPage
+import org.wspcgir.strong_giraffe.destinations.SetList
+import org.wspcgir.strong_giraffe.model.Backup
+import org.wspcgir.strong_giraffe.model.Equipment
+import org.wspcgir.strong_giraffe.model.Exercise
+import org.wspcgir.strong_giraffe.model.Location
+import org.wspcgir.strong_giraffe.model.Muscle
+import org.wspcgir.strong_giraffe.model.MuscleSetHistory
+import org.wspcgir.strong_giraffe.model.ids.EquipmentId
+import org.wspcgir.strong_giraffe.model.ids.ExerciseId
+import org.wspcgir.strong_giraffe.model.ids.LocationId
+import org.wspcgir.strong_giraffe.model.ids.MuscleId
+import org.wspcgir.strong_giraffe.model.ids.SetId
+import org.wspcgir.strong_giraffe.repository.AppDatabase
+import org.wspcgir.strong_giraffe.repository.AppRepository
 import org.wspcgir.strong_giraffe.repository.MIGRATION_1_2
+import org.wspcgir.strong_giraffe.ui.theme.StrongGiraffeTheme
 import java.time.Instant
 import java.util.Collections.emptyList
-import kotlinx.serialization.*
-import kotlinx.serialization.json.*
 import kotlin.reflect.typeOf
 
 class MainActivity : ComponentActivity() {
@@ -43,19 +90,82 @@ class MainActivity : ComponentActivity() {
                 .addMigrations(MIGRATION_1_2)
                 .build()
         val dao = db.dao()
+        val repo = AppRepository(dao)
+        val createBackup =
+            registerForActivityResult(
+                ActivityResultContracts.CreateDocument("text/plain")
+            ) { uri: Uri? ->
+                uri?.let {
+                    lifecycleScope.launch {
+                        val backup = repo.createBackup()
+                        val content = Json.encodeToString(backup)
+                        saveBackupToFileSystem(it, content)
+                    }
+                }
+            }
         setContent {
+            val scope = rememberCoroutineScope()
             StrongGiraffeTheme {
                 // A surface container using the 'background' color from the theme
                 Surface(
                     modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background
                 ) {
-                    MainComponent(repo = AppRepository(dao))
+                    MainComponent(
+                        repo = repo,
+                        createBackup = {
+                            scope.launch {
+                                createBackup.launch("strong-giraffe-backup.json")
+                            }
+                        },
+                        restoreFromBackup = { uri ->
+                            if (uri != null) {
+                                loadBackupFromFileSystem(uri)?.let {
+                                    scope.launch {
+                                        repo.restoreFromBackup(it)
+                                    }
+                                }
+                            }
+                        }
+                    )
                 }
             }
         }
     }
-}
 
+    private fun saveBackupToFileSystem(uri: Uri, content: String) {
+        try {
+            contentResolver.openOutputStream(uri)?.use { outputStream ->
+                outputStream.write(content.toByteArray())
+                Toast.makeText(this, "Backup created!", Toast.LENGTH_SHORT).show()
+            }
+        } catch (e: Exception) {
+            e.printStackTrace()
+            Toast.makeText(
+                this,
+                "Error creating backup: ${e.message}",
+                Toast.LENGTH_LONG
+            ).show()
+        }
+    }
+
+    private fun loadBackupFromFileSystem(uri: Uri): Backup? {
+        contentResolver.openInputStream(uri).use { inStream ->
+            inStream?.bufferedReader()?.use { it.readText() }?.let {
+                try {
+                    val backup = Json.decodeFromString(Backup.serializer(), it)
+                    return backup
+                } catch (e: SerializationException) {
+                    Toast.makeText(
+                        this,
+                        "Backup was malformed: ${e.message}",
+                        Toast.LENGTH_LONG
+                    ).show()
+                }
+            }
+        }
+        return null
+    }
+}
 
 @Serializable
 object Home
@@ -80,7 +190,11 @@ inline fun <reified T : Parcelable> parcelableType(
 }
 
 @Composable
-fun MainComponent(repo: AppRepository) {
+fun MainComponent(
+    repo: AppRepository,
+    createBackup: () -> Unit,
+    restoreFromBackup: (Uri?) -> Unit,
+) {
     val navController = rememberNavController()
     val typeMap = mapOf(
         typeOf<SetId>() to parcelableType<SetId>(),
@@ -95,6 +209,9 @@ fun MainComponent(repo: AppRepository) {
     )
     NavHost(navController = navController, startDestination = Home, typeMap = typeMap) {
         composable<Home> {
+            val pickFileLauncher = rememberLauncherForActivityResult(
+                ActivityResultContracts.OpenDocument()
+            ) { restoreFromBackup(it) }
             HomePage(
                 gotoLocationsList = {
                     navController.navigate(LocationList)
@@ -104,7 +221,8 @@ fun MainComponent(repo: AppRepository) {
                     navController.navigate(ExerciseList)
                 }, gotoSetList = {
                     navController.navigate(SetList)
-                }
+                }, createBackup = createBackup,
+                restoreFromBackup = { pickFileLauncher.launch(arrayOf("text/plain")) }
             )
         }
         composable<LocationList> {
@@ -178,7 +296,7 @@ fun MainComponent(repo: AppRepository) {
 
                 override fun goto(value: Equipment) {
                     navController.navigate(
-                            EditEquipment(value.id, value.name, value.location)
+                        EditEquipment(value.id, value.name, value.location)
                     )
                 }
 
@@ -323,74 +441,4 @@ fun locationRedirect(
         val new = repo.newLocation()
         navController.navigate(EditLocation(new.name, new.id))
     }
-}
-
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-fun HomePage(
-    gotoLocationsList: () -> Unit,
-    gotoMuscleList: () -> Unit,
-    gotoExerciseList: () -> Unit,
-    gotoSetList: () -> Unit,
-) {
-    Scaffold() { innerPadding ->
-
-        Column(
-            modifier = Modifier
-                .padding(innerPadding)
-                .fillMaxSize(),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.Center
-        ) {
-
-
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .fillMaxHeight(0.2f),
-                horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.Center
-            ) {
-                Text("Strong", fontSize = PAGE_TITLE_FONT_SIZE)
-                Text("Giraffe", fontSize = PAGE_TITLE_FONT_SIZE)
-            }
-            Spacer(modifier = Modifier
-                .fillMaxWidth()
-                .fillMaxHeight(0.2f))
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .fillMaxHeight(0.3f),
-                horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.Center
-            ) {
-                val space = 10.dp
-                Row() {
-                    Button(onClick = gotoLocationsList) {
-                        Text(text = "Locations")
-                    }
-                }
-                Spacer(modifier = Modifier.height(space))
-                Row() {
-                    Button(onClick = gotoMuscleList) {
-                        Text(text = "Muscles")
-                    }
-                    Spacer(modifier = Modifier.width(space))
-                    Button(onClick = gotoExerciseList) {
-                        Text(text = "Exercises")
-                    }
-                }
-                Spacer(modifier = Modifier.height(space))
-                Button(onClick = gotoSetList) {
-                    Text(text = "Sets")
-                }
-            }
-        }
-    }
-}
-
-@Preview
-@Composable
-fun HomePagePreview() {
-    HomePage({}, {}, {}, {})
 }

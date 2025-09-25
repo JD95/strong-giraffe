@@ -1,6 +1,7 @@
 package org.wspcgir.strong_giraffe.repository
 
 import androidx.room.Insert
+import androidx.room.OnConflictStrategy
 import androidx.room.Query
 import org.wspcgir.strong_giraffe.repository.entity.*
 
@@ -9,6 +10,9 @@ interface AppDao {
 
     @Insert
     suspend fun insertLocation(value: Location)
+
+    @Insert(onConflict = OnConflictStrategy.IGNORE)
+    suspend fun insertLocations(values: List<Location>)
 
     @Query(
         """
@@ -30,33 +34,15 @@ interface AppDao {
 
     @Query(
         """
-            SELECT DISTINCT l.id as id, l.name as name
-            FROM location l
-              JOIN equipment e ON e.location = l.id
-            ORDER BY l.name
-        """
-    )
-    suspend fun getLocationsWithEquipment(): List<Location>
-
-    @Query(
-        """
-            SELECT DISTINCT m.id as id, m.name as name
-            FROM muscle m
-              JOIN exercise e ON e.muscle = m.id
-            ORDER BY m.name
-        """
-    )
-    suspend fun getMusclesWithExercise(): List<Muscle>
-
-
-    @Query(
-        """
             SELECT id, name
             FROM muscle
             ORDER BY name
         """
     )
     suspend fun getAllMuscles(): List<Muscle>
+
+    @Insert(onConflict = OnConflictStrategy.IGNORE)
+    suspend fun insertMuscles(values: List<Muscle>)
 
     @Query(
         """
@@ -109,6 +95,9 @@ interface AppDao {
     @Insert
     suspend fun insertExercise(value: Exercise)
 
+    @Insert(onConflict = OnConflictStrategy.IGNORE)
+    suspend fun insertExercises(values: List<Exercise>)
+
     @Query(
         """
             UPDATE exercise
@@ -121,6 +110,24 @@ interface AppDao {
 
     @Insert
     suspend fun insertWorkoutSet(workoutSetEntity: WorkoutSet)
+
+    @Insert(onConflict = OnConflictStrategy.IGNORE)
+    suspend fun insertWorkoutSets(values: List<WorkoutSet>)
+
+    @Query(
+        """ 
+            SELECT id
+                 , exercise 
+                 , location
+                 , variation
+                 , reps
+                 , weight
+                 , time
+                 , intensity
+                 , comment
+            FROM workout_set
+        """)
+    suspend fun getSets(): List<WorkoutSet>
 
     @Query("SELECT * FROM SetSummary")
     suspend fun getSetSummaries(): List<SetSummary>
@@ -374,6 +381,17 @@ interface AppDao {
 
     @Query(
         """
+            SELECT id
+                 , name
+                 , exercise 
+                 , location 
+            FROM exercise_variation
+        """
+    )
+    suspend fun getVariations(): List<ExerciseVariation>
+
+    @Query(
+        """
             UPDATE exercise_variation
             SET name = :name,
                 location = :location
@@ -384,6 +402,9 @@ interface AppDao {
 
     @Insert
     suspend fun insertExerciseVariation(value: ExerciseVariation)
+
+    @Insert(onConflict = OnConflictStrategy.IGNORE)
+    suspend fun insertExerciseVariations(values: List<ExerciseVariation>)
 
     @Query(
         """
