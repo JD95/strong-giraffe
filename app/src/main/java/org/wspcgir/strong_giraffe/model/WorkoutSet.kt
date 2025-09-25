@@ -1,12 +1,13 @@
 package org.wspcgir.strong_giraffe.model
 
+import kotlinx.serialization.Serializable
 import org.wspcgir.strong_giraffe.model.ids.EquipmentId
 import org.wspcgir.strong_giraffe.model.ids.ExerciseId
 import org.wspcgir.strong_giraffe.model.ids.ExerciseVariationId
 import org.wspcgir.strong_giraffe.model.ids.LocationId
 import org.wspcgir.strong_giraffe.model.ids.SetId
-import java.time.Instant
 
+@Serializable
 data class WorkoutSet(
     val id: SetId,
     val exercise: ExerciseId,
@@ -15,7 +16,7 @@ data class WorkoutSet(
     val variation: ExerciseVariationId?,
     val reps: Reps,
     val weight: Weight,
-    val time: Instant,
+    val time: Time,
     val intensity: Intensity,
     val comment: Comment,
 )

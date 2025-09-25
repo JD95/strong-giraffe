@@ -1,6 +1,37 @@
 package org.wspcgir.strong_giraffe.model
 
+import kotlinx.serialization.KSerializer
+import kotlinx.serialization.Serializable
+import kotlinx.serialization.SerializationException
+import kotlinx.serialization.builtins.serializer
+import kotlinx.serialization.descriptors.PrimitiveKind
+import kotlinx.serialization.descriptors.PrimitiveSerialDescriptor
+import kotlinx.serialization.descriptors.SerialDescriptor
+import kotlinx.serialization.encoding.Decoder
+import kotlinx.serialization.encoding.Encoder
+
+@Serializable(with = Intensity.Serializer::class)
 sealed class Intensity {
+
+    object Serializer : KSerializer<Intensity> {
+        override val descriptor: SerialDescriptor
+            get() = PrimitiveSerialDescriptor("org.wspc.strong_giraffe.model.Intensity", PrimitiveKind.INT)
+
+        override fun deserialize(decoder: Decoder): Intensity {
+            val result = fromInt(Int.serializer().deserialize(decoder))
+            if (result != null) {
+                return result
+            } else {
+                throw SerializationException("Value was not an Int in the range for Intensity")
+            }
+        }
+
+        override fun serialize(encoder: Encoder, value: Intensity) {
+            Int.serializer().serialize(encoder, toInt(value))
+        }
+
+    }
+
     /**
      * No Muscle activation, too light.
      */

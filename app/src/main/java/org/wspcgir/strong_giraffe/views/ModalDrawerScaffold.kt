@@ -1,7 +1,10 @@
 package org.wspcgir.strong_giraffe.views
 
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material3.BottomAppBar
@@ -16,6 +19,8 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.rememberDrawerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
 import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -31,7 +36,15 @@ fun ModalDrawerScaffold(
     val scope = rememberCoroutineScope()
     ModalNavigationDrawer(
         drawerState = drawerState,
-        drawerContent = drawerContent
+        drawerContent = {
+            Column(
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.Center,
+                modifier = Modifier.fillMaxSize()
+            ) {
+                drawerContent()
+            }
+        }
     ) {
         Scaffold(
             topBar = {
