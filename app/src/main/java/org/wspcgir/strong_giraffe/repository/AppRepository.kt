@@ -357,13 +357,13 @@ class AppRepository(private val dao: AppDao) {
     suspend fun restoreFromBackup(backup: Backup) {
         dao.insertMuscles(backup.muscles.map {
             MuscleEntity(it.id.value, it.name)
-        });
+        })
         dao.insertExercises(backup.exercises.map {
             ExerciseEntity(it.id.value, it.name, it.muscle.value)
-        });
+        })
         dao.insertExerciseVariations(backup.variations.map {
             ExerciseVariationEntity(it.id.value, it.name, it.exercise.value, it.location?.value)
-        });
+        })
         dao.insertWorkoutSets(backup.sets.map {
                 WorkoutSetEntity(
                     id = it.id.value,
@@ -377,7 +377,7 @@ class AppRepository(private val dao: AppDao) {
                     intensity = Intensity.toInt(it.intensity),
                     comment = it.comment.value
                 )
-        });
+        })
     }
 
 }

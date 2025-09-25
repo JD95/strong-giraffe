@@ -60,7 +60,6 @@ fun HomePage(
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.SpaceEvenly
             ) {
-                val space = 10.dp
                 Button(onClick = gotoLocationsList) {
                     Text(text = "Locations")
                 }

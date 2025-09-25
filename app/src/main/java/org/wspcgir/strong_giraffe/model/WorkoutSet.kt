@@ -6,7 +6,6 @@ import org.wspcgir.strong_giraffe.model.ids.ExerciseId
 import org.wspcgir.strong_giraffe.model.ids.ExerciseVariationId
 import org.wspcgir.strong_giraffe.model.ids.LocationId
 import org.wspcgir.strong_giraffe.model.ids.SetId
-import java.time.Instant
 
 @Serializable
 data class WorkoutSet(
