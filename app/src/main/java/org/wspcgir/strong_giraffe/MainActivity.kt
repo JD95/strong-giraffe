@@ -79,8 +79,12 @@ import org.wspcgir.strong_giraffe.repository.AppRepository
 import org.wspcgir.strong_giraffe.repository.MIGRATION_1_2
 import org.wspcgir.strong_giraffe.ui.theme.StrongGiraffeTheme
 import java.time.Instant
+import java.time.LocalDateTime
+import java.time.format.DateTimeFormatter
 import java.util.Collections.emptyList
 import kotlin.reflect.typeOf
+
+const val JSON_MIME = "application/json"
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -93,7 +97,7 @@ class MainActivity : ComponentActivity() {
         val repo = AppRepository(dao)
         val createBackup =
             registerForActivityResult(
-                ActivityResultContracts.CreateDocument("text/plain")
+                ActivityResultContracts.CreateDocument(JSON_MIME)
             ) { uri: Uri? ->
                 uri?.let {
                     lifecycleScope.launch {
@@ -114,7 +118,9 @@ class MainActivity : ComponentActivity() {
                         repo = repo,
                         createBackup = {
                             scope.launch {
-                                createBackup.launch("strong-giraffe-backup.json")
+                                val now = LocalDateTime.now()
+                                val dateFormat = DateTimeFormatter.ofPattern("yyyy-MM-dd_HH-mm-ss")
+                                createBackup.launch("strong-giraffe-backup-${now.format(dateFormat)}")
                             }
                         },
                         restoreFromBackup = { uri ->
@@ -222,7 +228,7 @@ fun MainComponent(
                 }, gotoSetList = {
                     navController.navigate(SetList)
                 }, createBackup = createBackup,
-                restoreFromBackup = { pickFileLauncher.launch(arrayOf("text/plain")) }
+                restoreFromBackup = { pickFileLauncher.launch(arrayOf(JSON_MIME)) }
             )
         }
         composable<LocationList> {
