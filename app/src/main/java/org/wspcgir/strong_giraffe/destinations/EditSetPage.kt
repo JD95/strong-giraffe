@@ -3,7 +3,6 @@ package org.wspcgir.strong_giraffe.destinations
 import android.content.res.Configuration.UI_MODE_NIGHT_NO
 import android.content.res.Configuration.UI_MODE_NIGHT_YES
 import android.os.Parcelable
-import android.util.Log
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -35,7 +34,6 @@ import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.State
 import androidx.compose.runtime.getValue
@@ -53,6 +51,7 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.navigation.NavController
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 import kotlinx.parcelize.Parcelize
 import kotlinx.serialization.Serializable
@@ -91,177 +90,156 @@ data class EditSet(val id: SetId, val locked: Boolean) : Parcelable
 
 const val NUM_PREVIOUS_SETS = 6
 
-class EditSetPageViewModel(
-    private val setId: SetId,
-    private val repo: AppRepository,
-    private val dest: NavController,
-    private val inProgressMut: MutableState<WorkoutSet>,
-    private val variationsForExerciseMut: MutableState<List<ExerciseVariation>>,
-    private val previousSetsMut: MutableState<List<WorkoutSet>>,
-    private val lockedMut: MutableState<Boolean>,
-    val locations: List<Location>,
-    val exercises: List<Exercise>,
-) : ViewModel() {
-    fun submit() {
+class EditSetPageViewModel() : ViewModel() {
+
+    private var dataMut: MutableState<Data> = mutableStateOf(Data.Empty)
+
+    val data: State<Data>
+        get() = dataMut
+
+    fun init(repo: AppRepository, dest: NavController, set: WorkoutSet, locked: Boolean) {
         viewModelScope.launch {
-            repo.updateWorkoutSet(
-                id = setId,
-                exercise = inProgress.value.exercise,
-                location = inProgress.value.location,
-                variation = inProgress.value.variation,
-                reps = inProgress.value.reps,
-                weight = inProgress.value.weight,
-                intensity = inProgress.value.intensity,
-                comment = inProgress.value.comment,
-                time = inProgressMut.value.time
+            val previousSets = repo.setForExerciseAndVariationBefore(
+                cutoff = set.time,
+                set.exercise,
+                set.variation,
+                NUM_PREVIOUS_SETS
+            )
+            dataMut.value = Data.Loaded(
+                repo = repo,
+                dest = dest,
+                scope = viewModelScope,
+                previousSetsMut = mutableStateOf(previousSets),
+                inProgressMut = mutableStateOf(set),
+                lockedMut = mutableStateOf(locked)
             )
         }
-        dest.popBackStack()
+    }
+
+    sealed interface Data {
+        data class Loaded(
+            val repo: AppRepository,
+            val dest: NavController,
+            val scope: CoroutineScope,
+            private val previousSetsMut: MutableState<List<WorkoutSet>>,
+            private val inProgressMut: MutableState<WorkoutSet>,
+            private val lockedMut: MutableState<Boolean>,
+        ) : Data {
+            val locked: State<Boolean>
+                get() = lockedMut
+
+            val inProgress: State<WorkoutSet>
+                get() = inProgressMut
+
+            val previousSets: State<List<WorkoutSet>>
+                get() = previousSetsMut
+
+            fun submit() {
+                scope.launch {
+                    repo.updateWorkoutSet(
+                        id = inProgress.value.id,
+                        exercise = inProgress.value.exercise,
+                        location = inProgress.value.location,
+                        variation = inProgress.value.variation,
+                        reps = inProgress.value.reps,
+                        weight = inProgress.value.weight,
+                        intensity = inProgress.value.intensity,
+                        comment = inProgress.value.comment,
+                        time = inProgressMut.value.time
+                    )
+                }
+                dest.popBackStack()
+            }
+
+            fun changeExercise(exercise: ExerciseId) {
+                scope.launch {
+                    // Initially assume no variation until selected
+                    inProgressMut.value = inProgressMut.value.copy(variation = null)
+                    previousSetsMut.value = repo.setForExerciseAndVariationBefore(
+                        inProgress.value.time,
+                        exercise,
+                        inProgress.value.variation,
+                        NUM_PREVIOUS_SETS
+                    )
+                    inProgressMut.value = inProgress.value.copy(exercise = exercise)
+                }
+            }
+
+            fun changeVariation(variation: ExerciseVariationId?) {
+                scope.launch {
+                    previousSetsMut.value = repo.setForExerciseAndVariationBefore(
+                        inProgress.value.time,
+                        inProgress.value.exercise,
+                        variation,
+                        NUM_PREVIOUS_SETS
+                    )
+                    inProgressMut.value = inProgress.value.copy(variation = variation)
+                }
+            }
+
+            fun changeReps(new: Reps) {
+                inProgressMut.value = inProgress.value.copy(reps = new)
+            }
+
+            fun changeWeight(new: Weight) {
+                inProgressMut.value = inProgress.value.copy(weight = new)
+            }
+
+            fun changeIntensity(new: Intensity) {
+                inProgressMut.value = inProgress.value.copy(intensity = new)
+            }
+
+            fun changeComment(new: Comment) {
+                inProgressMut.value = inProgress.value.copy(comment = new)
+            }
+
+            fun delete() {
+                scope.launch {
+                    repo.deleteWorkoutSet(inProgress.value.id)
+                }
+                dest.popBackStack()
+            }
+
+            fun gotoSet(set: WorkoutSet) {
+                dest.navigate(EditSet(set.id, true))
+            }
+
+            fun toggleSetLock(new: Boolean) {
+                lockedMut.value = new
+            }
+
+        }
+
+        data object Empty : Data
     }
 
     @Deprecated("Changing location shouldn't do anything now")
     fun changeLocation(location: LocationId?) {
     }
-
-    fun changeExercise(exercise: ExerciseId) {
-        viewModelScope.launch {
-            this@EditSetPageViewModel.variationsForExerciseMut.value =
-                repo.getVariationsForExercise(exercise)
-            // Initially assume no variation until selected
-            inProgressMut.value = inProgressMut.value.copy(variation = null)
-            previousSetsMut.value = repo.setForExerciseAndVariationBefore(
-                inProgress.value.time,
-                exercise,
-                inProgress.value.variation,
-                NUM_PREVIOUS_SETS
-            )
-            inProgressMut.value = inProgress.value.copy(exercise = exercise)
-        }
-    }
-
-    fun changeVariation(variation: ExerciseVariationId?) {
-        viewModelScope.launch {
-            previousSetsMut.value = repo.setForExerciseAndVariationBefore(
-                inProgress.value.time,
-                inProgress.value.exercise,
-                variation,
-                NUM_PREVIOUS_SETS
-            )
-            inProgressMut.value = inProgress.value.copy(variation = variation)
-        }
-    }
-
-    fun changeReps(new: Reps) {
-        inProgressMut.value = inProgress.value.copy(reps = new)
-    }
-
-    fun changeWeight(new: Weight) {
-        inProgressMut.value = inProgress.value.copy(weight = new)
-    }
-
-    fun changeIntensity(new: Intensity) {
-        inProgressMut.value = inProgress.value.copy(intensity = new)
-    }
-
-    fun changeComment(new: Comment) {
-        inProgressMut.value = inProgress.value.copy(comment = new)
-    }
-
-    fun delete() {
-        viewModelScope.launch {
-            repo.deleteWorkoutSet(setId)
-        }
-        dest.popBackStack()
-    }
-
-    fun gotoSet(set: WorkoutSet) {
-        dest.navigate(EditSet(set.id, true))
-    }
-
-    fun toggleSetLock(new: Boolean) {
-        lockedMut.value = new
-    }
-
-    val locked: State<Boolean>
-        get() = lockedMut
-    val inProgress: State<WorkoutSet>
-        get() = inProgressMut
-
-    val variationsForExercise: State<List<ExerciseVariation>>
-        get() = this.variationsForExerciseMut
-
-    val previousSets: State<List<WorkoutSet>>
-        get() = previousSetsMut
-}
-
-@Composable
-fun RegisterEditSetPage(
-    navArgs: EditSet,
-    repo: AppRepository,
-    dest: NavController
-) {
-
-    var locations by remember { mutableStateOf<List<Location>>(emptyList()) }
-    var exercises by remember { mutableStateOf<List<Exercise>>(emptyList()) }
-    val variations = remember { mutableStateOf<List<ExerciseVariation>>(emptyList()) }
-    val inProgress = remember { mutableStateOf<WorkoutSet?>(null) }
-    val previousSets = remember { mutableStateOf<List<WorkoutSet>>(emptyList()) }
-    val locked = remember { mutableStateOf(navArgs.locked) }
-
-    LaunchedEffect(locations, exercises) {
-        locations = repo.getLocations()
-        exercises = repo.getExercises()
-        inProgress.value = repo.getSetFromId(navArgs.id)
-        variations.value = inProgress.value
-            ?.let { repo.getVariationsForExercise(it.exercise) }
-            ?: emptyList()
-        Log.i("SET", "weight is now '${inProgress.value?.weight}")
-        if (inProgress.value != null)
-            previousSets.value = repo.setForExerciseAndVariationBefore(
-                cutoff = inProgress.value!!.time,
-                inProgress.value!!.exercise,
-                inProgress.value!!.variation,
-                NUM_PREVIOUS_SETS
-            )
-    }
-
-    if (inProgress.value != null) {
-        EditSetPage(
-            EditSetPageViewModel(
-                setId = navArgs.id,
-                inProgressMut = remember { mutableStateOf(inProgress.value!!) },
-                variationsForExerciseMut = variations,
-                repo = repo,
-                dest = dest,
-                locations = locations,
-                exercises = exercises,
-                previousSetsMut = previousSets,
-                lockedMut = locked
-            )
-        )
-    }
 }
 
 @Composable
 fun EditSetPage(view: EditSetPageViewModel) {
-    Page(
-        locked = view.locked.value,
-        toggleSetLock = view::toggleSetLock,
-        submit = view::submit,
-        delete = view::delete,
-        changeExercise = view::changeExercise,
-        changeVariation = view::changeVariation,
-        changeReps = view::changeReps,
-        changeWeight = view::changeWeight,
-        changeIntensity = view::changeIntensity,
-        changeComment = view::changeComment,
-        gotoSet = view::gotoSet,
-        starting = view.inProgress,
-        locations = view.locations,
-        exercises = view.exercises,
-        variations = view.variationsForExercise,
-        previousSets = view.previousSets
-    )
+    when (val data = view.data.value) {
+        is EditSetPageViewModel.Data.Empty -> CircularProgressIndicator()
+        is EditSetPageViewModel.Data.Loaded -> {
+            Page(
+                locked = data.locked.value,
+                toggleSetLock = data::toggleSetLock,
+                submit = data::submit,
+                delete = data::delete,
+                selectExercise = { },
+                selectVariation = { },
+                changeReps = data::changeReps,
+                changeWeight = data::changeWeight,
+                changeIntensity = data::changeIntensity,
+                changeComment = data::changeComment,
+                gotoSet = data::gotoSet,
+                starting = data.inProgress,
+                previousSets = data.previousSets
+            )
+        }
+    }
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -272,163 +250,132 @@ fun Page(
     starting: State<WorkoutSet>,
     submit: () -> Unit,
     delete: () -> Unit,
-    changeExercise: (ExerciseId) -> Unit,
-    changeVariation: (ExerciseVariationId?) -> Unit,
+    selectExercise: () -> Unit,
+    selectVariation: () -> Unit,
     changeReps: (Reps) -> Unit,
     changeWeight: (Weight) -> Unit,
     changeIntensity: (Intensity) -> Unit,
     changeComment: (Comment) -> Unit,
     gotoSet: (WorkoutSet) -> Unit,
-    locations: List<Location>,
-    exercises: List<Exercise>,
-    variations: State<List<ExerciseVariation>>,
     previousSets: State<List<WorkoutSet>>
 ) {
     val keyboardController = LocalSoftwareKeyboardController.current
-    if (locations.isNotEmpty() && exercises.isNotEmpty()) {
-        val validReps = remember { mutableStateOf(true) }
-        val validWeight = remember { mutableStateOf(true) }
+    val validReps = remember { mutableStateOf(true) }
+    val validWeight = remember { mutableStateOf(true) }
 
-        ModalDrawerScaffold(
-            title = if (locked) {
-                "View Set"
-            } else {
-                "Edit Set"
-            },
-            drawerContent = {
-                Column(
-                    modifier = Modifier.fillMaxSize(),
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                    verticalArrangement = Arrangement.Center
-                ) {
-                    Row(
-                        modifier = Modifier
-                            .padding(bottom = 10.dp)
-                            .weight(0.5f),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Text("Set Locked", modifier = Modifier.padding(end = 10.dp))
-                        Switch(
-                            checked = locked,
-                            onCheckedChange = toggleSetLock,
-                        )
-                    }
-                    Spacer(modifier = Modifier.weight(0.5f))
-                    Button(
-                        modifier = Modifier
-                            .padding(bottom = 10.dp),
-                        onClick = delete
-                    ) {
-                        Text("Delete")
-                        Spacer(modifier = Modifier.fillMaxWidth(0.03f))
-                        Icon(Icons.Default.Delete, contentDescription = "delete set")
-                    }
-                }
-            },
-            actionButton = {
-                FloatingActionButton(onClick = submit) {
-                    if (locked) {
-                        Icon(Icons.Default.ArrowBack, contentDescription = "Set Locked")
-                    } else if (validReps.value && validWeight.value) {
-                        Icon(Icons.Default.Done, contentDescription = "Save Set")
-                    } else {
-                        Icon(Icons.Default.Warning, contentDescription = "Invalid fields")
-                    }
-                }
-            }
-        ) { innerPadding ->
-
+    ModalDrawerScaffold(
+        title = if (locked) {
+            "View Set"
+        } else {
+            "Edit Set"
+        },
+        drawerContent = {
             Column(
-                modifier = Modifier
-                    .padding(innerPadding)
-                    .fillMaxWidth(),
+                modifier = Modifier.fillMaxSize(),
                 horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.spacedBy(10.dp),
+                verticalArrangement = Arrangement.Center
             ) {
-                Spacer(modifier = Modifier.weight(1.0f))
-                val zone = TimeZone.getDefault().toZoneId()
-                val date = OffsetDateTime.ofInstant(starting.value.time.value, zone)
-                val dateFormat = DateTimeFormatter.ofPattern("MMMM dd, yyyy")
-                val timeFormat = DateTimeFormatter.ofPattern("HH:MM:ss")
-                Text(date.format(dateFormat), fontSize = FIELD_NAME_FONT_SIZE)
-                Text(date.format(timeFormat), fontSize = FIELD_NAME_FONT_SIZE)
-                Card {
-                    Column(
-                        horizontalAlignment = Alignment.CenterHorizontally,
-                        verticalArrangement = Arrangement.spacedBy(10.dp),
-                        modifier = Modifier.padding(10.dp)
-                    ) {
-                        LargeDropDownFromList(
-                            items = exercises,
-                            label = "Exercise",
-                            enabled = !locked,
-                            itemToString = { it.name },
-                            onItemSelected = { changeExercise(it.id) },
-                            modifier = Modifier.fillMaxWidth(0.8f),
-                            selectedIndex = exercises.indexOfFirst { it.id == starting.value.exercise }
-                        )
-                        val variationsWithNull = listOf(null).plus(variations.value)
-                        LargeDropDownFromList(
-                            items = variationsWithNull,
-                            label = "Variation",
-                            enabled = !locked,
-                            itemToString = {
-                                if (it != null) {
-                                    val location = locations.firstOrNull { loc ->
-                                        loc.id == it.location
-                                    }
-                                    val locationQualifier =
-                                        if (location != null) { " (${location.name})" } else { "" }
-                                    "${it.name}${locationQualifier}"
-                                } else {
-                                    "None"
-                                }
-                            },
-                            onItemSelected = { changeVariation(it?.id) },
-                            modifier = Modifier.fillMaxWidth(0.8f),
-                            selectedIndex = variationsWithNull.indexOfFirst { it?.id == starting.value.variation }
-                        )
-                    }
-                }
-                Card {
-                    RepsAndWeightSelector(
-                        starting,
-                        validReps,
-                        enabled = !locked,
-                        changeReps,
-                        validWeight,
-                        changeWeight,
+                Row(
+                    modifier = Modifier
+                        .padding(bottom = 10.dp)
+                        .weight(0.5f),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text("Set Locked", modifier = Modifier.padding(end = 10.dp))
+                    Switch(
+                        checked = locked,
+                        onCheckedChange = toggleSetLock,
                     )
                 }
-                Card {
-                    IntensitySelector(changeIntensity, starting, enabled = !locked)
+                Spacer(modifier = Modifier.weight(0.5f))
+                Button(
+                    modifier = Modifier
+                        .padding(bottom = 10.dp),
+                    onClick = delete
+                ) {
+                    Text("Delete")
+                    Spacer(modifier = Modifier.fillMaxWidth(0.03f))
+                    Icon(Icons.Default.Delete, contentDescription = "delete set")
                 }
-                Card {
-                    Column(
-                        modifier = Modifier.padding(10.dp)
-                    ) {
-                        TextField(
-                            label = { Text("Comment") },
-                            modifier = Modifier.fillMaxWidth(0.8f),
-                            enabled = !locked,
-                            value = starting.value.comment.value,
-                            onValueChange = { changeComment(Comment(it)) },
-                            keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
-                            keyboardActions = KeyboardActions(onDone = { keyboardController?.hide() })
-                        )
-                    }
+            }
+        },
+        actionButton = {
+            FloatingActionButton(onClick = submit) {
+                if (locked) {
+                    Icon(Icons.Default.ArrowBack, contentDescription = "Set Locked")
+                } else if (validReps.value && validWeight.value) {
+                    Icon(Icons.Default.Done, contentDescription = "Save Set")
+                } else {
+                    Icon(Icons.Default.Warning, contentDescription = "Invalid fields")
                 }
-                LazyRow(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                    this.item { Spacer(modifier = Modifier.width(25.dp)) }
-                    this.items(previousSets.value) { set ->
-                        PreviousSetButton(set.reps, set.weight, set.intensity) { gotoSet(set) }
-                    }
-                }
-                Spacer(modifier = Modifier.fillMaxHeight(0.1f))
             }
         }
-    } else {
-        CircularProgressIndicator()
+    ) { innerPadding ->
+
+        Column(
+            modifier = Modifier
+                .padding(innerPadding)
+                .fillMaxWidth(),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(10.dp),
+        ) {
+            Spacer(modifier = Modifier.weight(1.0f))
+            val zone = TimeZone.getDefault().toZoneId()
+            val date = OffsetDateTime.ofInstant(starting.value.time.value, zone)
+            val dateFormat = DateTimeFormatter.ofPattern("MMMM dd, yyyy")
+            val timeFormat = DateTimeFormatter.ofPattern("HH:MM:ss")
+            Text(date.format(dateFormat), fontSize = FIELD_NAME_FONT_SIZE)
+            Text(date.format(timeFormat), fontSize = FIELD_NAME_FONT_SIZE)
+            Card {
+                Column(
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.spacedBy(10.dp),
+                    modifier = Modifier.padding(10.dp)
+                ) {
+                    Button(onClick = selectExercise) {
+                        Text(starting.value.exercise.value)
+                    }
+                    Button(onClick = selectVariation) {
+                        Text(starting.value.variation?.value ?: "None")
+                    }
+                }
+            }
+            Card {
+                RepsAndWeightSelector(
+                    starting,
+                    validReps,
+                    enabled = !locked,
+                    changeReps,
+                    validWeight,
+                    changeWeight,
+                )
+            }
+            Card {
+                IntensitySelector(changeIntensity, starting, enabled = !locked)
+            }
+            Card {
+                Column(
+                    modifier = Modifier.padding(10.dp)
+                ) {
+                    TextField(
+                        label = { Text("Comment") },
+                        modifier = Modifier.fillMaxWidth(0.8f),
+                        enabled = !locked,
+                        value = starting.value.comment.value,
+                        onValueChange = { changeComment(Comment(it)) },
+                        keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
+                        keyboardActions = KeyboardActions(onDone = { keyboardController?.hide() })
+                    )
+                }
+            }
+            LazyRow(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                this.item { Spacer(modifier = Modifier.width(25.dp)) }
+                this.items(previousSets.value) { set ->
+                    PreviousSetButton(set.reps, set.weight, set.intensity) { gotoSet(set) }
+                }
+            }
+            Spacer(modifier = Modifier.fillMaxHeight(0.1f))
+        }
     }
 }
 
@@ -562,39 +509,13 @@ private fun Preview() {
             starting = remember { mutableStateOf(setTemplate) },
             submit = { },
             delete = { },
-            changeExercise = { },
-            changeVariation = { },
+            selectExercise = { },
+            selectVariation = { },
             changeReps = { },
             changeWeight = { },
             changeIntensity = { },
             changeComment = { },
             gotoSet = { },
-            locations = listOf(
-                Location(LocationId("locationA"), "24 Hour Parkmoore"),
-                Location(LocationId("locationB"), "Fruitdale Apt. Gym"),
-            ),
-            variations = remember {
-                mutableStateOf(
-                    listOf(
-                        ExerciseVariation(
-                            ExerciseVariationId("varA"),
-                            "Barbell",
-                            ExerciseId("exerciseA"),
-                            LocationId("locationA")
-                        ),
-                        ExerciseVariation(
-                            ExerciseVariationId("varB"),
-                            "Bicep Curl A",
-                            ExerciseId("exerciseA"),
-                            null
-                        ),
-                    )
-                )
-            },
-            exercises = listOf(
-                Exercise(ExerciseId("a"), "Lat Pull Down", MuscleId("0")),
-                Exercise(ExerciseId("b"), "Squats", MuscleId("1")),
-            ),
             previousSets = remember {
                 mutableStateOf(
                     listOf(setTemplate, setTemplate, setTemplate, setTemplate, setTemplate)

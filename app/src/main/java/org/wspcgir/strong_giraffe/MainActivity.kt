@@ -21,6 +21,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.viewModelScope
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
@@ -47,6 +48,8 @@ import org.wspcgir.strong_giraffe.destinations.EditMuscle
 import org.wspcgir.strong_giraffe.destinations.EditMusclePage
 import org.wspcgir.strong_giraffe.destinations.EditMusclePageViewModel
 import org.wspcgir.strong_giraffe.destinations.EditSet
+import org.wspcgir.strong_giraffe.destinations.EditSetPage
+import org.wspcgir.strong_giraffe.destinations.EditSetPageViewModel
 import org.wspcgir.strong_giraffe.destinations.EquipmentList
 import org.wspcgir.strong_giraffe.destinations.EquipmentListPage
 import org.wspcgir.strong_giraffe.destinations.EquipmentListPageViewModel
@@ -60,7 +63,6 @@ import org.wspcgir.strong_giraffe.destinations.LocationListPageViewModel
 import org.wspcgir.strong_giraffe.destinations.MuscleList
 import org.wspcgir.strong_giraffe.destinations.MuscleListPage
 import org.wspcgir.strong_giraffe.destinations.MuscleListPageViewModel
-import org.wspcgir.strong_giraffe.destinations.RegisterEditSetPage
 import org.wspcgir.strong_giraffe.destinations.RegisterSetListPage
 import org.wspcgir.strong_giraffe.destinations.SetList
 import org.wspcgir.strong_giraffe.model.Backup
@@ -435,7 +437,12 @@ fun MainComponent(
         }
         composable<EditSet>(typeMap = typeMap) {
             val navArgs: EditSet = it.toRoute()
-            RegisterEditSetPage(navArgs, repo, navController)
+            val view = viewModel(EditSetPageViewModel::class)
+            LaunchedEffect(Unit) {
+                val set = repo.getSetFromId(navArgs.id)
+                view.init(repo, navController, set, navArgs.locked)
+            }
+            EditSetPage(view)
         }
     }
 }
