@@ -2,6 +2,7 @@ package org.wspcgir.strong_giraffe.destinations.edit_set
 
 import android.annotation.SuppressLint
 import android.os.Parcelable
+import android.util.Log
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -9,6 +10,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavBackStackEntry
 import androidx.navigation.NavController
@@ -17,6 +19,7 @@ import androidx.navigation.NavType
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.navigation
 import androidx.navigation.toRoute
+import kotlinx.coroutines.launch
 import kotlinx.serialization.Serializable
 import org.wspcgir.strong_giraffe.destinations.EditExercise
 import org.wspcgir.strong_giraffe.destinations.EditVariation
@@ -41,7 +44,8 @@ fun NavGraphBuilder.editSetGraph(
             val parent = rememberParent(navController, it)
             val navArgs = parent.toRoute<EditSet>()
             val view = viewModel<EditSetPageViewModel>(parent)
-            LaunchedEffect(Unit) {
+            LaunchedEffect(navArgs.id) {
+                Log.d("editSetGraph", "Initializing EditSet page view model")
                 val set = repo.getSetFromId(navArgs.id)
                 view.init(repo, navController, set, navArgs.locked)
             }
@@ -67,7 +71,14 @@ fun NavGraphBuilder.editSetGraph(
                     }
                 },
                 onEdit = { exercise -> navController.navigate(EditExercise(id = exercise.id)) },
-                goBack = { navController.popBackStack() }
+                onCreateNew = {
+                    view.viewModelScope.launch {
+                        repo.getMuscles().firstOrNull()?.let {
+                            val new = repo.newExercise(it.id)
+                            navController.navigate(EditExercise(new.id))
+                        }
+                    }
+                }
             )
         }
         composable<SelectVariation> { entry ->
@@ -96,7 +107,17 @@ fun NavGraphBuilder.editSetGraph(
                     }
                 },
                 onEdit = { variation -> navController.navigate(EditVariation(id = variation.id)) },
-                goBack = { navController.popBackStack() }
+                onCreateNew = {
+                    view.viewModelScope.launch {
+                        when (data) {
+                            is EditSetPageViewModel.Data.Loaded -> {
+                                val new = repo.newExerciseVariation(data.inProgress.value.exercise)
+                                navController.navigate(EditVariation(new.id))
+                            }
+                            else -> { }
+                        }
+                    }
+                }
             )
         }
     }

@@ -3,6 +3,7 @@ package org.wspcgir.strong_giraffe.destinations.edit_set
 import android.content.res.Configuration.UI_MODE_NIGHT_NO
 import android.content.res.Configuration.UI_MODE_NIGHT_YES
 import android.os.Parcelable
+import android.util.Log
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -37,6 +38,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.State
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -94,21 +96,26 @@ class EditSetPageViewModel() : ViewModel() {
         get() = dataMut
 
     fun init(repo: AppRepository, dest: NavController, set: WorkoutSet, locked: Boolean) {
-        viewModelScope.launch {
-            val previousSets = repo.setForExerciseAndVariationBefore(
-                cutoff = set.time,
-                set.exercise,
-                set.variation,
-                NUM_PREVIOUS_SETS
-            )
-            dataMut.value = Data.Loaded(
-                repo = repo,
-                dest = dest,
-                scope = viewModelScope,
-                previousSetsMut = mutableStateOf(previousSets),
-                inProgressMut = mutableStateOf(set),
-                lockedMut = mutableStateOf(locked)
-            )
+        when (data.value) {
+            is Data.Empty -> {
+                viewModelScope.launch {
+                    val previousSets = repo.setForExerciseAndVariationBefore(
+                        cutoff = set.time,
+                        set.exercise,
+                        set.variation,
+                        NUM_PREVIOUS_SETS
+                    )
+                    dataMut.value = Data.Loaded(
+                        repo = repo,
+                        dest = dest,
+                        scope = viewModelScope,
+                        previousSetsMut = mutableStateOf(previousSets),
+                        inProgressMut = mutableStateOf(set),
+                        lockedMut = mutableStateOf(locked)
+                    )
+                }
+            }
+            else -> { }
         }
     }
 
@@ -148,16 +155,20 @@ class EditSetPageViewModel() : ViewModel() {
             }
 
             fun changeExercise(exercise: ExerciseId) {
+                Log.d("EditSetPage", "Changing exercise called")
                 scope.launch {
                     // Initially assume no variation until selected
                     inProgressMut.value = inProgressMut.value.copy(variation = null)
+                    Log.d("EditSetPage", "variation unset")
                     previousSetsMut.value = repo.setForExerciseAndVariationBefore(
                         inProgress.value.time,
                         exercise,
                         inProgress.value.variation,
                         NUM_PREVIOUS_SETS
                     )
+                    Log.d("EditSetPage", "previous sets updated")
                     inProgressMut.value = inProgress.value.copy(exercise = exercise)
+                    Log.d("EditSetPage", "exercise updated")
                 }
             }
 
@@ -336,8 +347,10 @@ fun Page(
                     verticalArrangement = Arrangement.spacedBy(10.dp),
                     modifier = Modifier.padding(10.dp)
                 ) {
-                    Button(onClick = selectExercise) {
-                        Text(starting.value.exercise.value)
+                    key(starting.value) {
+                        Button(onClick = selectExercise) {
+                            Text(starting.value.exercise.value)
+                        }
                     }
                     Button(onClick = selectVariation) {
                         Text(starting.value.variation?.value ?: "None")

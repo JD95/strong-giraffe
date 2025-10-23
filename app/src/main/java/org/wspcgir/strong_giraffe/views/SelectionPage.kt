@@ -12,6 +12,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Create
 import androidx.compose.material.icons.outlined.CheckCircle
@@ -53,7 +54,7 @@ fun <T> SelectionPage(
     displayName: (T) -> String,
     onEdit: (T) -> Unit,
     onSelect: (T) -> Unit,
-    goBack: () -> Unit,
+    onCreateNew: () -> Unit,
     orderings: Map<String, SortingOnGroup<T>> = emptyMap()
 ) {
     var selectedOrdering: SortingOnGroup<T> by remember {
@@ -77,8 +78,8 @@ fun <T> SelectionPage(
             }
         },
         actionButton = {
-            FloatingActionButton(onClick = goBack) {
-                Icon(Icons.Filled.ArrowBack, contentDescription = "navigate back")
+            FloatingActionButton(onClick = onCreateNew) {
+                Icon(Icons.Filled.Add, contentDescription = "create new")
             }
         }
     ) {
@@ -209,7 +210,7 @@ private fun Preview() {
             displayName = { it },
             onEdit = { },
             onSelect = { },
-            goBack = { },
+            onCreateNew = { },
             orderings = mapOf(
                 "alphabetic" to alphabeticOrdering { it },
                 "rankings" to SortingOnGroup {
