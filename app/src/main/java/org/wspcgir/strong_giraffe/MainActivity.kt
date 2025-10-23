@@ -47,9 +47,9 @@ import org.wspcgir.strong_giraffe.destinations.EditLocationPageViewModel
 import org.wspcgir.strong_giraffe.destinations.EditMuscle
 import org.wspcgir.strong_giraffe.destinations.EditMusclePage
 import org.wspcgir.strong_giraffe.destinations.EditMusclePageViewModel
-import org.wspcgir.strong_giraffe.destinations.EditSet
-import org.wspcgir.strong_giraffe.destinations.EditSetPage
-import org.wspcgir.strong_giraffe.destinations.EditSetPageViewModel
+import org.wspcgir.strong_giraffe.destinations.edit_set.EditSet
+import org.wspcgir.strong_giraffe.destinations.edit_set.EditSetPage
+import org.wspcgir.strong_giraffe.destinations.edit_set.EditSetPageViewModel
 import org.wspcgir.strong_giraffe.destinations.EquipmentList
 import org.wspcgir.strong_giraffe.destinations.EquipmentListPage
 import org.wspcgir.strong_giraffe.destinations.EquipmentListPageViewModel
@@ -65,6 +65,7 @@ import org.wspcgir.strong_giraffe.destinations.MuscleListPage
 import org.wspcgir.strong_giraffe.destinations.MuscleListPageViewModel
 import org.wspcgir.strong_giraffe.destinations.RegisterSetListPage
 import org.wspcgir.strong_giraffe.destinations.SetList
+import org.wspcgir.strong_giraffe.destinations.edit_set.editSetGraph
 import org.wspcgir.strong_giraffe.model.Backup
 import org.wspcgir.strong_giraffe.model.Equipment
 import org.wspcgir.strong_giraffe.model.Exercise
@@ -435,15 +436,7 @@ fun MainComponent(
         composable<SetList> {
             RegisterSetListPage(repo, navController)
         }
-        composable<EditSet>(typeMap = typeMap) {
-            val navArgs: EditSet = it.toRoute()
-            val view = viewModel(EditSetPageViewModel::class)
-            LaunchedEffect(Unit) {
-                val set = repo.getSetFromId(navArgs.id)
-                view.init(repo, navController, set, navArgs.locked)
-            }
-            EditSetPage(view)
-        }
+        editSetGraph(navController, repo, typeMap)
     }
 }
 

@@ -1,4 +1,4 @@
-package org.wspcgir.strong_giraffe.destinations
+package org.wspcgir.strong_giraffe.destinations.edit_set
 
 import android.content.res.Configuration.UI_MODE_NIGHT_NO
 import android.content.res.Configuration.UI_MODE_NIGHT_YES
@@ -55,11 +55,9 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 import kotlinx.parcelize.Parcelize
 import kotlinx.serialization.Serializable
+import org.wspcgir.strong_giraffe.destinations.EditExercise
 import org.wspcgir.strong_giraffe.model.Comment
-import org.wspcgir.strong_giraffe.model.Exercise
-import org.wspcgir.strong_giraffe.model.ExerciseVariation
 import org.wspcgir.strong_giraffe.model.Intensity
-import org.wspcgir.strong_giraffe.model.Location
 import org.wspcgir.strong_giraffe.model.Reps
 import org.wspcgir.strong_giraffe.model.Time
 import org.wspcgir.strong_giraffe.model.Weight
@@ -68,13 +66,11 @@ import org.wspcgir.strong_giraffe.model.ids.EquipmentId
 import org.wspcgir.strong_giraffe.model.ids.ExerciseId
 import org.wspcgir.strong_giraffe.model.ids.ExerciseVariationId
 import org.wspcgir.strong_giraffe.model.ids.LocationId
-import org.wspcgir.strong_giraffe.model.ids.MuscleId
 import org.wspcgir.strong_giraffe.model.ids.SetId
 import org.wspcgir.strong_giraffe.repository.AppRepository
 import org.wspcgir.strong_giraffe.ui.theme.StrongGiraffeTheme
 import org.wspcgir.strong_giraffe.views.FIELD_NAME_FONT_SIZE
 import org.wspcgir.strong_giraffe.views.IntField
-import org.wspcgir.strong_giraffe.views.LargeDropDownFromList
 import org.wspcgir.strong_giraffe.views.ModalDrawerScaffold
 import org.wspcgir.strong_giraffe.views.PreviousSetButton
 import org.wspcgir.strong_giraffe.views.intensityColor
@@ -208,6 +204,14 @@ class EditSetPageViewModel() : ViewModel() {
                 lockedMut.value = new
             }
 
+            fun selectExercise() {
+                dest.navigate(SelectExercise)
+            }
+
+            fun selectVariation() {
+                dest.navigate(SelectVariation)
+            }
+
         }
 
         data object Empty : Data
@@ -228,8 +232,8 @@ fun EditSetPage(view: EditSetPageViewModel) {
                 toggleSetLock = data::toggleSetLock,
                 submit = data::submit,
                 delete = data::delete,
-                selectExercise = { },
-                selectVariation = { },
+                selectExercise = data::selectExercise,
+                selectVariation = data::selectVariation,
                 changeReps = data::changeReps,
                 changeWeight = data::changeWeight,
                 changeIntensity = data::changeIntensity,

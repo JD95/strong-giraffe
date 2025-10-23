@@ -26,7 +26,7 @@ abstract class EditVariationPageViewModel(val id: ExerciseId) : ViewModel() {
     abstract val variations: State<List<ExerciseVariation>>
 }
 
-data class EditVariation(val id: ExerciseId)
+data class EditVariation(val id: ExerciseVariationId)
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable

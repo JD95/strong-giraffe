@@ -51,6 +51,9 @@ fun <T> alphabeticOrdering(displayName: (T) -> String): SortingOnGroup<T> {
 fun <T> SelectionPage(
     items: List<T>,
     displayName: (T) -> String,
+    onEdit: (T) -> Unit,
+    onSelect: (T) -> Unit,
+    goBack: () -> Unit,
     orderings: Map<String, SortingOnGroup<T>> = emptyMap()
 ) {
     var selectedOrdering: SortingOnGroup<T> by remember {
@@ -74,7 +77,7 @@ fun <T> SelectionPage(
             }
         },
         actionButton = {
-            FloatingActionButton(onClick = {}) {
+            FloatingActionButton(onClick = goBack) {
                 Icon(Icons.Filled.ArrowBack, contentDescription = "navigate back")
             }
         }
@@ -104,9 +107,10 @@ fun <T> SelectionPage(
                         item {
                             Row(modifier = Modifier.fillMaxWidth(0.9f)) {
                                 ExerciseRow(
-                                    title = displayName(value),
-                                    onSelect = {},
-                                    onEdit = {}
+                                    item = value,
+                                    displayName = displayName,
+                                    onSelect = onSelect,
+                                    onEdit = onEdit
                                 )
                             }
                         }
@@ -144,10 +148,11 @@ fun <T> OrderingDropdown(orderings: Map<String, SortingOnGroup<T>>, onSelect: (S
 }
 
 @Composable
-fun ExerciseRow(
-    title: String,
-    onSelect: () -> Unit,
-    onEdit: () -> Unit
+fun <T> ExerciseRow(
+    item: T,
+    displayName: (T) -> String,
+    onSelect: (T) -> Unit,
+    onEdit: (T) -> Unit
 ) {
     Row(
         verticalAlignment = Alignment.CenterVertically,
@@ -156,7 +161,7 @@ fun ExerciseRow(
     ) {
         Column() {
             IconButton(
-                onClick = onSelect,
+                onClick = { onSelect(item) },
                 modifier = Modifier.width(40.dp)
             ) {
                 Icon(Icons.Outlined.CheckCircle, contentDescription = "Select ")
@@ -164,11 +169,11 @@ fun ExerciseRow(
         }
         Spacer(modifier = Modifier.width(10.dp))
         Column(modifier = Modifier.weight(0.8f)) {
-            Text(title, fontSize = 20.sp)
+            Text(displayName(item), fontSize = 20.sp)
         }
         Column(modifier = Modifier.weight(0.1f)) {
             IconButton(
-                onClick = onEdit
+                onClick = { onEdit(item) }
             ) {
                 Icon(
                     Icons.Filled.Create,
@@ -202,6 +207,9 @@ private fun Preview() {
                 "MR Life Fitness Black"
             ),
             displayName = { it },
+            onEdit = { },
+            onSelect = { },
+            goBack = { },
             orderings = mapOf(
                 "alphabetic" to alphabeticOrdering { it },
                 "rankings" to SortingOnGroup {
