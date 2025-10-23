@@ -137,6 +137,10 @@ class EditSetPageViewModel() : ViewModel() {
             val previousSets: State<List<WorkoutSet>>
                 get() = previousSetsMut
 
+            fun goBack() {
+                dest.popBackStack()
+            }
+
             fun submit() {
                 scope.launch {
                     repo.updateWorkoutSet(
@@ -151,7 +155,6 @@ class EditSetPageViewModel() : ViewModel() {
                         time = inProgressMut.value.time
                     )
                 }
-                dest.popBackStack()
             }
 
             fun changeExercise(exercise: ExerciseId) {
@@ -208,6 +211,7 @@ class EditSetPageViewModel() : ViewModel() {
             }
 
             fun gotoSet(set: WorkoutSet) {
+                submit()
                 dest.navigate(EditSet(set.id, true))
             }
 
@@ -242,6 +246,7 @@ fun EditSetPage(view: EditSetPageViewModel) {
                 locked = data.locked.value,
                 toggleSetLock = data::toggleSetLock,
                 submit = data::submit,
+                goBack = data::goBack,
                 delete = data::delete,
                 selectExercise = data::selectExercise,
                 selectVariation = data::selectVariation,
@@ -264,6 +269,7 @@ fun Page(
     toggleSetLock: (Boolean) -> Unit,
     starting: State<WorkoutSet>,
     submit: () -> Unit,
+    goBack: () -> Unit,
     delete: () -> Unit,
     selectExercise: () -> Unit,
     selectVariation: () -> Unit,
@@ -315,7 +321,10 @@ fun Page(
             }
         },
         actionButton = {
-            FloatingActionButton(onClick = submit) {
+            FloatingActionButton(onClick = {
+                submit()
+                goBack()
+            }) {
                 if (locked) {
                     Icon(Icons.Default.ArrowBack, contentDescription = "Set Locked")
                 } else if (validReps.value && validWeight.value) {
@@ -525,6 +534,7 @@ private fun Preview() {
             toggleSetLock = { },
             starting = remember { mutableStateOf(setTemplate) },
             submit = { },
+            goBack = { },
             delete = { },
             selectExercise = { },
             selectVariation = { },
