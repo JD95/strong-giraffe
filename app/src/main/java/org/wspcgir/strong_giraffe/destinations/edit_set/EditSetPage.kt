@@ -105,6 +105,7 @@ class EditSetPageViewModel() : ViewModel() {
                         set.variation,
                         NUM_PREVIOUS_SETS
                     )
+                    Log.d("EditSetPage", "Loaded ${previousSets.size} previous sets")
                     dataMut.value = Data.Loaded(
                         repo = repo,
                         dest = dest,
