@@ -1,9 +1,7 @@
 package org.wspcgir.strong_giraffe.destinations.edit_set
 
-import android.annotation.SuppressLint
 import android.os.Parcelable
 import android.util.Log
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -60,11 +58,11 @@ fun NavGraphBuilder.editSetGraph(
             SelectionPage(
                 items = exercises,
                 displayName = { it.name },
-                onSelect = { selection ->
+                onSelect = { exercise ->
                     when (val data = view.data.value) {
                         is EditSetPageViewModel.Data.Loaded -> {
                             navController.popBackStack()
-                            data.changeExercise(selection.id)
+                            data.changeExercise(exercise.id, exercise.name)
                         }
                         else -> { }
                     }
@@ -99,7 +97,7 @@ fun NavGraphBuilder.editSetGraph(
                 onSelect = { variation ->
                     when (data) {
                         is EditSetPageViewModel.Data.Loaded -> {
-                            data.changeVariation(variation.id)
+                            data.changeVariation(variation.id, variation.name)
                             navController.popBackStack()
                         }
                         else -> { }

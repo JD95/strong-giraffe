@@ -23,17 +23,13 @@ import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
-import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material.icons.filled.Create
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Done
-import androidx.compose.material.icons.filled.KeyboardArrowUp
 import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.DropdownMenu
-import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
@@ -49,7 +45,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.State
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -70,7 +65,6 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 import kotlinx.parcelize.Parcelize
 import kotlinx.serialization.Serializable
-import org.wspcgir.strong_giraffe.destinations.EditExercise
 import org.wspcgir.strong_giraffe.model.Comment
 import org.wspcgir.strong_giraffe.model.Intensity
 import org.wspcgir.strong_giraffe.model.Reps
@@ -78,7 +72,6 @@ import org.wspcgir.strong_giraffe.model.SetContent
 import org.wspcgir.strong_giraffe.model.Time
 import org.wspcgir.strong_giraffe.model.Weight
 import org.wspcgir.strong_giraffe.model.WorkoutSet
-import org.wspcgir.strong_giraffe.model.ids.EquipmentId
 import org.wspcgir.strong_giraffe.model.ids.ExerciseId
 import org.wspcgir.strong_giraffe.model.ids.ExerciseVariationId
 import org.wspcgir.strong_giraffe.model.ids.LocationId
@@ -172,12 +165,17 @@ class EditSetPageViewModel() : ViewModel() {
                 }
             }
 
-            fun changeExercise(exercise: ExerciseId) {
-                Log.d("EditSetPage", "Changing exercise called")
+            fun changeExercise(exercise: ExerciseId, exerciseName: String) {
+                Log.d("EditSetPage", "Changing exercise")
                 scope.launch {
                     // Initially assume no variation until selected
-                    inProgressMut.value = inProgressMut.value.copy(variation = null)
-                    Log.d("EditSetPage", "variation unset")
+                    inProgressMut.value = inProgressMut.value.copy(
+                        variation = null,
+                        variationName = "N/A",
+                        exercise = exercise,
+                        exerciseName = exerciseName
+                    )
+                    Log.d("EditSetPage", "exercise and variation updated")
                     previousSetsMut.value = repo.setForExerciseAndVariationBefore(
                         inProgress.value.time,
                         exercise,
@@ -185,20 +183,21 @@ class EditSetPageViewModel() : ViewModel() {
                         NUM_PREVIOUS_SETS
                     )
                     Log.d("EditSetPage", "previous sets updated")
-                    inProgressMut.value = inProgress.value.copy(exercise = exercise)
-                    Log.d("EditSetPage", "exercise updated")
                 }
             }
 
-            fun changeVariation(variation: ExerciseVariationId?) {
+            fun changeVariation(variation: ExerciseVariationId?, name: String?) {
                 scope.launch {
+                    inProgressMut.value = inProgress.value.copy(
+                        variation = variation,
+                        variationName = name
+                    )
                     previousSetsMut.value = repo.setForExerciseAndVariationBefore(
                         inProgress.value.time,
                         inProgress.value.exercise,
                         variation,
                         NUM_PREVIOUS_SETS
                     )
-                    inProgressMut.value = inProgress.value.copy(variation = variation)
                 }
             }
 
@@ -371,14 +370,12 @@ fun Page(
                     verticalArrangement = Arrangement.spacedBy(10.dp),
                     modifier = Modifier.padding(10.dp)
                 ) {
-                    key(starting.value) {
-                        SelectionField(
-                            label = "Exercise",
-                            text = starting.value.exerciseName,
-                            onClick = selectExercise,
-                            modifier = Modifier.fillMaxWidth(0.8f)
-                        )
-                    }
+                    SelectionField(
+                        label = "Exercise",
+                        text = starting.value.exerciseName,
+                        onClick = selectExercise,
+                        modifier = Modifier.fillMaxWidth(0.8f)
+                    )
                     SelectionField(
                         label = "Variation",
                         text = starting.value.variationName ?: "N/A",
@@ -441,6 +438,7 @@ fun SelectionField(
             trailingIcon = {
                 Icon(Icons.Filled.Create, "select button")
             },
+            modifier = Modifier.fillMaxWidth(),
             onValueChange = { },
             readOnly = true,
         )
