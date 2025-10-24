@@ -162,13 +162,13 @@ class AppRepository(private val dao: AppDao) {
     suspend fun updateWorkoutSet(
         id: SetId,
         exercise: ExerciseId,
-        location: LocationId?,
         variation: ExerciseVariationId?,
         reps: Reps,
         weight: Weight,
         time: Time,
         intensity: Intensity,
-        comment: Comment
+        comment: Comment,
+        location: LocationId? = null,
     ) {
         dao.updateWorkoutSet(
             id = id.value,
@@ -183,14 +183,14 @@ class AppRepository(private val dao: AppDao) {
         )
     }
 
-    suspend fun getSetFromId(id: SetId): WorkoutSet {
-        val e = dao.getWorkoutSet(id.value)
-        return WorkoutSet(
+    suspend fun getSetFromId(id: SetId): SetContent {
+        val e = dao.getWorkoutSetContent(id.value)
+        return SetContent(
             id = SetId(e.id),
             exercise = ExerciseId(e.exercise),
-            location = e.location?.let { LocationId(it) },
-            equipment = e.equipment?.let { EquipmentId(it) },
+            exerciseName = e.exerciseName,
             variation = e.variation?.let { ExerciseVariationId(it) },
+            variationName = e.variationName,
             reps = Reps(e.reps),
             weight = Weight(e.weight),
             intensity = Intensity.fromInt(e.intensity)!!,

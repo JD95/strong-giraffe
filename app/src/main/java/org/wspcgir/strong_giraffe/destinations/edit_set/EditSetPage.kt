@@ -4,8 +4,11 @@ import android.content.res.Configuration.UI_MODE_NIGHT_NO
 import android.content.res.Configuration.UI_MODE_NIGHT_YES
 import android.os.Parcelable
 import android.util.Log
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
@@ -20,17 +23,25 @@ import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.filled.ArrowDropDown
+import androidx.compose.material.icons.filled.Create
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Done
+import androidx.compose.material.icons.filled.KeyboardArrowUp
 import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Slider
 import androidx.compose.material3.SliderDefaults
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
@@ -46,6 +57,8 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.tooling.preview.Preview
@@ -61,6 +74,7 @@ import org.wspcgir.strong_giraffe.destinations.EditExercise
 import org.wspcgir.strong_giraffe.model.Comment
 import org.wspcgir.strong_giraffe.model.Intensity
 import org.wspcgir.strong_giraffe.model.Reps
+import org.wspcgir.strong_giraffe.model.SetContent
 import org.wspcgir.strong_giraffe.model.Time
 import org.wspcgir.strong_giraffe.model.Weight
 import org.wspcgir.strong_giraffe.model.WorkoutSet
@@ -95,10 +109,11 @@ class EditSetPageViewModel() : ViewModel() {
     val data: State<Data>
         get() = dataMut
 
-    fun init(repo: AppRepository, dest: NavController, set: WorkoutSet, locked: Boolean) {
+    fun init(repo: AppRepository, dest: NavController, setId: SetId, locked: Boolean) {
         when (data.value) {
             is Data.Empty -> {
                 viewModelScope.launch {
+                    val set = repo.getSetFromId(setId)
                     val previousSets = repo.setForExerciseAndVariationBefore(
                         cutoff = set.time,
                         set.exercise,
@@ -126,13 +141,13 @@ class EditSetPageViewModel() : ViewModel() {
             val dest: NavController,
             val scope: CoroutineScope,
             private val previousSetsMut: MutableState<List<WorkoutSet>>,
-            private val inProgressMut: MutableState<WorkoutSet>,
+            private val inProgressMut: MutableState<SetContent>,
             private val lockedMut: MutableState<Boolean>,
         ) : Data {
             val locked: State<Boolean>
                 get() = lockedMut
 
-            val inProgress: State<WorkoutSet>
+            val inProgress: State<SetContent>
                 get() = inProgressMut
 
             val previousSets: State<List<WorkoutSet>>
@@ -147,7 +162,6 @@ class EditSetPageViewModel() : ViewModel() {
                     repo.updateWorkoutSet(
                         id = inProgress.value.id,
                         exercise = inProgress.value.exercise,
-                        location = inProgress.value.location,
                         variation = inProgress.value.variation,
                         reps = inProgress.value.reps,
                         weight = inProgress.value.weight,
@@ -211,9 +225,9 @@ class EditSetPageViewModel() : ViewModel() {
                 dest.popBackStack()
             }
 
-            fun gotoSet(set: WorkoutSet) {
+            fun gotoSet(set: SetId) {
                 submit()
-                dest.navigate(EditSet(set.id, true))
+                dest.navigate(EditSet(set, true))
             }
 
             fun toggleSetLock(new: Boolean) {
@@ -268,7 +282,7 @@ fun EditSetPage(view: EditSetPageViewModel) {
 fun Page(
     locked: Boolean,
     toggleSetLock: (Boolean) -> Unit,
-    starting: State<WorkoutSet>,
+    starting: State<SetContent>,
     submit: () -> Unit,
     goBack: () -> Unit,
     delete: () -> Unit,
@@ -278,7 +292,7 @@ fun Page(
     changeWeight: (Weight) -> Unit,
     changeIntensity: (Intensity) -> Unit,
     changeComment: (Comment) -> Unit,
-    gotoSet: (WorkoutSet) -> Unit,
+    gotoSet: (SetId) -> Unit,
     previousSets: State<List<WorkoutSet>>
 ) {
     val keyboardController = LocalSoftwareKeyboardController.current
@@ -358,13 +372,19 @@ fun Page(
                     modifier = Modifier.padding(10.dp)
                 ) {
                     key(starting.value) {
-                        Button(onClick = selectExercise) {
-                            Text(starting.value.exercise.value)
-                        }
+                        SelectionField(
+                            label = "Exercise",
+                            text = starting.value.exerciseName,
+                            onClick = selectExercise,
+                            modifier = Modifier.fillMaxWidth(0.8f)
+                        )
                     }
-                    Button(onClick = selectVariation) {
-                        Text(starting.value.variation?.value ?: "None")
-                    }
+                    SelectionField(
+                        label = "Variation",
+                        text = starting.value.variationName ?: "N/A",
+                        onClick = selectVariation,
+                        modifier = Modifier.fillMaxWidth(0.8f)
+                    )
                 }
             }
             Card {
@@ -398,7 +418,7 @@ fun Page(
             LazyRow(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                 this.item { Spacer(modifier = Modifier.width(25.dp)) }
                 this.items(previousSets.value) { set ->
-                    PreviousSetButton(set.reps, set.weight, set.intensity) { gotoSet(set) }
+                    PreviousSetButton(set.reps, set.weight, set.intensity) { gotoSet(set.id) }
                 }
             }
             Spacer(modifier = Modifier.fillMaxHeight(0.1f))
@@ -407,9 +427,39 @@ fun Page(
 }
 
 @Composable
+fun SelectionField(
+    label: String,
+    text: String,
+    modifier: Modifier = Modifier,
+    onClick: () -> Unit = { },
+) {
+    Box(modifier = modifier.height(IntrinsicSize.Min)) {
+        OutlinedTextField(
+            label = { Text(label) },
+            value = text,
+            enabled = true,
+            trailingIcon = {
+                Icon(Icons.Filled.Create, "select button")
+            },
+            onValueChange = { },
+            readOnly = true,
+        )
+        Surface(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(top = 8.dp)
+                .clip(MaterialTheme.shapes.small)
+                .clickable(enabled = true) { onClick() },
+            color = Color.Transparent
+        ) {}
+
+    }
+}
+
+@Composable
 private fun IntensitySelector(
     changeIntensity: (Intensity) -> Unit,
-    starting: State<WorkoutSet>,
+    starting: State<SetContent>,
     enabled: Boolean = true,
 ) {
     var slider by remember(key1 = starting.value.intensity) {
@@ -453,7 +503,7 @@ private fun IntensitySelector(
 
 @Composable
 private fun RepsAndWeightSelector(
-    starting: State<WorkoutSet>,
+    starting: State<SetContent>,
     validReps: MutableState<Boolean>,
     enabled: Boolean = true,
     changeReps: (Reps) -> Unit,
@@ -517,17 +567,30 @@ private fun RepsAndWeightSelector(
 @Composable
 private fun Preview() {
     val setTemplate =
-        WorkoutSet(
+        SetContent(
             id = SetId("a"),
             exercise = ExerciseId("a"),
-            equipment = EquipmentId("equipA"),
+            exerciseName = "foo",
             variation = ExerciseVariationId("variationA"),
-            location = LocationId("locationA"),
+            variationName = "barbell",
             reps = Reps(0),
             weight = Weight(0.0f),
             time = Time(Instant.now()),
             intensity = Intensity.Normal,
             comment = Comment("")
+        )
+    val prevSetTemplate =
+        WorkoutSet(
+            id = SetId("a"),
+            exercise = ExerciseId("a"),
+            variation = ExerciseVariationId("variationA"),
+            reps = Reps(0),
+            weight = Weight(0.0f),
+            time = Time(Instant.now()),
+            intensity = Intensity.Normal,
+            comment = Comment(""),
+            location = null,
+            equipment = null
         )
     StrongGiraffeTheme {
         Page(
@@ -546,7 +609,7 @@ private fun Preview() {
             gotoSet = { },
             previousSets = remember {
                 mutableStateOf(
-                    listOf(setTemplate, setTemplate, setTemplate, setTemplate, setTemplate)
+                    listOf(prevSetTemplate, prevSetTemplate, prevSetTemplate, prevSetTemplate, prevSetTemplate)
                 )
             }
         )

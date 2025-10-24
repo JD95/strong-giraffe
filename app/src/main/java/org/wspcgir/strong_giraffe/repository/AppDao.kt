@@ -179,6 +179,27 @@ interface AppDao {
 
     @Query(
         """
+            SELECT workout_set.id
+                 , workout_set.exercise
+                 , exercise.name AS "exerciseName"
+                 , workout_set.variation 
+                 , exercise_variation.name AS "variationName"
+                 , workout_set.reps
+                 , workout_set.weight
+                 , workout_set.time
+                 , workout_set.intensity
+                 , workout_set.comment
+            FROM workout_set
+            JOIN exercise ON exercise.id = workout_set.exercise
+            LEFT JOIN exercise_variation ON exercise_variation.id = workout_set.variation
+            WHERE workout_set.id = :id
+            LIMIT 1
+        """
+    )
+    suspend fun getWorkoutSetContent(id: String): SetContent
+
+    @Query(
+        """
             SELECT id
                  , exercise
                  , location

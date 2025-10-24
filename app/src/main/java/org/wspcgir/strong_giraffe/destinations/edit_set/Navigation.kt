@@ -46,8 +46,7 @@ fun NavGraphBuilder.editSetGraph(
             val view = viewModel<EditSetPageViewModel>(parent)
             LaunchedEffect(navArgs.id) {
                 Log.d("editSetGraph", "Initializing EditSet page view model")
-                val set = repo.getSetFromId(navArgs.id)
-                view.init(repo, navController, set, navArgs.locked)
+                view.init(repo, navController, navArgs.id, navArgs.locked)
             }
             EditSetPage(view)
         }
@@ -64,8 +63,8 @@ fun NavGraphBuilder.editSetGraph(
                 onSelect = { selection ->
                     when (val data = view.data.value) {
                         is EditSetPageViewModel.Data.Loaded -> {
-                            data.changeExercise(selection.id)
                             navController.popBackStack()
+                            data.changeExercise(selection.id)
                         }
                         else -> { }
                     }
