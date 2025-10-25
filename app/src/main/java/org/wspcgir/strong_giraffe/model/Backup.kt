@@ -1,6 +1,8 @@
 package org.wspcgir.strong_giraffe.model
 
 import kotlinx.serialization.Serializable
+import org.wspcgir.strong_giraffe.model.set.WorkoutSet
+import org.wspcgir.strong_giraffe.model.variation.ExerciseVariation
 
 
 @Serializable

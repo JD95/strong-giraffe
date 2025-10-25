@@ -4,6 +4,11 @@ import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
 import org.wspcgir.strong_giraffe.repository.entity.*
+import org.wspcgir.strong_giraffe.repository.entity.set.SetContent
+import org.wspcgir.strong_giraffe.repository.entity.set.SetSummary
+import org.wspcgir.strong_giraffe.repository.entity.set.WorkoutSet
+import org.wspcgir.strong_giraffe.repository.entity.variation.ExerciseVariation
+import org.wspcgir.strong_giraffe.repository.entity.variation.VariationContent
 
 @androidx.room.Dao
 interface AppDao {
@@ -176,6 +181,27 @@ interface AppDao {
         """
     )
     suspend fun getWorkoutSet(id: String): WorkoutSet
+
+    @Query(
+        """
+            SELECT workout_set.id
+                 , workout_set.exercise
+                 , exercise.name AS "exerciseName"
+                 , workout_set.variation 
+                 , exercise_variation.name AS "variationName"
+                 , workout_set.reps
+                 , workout_set.weight
+                 , workout_set.time
+                 , workout_set.intensity
+                 , workout_set.comment
+            FROM workout_set
+            JOIN exercise ON exercise.id = workout_set.exercise
+            LEFT JOIN exercise_variation ON exercise_variation.id = workout_set.variation
+            WHERE workout_set.id = :id
+            LIMIT 1
+        """
+    )
+    suspend fun getWorkoutSetContent(id: String): SetContent
 
     @Query(
         """
@@ -378,6 +404,20 @@ interface AppDao {
         """
     )
     suspend fun getVariationsForExercise(exerciseId: String): List<ExerciseVariation>
+
+    @Query(
+        """
+            SELECT 
+              exercise_variation.id,
+              exercise_variation.name,
+              exercise_variation.location,
+              location.name AS "locationName"
+            FROM exercise_variation
+            LEFT JOIN location ON location.id = exercise_variation.location
+            WHERE exercise_variation.id = :variationId
+        """
+    )
+    suspend fun getVariationContentForId(variationId: String): VariationContent
 
     @Query(
         """

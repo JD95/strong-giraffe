@@ -1,10 +1,12 @@
-package org.wspcgir.strong_giraffe.repository.entity
+package org.wspcgir.strong_giraffe.repository.entity.variation
 
 import androidx.room.ColumnInfo
 import androidx.room.Entity
 import androidx.room.ForeignKey
 import androidx.room.Index
 import androidx.room.PrimaryKey
+import org.wspcgir.strong_giraffe.repository.entity.Exercise
+import org.wspcgir.strong_giraffe.repository.entity.Location
 
 @Entity(
     tableName = "exercise_variation",

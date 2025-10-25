@@ -9,8 +9,11 @@ import org.wspcgir.strong_giraffe.model.ids.ExerciseId
 import org.wspcgir.strong_giraffe.model.ids.ExerciseVariationId
 import org.wspcgir.strong_giraffe.model.ids.LocationId
 import org.wspcgir.strong_giraffe.model.ids.SetId
-import org.wspcgir.strong_giraffe.model.ExerciseVariation as Variation
+import org.wspcgir.strong_giraffe.model.variation.ExerciseVariation as Variation
 import org.wspcgir.strong_giraffe.repository.entity.*
+import org.wspcgir.strong_giraffe.repository.entity.set.SetSummary
+import org.wspcgir.strong_giraffe.repository.entity.set.WorkoutSet
+import org.wspcgir.strong_giraffe.repository.entity.variation.ExerciseVariation
 import java.util.UUID
 
 @Database(

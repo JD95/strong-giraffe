@@ -1,5 +1,6 @@
-package org.wspcgir.strong_giraffe.model
+package org.wspcgir.strong_giraffe.model.set
 
+import org.wspcgir.strong_giraffe.model.WeekRange
 import org.wspcgir.strong_giraffe.model.ids.MuscleId
 
 

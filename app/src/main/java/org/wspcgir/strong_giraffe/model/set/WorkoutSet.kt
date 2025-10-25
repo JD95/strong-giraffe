@@ -1,6 +1,11 @@
-package org.wspcgir.strong_giraffe.model
+package org.wspcgir.strong_giraffe.model.set
 
 import kotlinx.serialization.Serializable
+import org.wspcgir.strong_giraffe.model.Comment
+import org.wspcgir.strong_giraffe.model.Intensity
+import org.wspcgir.strong_giraffe.model.Reps
+import org.wspcgir.strong_giraffe.model.Time
+import org.wspcgir.strong_giraffe.model.Weight
 import org.wspcgir.strong_giraffe.model.ids.EquipmentId
 import org.wspcgir.strong_giraffe.model.ids.ExerciseId
 import org.wspcgir.strong_giraffe.model.ids.ExerciseVariationId
