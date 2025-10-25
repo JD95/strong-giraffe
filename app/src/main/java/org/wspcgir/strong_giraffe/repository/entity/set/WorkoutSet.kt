@@ -1,6 +1,9 @@
-package org.wspcgir.strong_giraffe.repository.entity
+package org.wspcgir.strong_giraffe.repository.entity.set
 
 import androidx.room.*
+import org.wspcgir.strong_giraffe.repository.entity.Exercise
+import org.wspcgir.strong_giraffe.repository.entity.Location
+import org.wspcgir.strong_giraffe.repository.entity.variation.ExerciseVariation
 
 @Entity(
     tableName = "workout_set",

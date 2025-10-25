@@ -21,7 +21,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.viewModelScope
-import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
@@ -48,8 +47,6 @@ import org.wspcgir.strong_giraffe.destinations.EditMuscle
 import org.wspcgir.strong_giraffe.destinations.EditMusclePage
 import org.wspcgir.strong_giraffe.destinations.EditMusclePageViewModel
 import org.wspcgir.strong_giraffe.destinations.edit_set.EditSet
-import org.wspcgir.strong_giraffe.destinations.edit_set.EditSetPage
-import org.wspcgir.strong_giraffe.destinations.edit_set.EditSetPageViewModel
 import org.wspcgir.strong_giraffe.destinations.EquipmentList
 import org.wspcgir.strong_giraffe.destinations.EquipmentListPage
 import org.wspcgir.strong_giraffe.destinations.EquipmentListPageViewModel
@@ -66,14 +63,17 @@ import org.wspcgir.strong_giraffe.destinations.MuscleListPageViewModel
 import org.wspcgir.strong_giraffe.destinations.RegisterSetListPage
 import org.wspcgir.strong_giraffe.destinations.SetList
 import org.wspcgir.strong_giraffe.destinations.edit_set.editSetGraph
+import org.wspcgir.strong_giraffe.destinations.edit_variation.EditVariation
+import org.wspcgir.strong_giraffe.destinations.edit_variation.editVariationGraph
 import org.wspcgir.strong_giraffe.model.Backup
 import org.wspcgir.strong_giraffe.model.Equipment
 import org.wspcgir.strong_giraffe.model.Exercise
 import org.wspcgir.strong_giraffe.model.Location
 import org.wspcgir.strong_giraffe.model.Muscle
-import org.wspcgir.strong_giraffe.model.MuscleSetHistory
+import org.wspcgir.strong_giraffe.model.set.MuscleSetHistory
 import org.wspcgir.strong_giraffe.model.ids.EquipmentId
 import org.wspcgir.strong_giraffe.model.ids.ExerciseId
+import org.wspcgir.strong_giraffe.model.ids.ExerciseVariationId
 import org.wspcgir.strong_giraffe.model.ids.LocationId
 import org.wspcgir.strong_giraffe.model.ids.MuscleId
 import org.wspcgir.strong_giraffe.model.ids.SetId
@@ -210,11 +210,13 @@ fun MainComponent(
         typeOf<MuscleId>() to parcelableType<MuscleId>(),
         typeOf<LocationId>() to parcelableType<LocationId>(),
         typeOf<ExerciseId>() to parcelableType<ExerciseId>(),
+        typeOf<ExerciseVariationId>() to parcelableType<ExerciseVariationId>(),
         typeOf<EquipmentId>() to parcelableType<EquipmentId>(),
         typeOf<EditLocation>() to parcelableType<EditLocation>(),
         typeOf<EditSet>() to parcelableType<EditSet>(),
         typeOf<EditMuscle>() to parcelableType<EditMuscle>(),
         typeOf<EditExercise>() to parcelableType<EditExercise>(),
+        typeOf<EditVariation>() to parcelableType<EditVariation>(),
     )
     NavHost(navController = navController, startDestination = Home, typeMap = typeMap) {
         composable<Home> {
@@ -437,6 +439,7 @@ fun MainComponent(
             RegisterSetListPage(repo, navController)
         }
         editSetGraph(navController, repo, typeMap)
+        editVariationGraph(navController, repo, typeMap)
     }
 }
 

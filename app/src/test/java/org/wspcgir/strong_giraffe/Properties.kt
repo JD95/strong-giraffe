@@ -9,7 +9,7 @@ import io.kotest.property.forAll
 import org.wspcgir.strong_giraffe.model.Group
 import org.wspcgir.strong_giraffe.model.Intensity
 import org.wspcgir.strong_giraffe.model.Reps
-import org.wspcgir.strong_giraffe.model.SetSummary
+import org.wspcgir.strong_giraffe.model.set.SetSummary
 import org.wspcgir.strong_giraffe.model.WeekRange
 import org.wspcgir.strong_giraffe.model.Weight
 import org.wspcgir.strong_giraffe.model.ids.ExerciseId

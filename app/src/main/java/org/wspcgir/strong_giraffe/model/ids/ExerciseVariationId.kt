@@ -1,6 +1,9 @@
 package org.wspcgir.strong_giraffe.model.ids
 
+import android.os.Parcelable
+import kotlinx.parcelize.Parcelize
 import kotlinx.serialization.Serializable
 
 @Serializable
-data class ExerciseVariationId(val value: String)
+@Parcelize
+data class ExerciseVariationId(val value: String) : Parcelable

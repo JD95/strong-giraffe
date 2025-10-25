@@ -24,7 +24,6 @@ import androidx.compose.material3.Card
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -38,7 +37,7 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.ViewModel
 import kotlinx.serialization.Serializable
 import org.wspcgir.strong_giraffe.model.Muscle
-import org.wspcgir.strong_giraffe.model.MuscleSetHistory
+import org.wspcgir.strong_giraffe.model.set.MuscleSetHistory
 import org.wspcgir.strong_giraffe.model.ids.MuscleId
 import org.wspcgir.strong_giraffe.ui.theme.Blue
 import org.wspcgir.strong_giraffe.ui.theme.Green

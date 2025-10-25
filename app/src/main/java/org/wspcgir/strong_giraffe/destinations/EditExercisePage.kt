@@ -33,7 +33,7 @@ import kotlinx.coroutines.launch
 import kotlinx.parcelize.Parcelize
 import kotlinx.serialization.Serializable
 import org.wspcgir.strong_giraffe.model.Exercise
-import org.wspcgir.strong_giraffe.model.ExerciseVariation
+import org.wspcgir.strong_giraffe.model.variation.ExerciseVariation
 import org.wspcgir.strong_giraffe.model.Location
 import org.wspcgir.strong_giraffe.model.ids.ExerciseVariationId
 import org.wspcgir.strong_giraffe.repository.AppRepository

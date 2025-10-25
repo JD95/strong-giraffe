@@ -1,4 +1,4 @@
-package org.wspcgir.strong_giraffe.repository.entity
+package org.wspcgir.strong_giraffe.repository.entity.set
 
 import androidx.room.DatabaseView
 

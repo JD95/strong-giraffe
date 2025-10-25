@@ -20,9 +20,9 @@ import androidx.navigation.toRoute
 import kotlinx.coroutines.launch
 import kotlinx.serialization.Serializable
 import org.wspcgir.strong_giraffe.destinations.EditExercise
-import org.wspcgir.strong_giraffe.destinations.EditVariation
+import org.wspcgir.strong_giraffe.destinations.edit_variation.EditVariation
 import org.wspcgir.strong_giraffe.model.Exercise
-import org.wspcgir.strong_giraffe.model.ExerciseVariation
+import org.wspcgir.strong_giraffe.model.variation.ExerciseVariation
 import org.wspcgir.strong_giraffe.repository.AppRepository
 import org.wspcgir.strong_giraffe.views.SelectionPage
 import kotlin.reflect.KType

@@ -4,11 +4,8 @@ import android.content.res.Configuration.UI_MODE_NIGHT_NO
 import android.content.res.Configuration.UI_MODE_NIGHT_YES
 import android.os.Parcelable
 import android.util.Log
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
@@ -23,7 +20,6 @@ import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
-import androidx.compose.material.icons.filled.Create
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Done
 import androidx.compose.material.icons.filled.Warning
@@ -33,11 +29,8 @@ import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Slider
 import androidx.compose.material3.SliderDefaults
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
@@ -52,8 +45,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.tooling.preview.Preview
@@ -68,10 +59,10 @@ import kotlinx.serialization.Serializable
 import org.wspcgir.strong_giraffe.model.Comment
 import org.wspcgir.strong_giraffe.model.Intensity
 import org.wspcgir.strong_giraffe.model.Reps
-import org.wspcgir.strong_giraffe.model.SetContent
+import org.wspcgir.strong_giraffe.model.set.SetContent
 import org.wspcgir.strong_giraffe.model.Time
 import org.wspcgir.strong_giraffe.model.Weight
-import org.wspcgir.strong_giraffe.model.WorkoutSet
+import org.wspcgir.strong_giraffe.model.set.WorkoutSet
 import org.wspcgir.strong_giraffe.model.ids.ExerciseId
 import org.wspcgir.strong_giraffe.model.ids.ExerciseVariationId
 import org.wspcgir.strong_giraffe.model.ids.LocationId
@@ -82,6 +73,7 @@ import org.wspcgir.strong_giraffe.views.FIELD_NAME_FONT_SIZE
 import org.wspcgir.strong_giraffe.views.IntField
 import org.wspcgir.strong_giraffe.views.ModalDrawerScaffold
 import org.wspcgir.strong_giraffe.views.PreviousSetButton
+import org.wspcgir.strong_giraffe.views.SelectionField
 import org.wspcgir.strong_giraffe.views.intensityColor
 import java.time.Instant
 import java.time.OffsetDateTime
@@ -420,37 +412,6 @@ fun Page(
             }
             Spacer(modifier = Modifier.fillMaxHeight(0.1f))
         }
-    }
-}
-
-@Composable
-fun SelectionField(
-    label: String,
-    text: String,
-    modifier: Modifier = Modifier,
-    onClick: () -> Unit = { },
-) {
-    Box(modifier = modifier.height(IntrinsicSize.Min)) {
-        OutlinedTextField(
-            label = { Text(label) },
-            value = text,
-            enabled = true,
-            trailingIcon = {
-                Icon(Icons.Filled.Create, "select button")
-            },
-            modifier = Modifier.fillMaxWidth(),
-            onValueChange = { },
-            readOnly = true,
-        )
-        Surface(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(top = 8.dp)
-                .clip(MaterialTheme.shapes.small)
-                .clickable(enabled = true) { onClick() },
-            color = Color.Transparent
-        ) {}
-
     }
 }
 

@@ -3,6 +3,13 @@ package org.wspcgir.strong_giraffe.repository
 import android.util.Log
 import org.wspcgir.strong_giraffe.model.*
 import org.wspcgir.strong_giraffe.model.ids.*
+import org.wspcgir.strong_giraffe.model.set.MuscleSetHistory
+import org.wspcgir.strong_giraffe.model.set.SetContent
+import org.wspcgir.strong_giraffe.model.set.SetSummary
+import org.wspcgir.strong_giraffe.model.set.SetsForMuscleInWeek
+import org.wspcgir.strong_giraffe.model.set.WorkoutSet
+import org.wspcgir.strong_giraffe.model.variation.ExerciseVariation
+import org.wspcgir.strong_giraffe.model.variation.VariationContent
 import java.time.Instant
 import java.time.OffsetDateTime
 import java.util.*
@@ -10,8 +17,8 @@ import org.wspcgir.strong_giraffe.repository.entity.Location as LocationEntity
 import org.wspcgir.strong_giraffe.repository.entity.Equipment as EquipmentEntity
 import org.wspcgir.strong_giraffe.repository.entity.Muscle as MuscleEntity
 import org.wspcgir.strong_giraffe.repository.entity.Exercise as ExerciseEntity
-import org.wspcgir.strong_giraffe.repository.entity.WorkoutSet as WorkoutSetEntity
-import org.wspcgir.strong_giraffe.repository.entity.ExerciseVariation as ExerciseVariationEntity
+import org.wspcgir.strong_giraffe.repository.entity.set.WorkoutSet as WorkoutSetEntity
+import org.wspcgir.strong_giraffe.repository.entity.variation.ExerciseVariation as ExerciseVariationEntity
 
 class AppRepository(private val dao: AppDao) {
     suspend fun newLocation(id: String = UUID.randomUUID().toString()): Location {
@@ -340,6 +347,17 @@ class AppRepository(private val dao: AppDao) {
                 exercise = ExerciseId(it.exercise),
                 name = it.name,
                 location = it.location?.let { l -> LocationId(l) }
+            )
+        }
+    }
+
+    suspend fun getVariationForId(id: ExerciseVariationId): VariationContent {
+        return dao.getVariationContentForId(id.value).let {
+            VariationContent(
+                id = ExerciseVariationId(it.id),
+                name = it.name,
+                location = it.location?.let { l -> LocationId(l) },
+                locationName = it.locationName
             )
         }
     }

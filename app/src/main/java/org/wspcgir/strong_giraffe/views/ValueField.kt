@@ -1,6 +1,8 @@
 package org.wspcgir.strong_giraffe.views
 
 import android.util.Log
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
@@ -9,9 +11,33 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
+import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
+import kotlin.math.sin
+
+@Composable
+fun TextField (
+    label: String,
+    start: String,
+    onChange: (String) -> Unit,
+    modifier: Modifier = Modifier,
+    enabled: Boolean = true,
+    singleLine: Boolean = true,
+) {
+    ValueField(
+        label = label,
+        start = start,
+        fromString = { it },
+        modifier = modifier,
+        keyboardType = KeyboardType.Text,
+        enabled = enabled,
+        singleLine = singleLine,
+        onChange = { onChange(it ?: "") },
+    )
+}
 
 @Composable
 fun IntField(
@@ -21,7 +47,7 @@ fun IntField(
     start: Int = 0,
     onChange: (Int?) -> Unit,
 ) {
-    ValueField(
+    NumberField(
         label = label,
         enabled = enabled,
         modifier = modifier,
@@ -39,7 +65,7 @@ fun FloatField(
     start: Float = 0f,
     onChange: (Float?) -> Unit
 ) {
-    ValueField(
+    NumberField(
         label = label,
         enabled = enabled,
         modifier = modifier,
@@ -49,15 +75,36 @@ fun FloatField(
     )
 }
 
+@Composable
+fun <T> NumberField(
+    label: String,
+    start: T,
+    fromString: (String) -> T?,
+    modifier: Modifier,
+    enabled: Boolean = true,
+    onChange: (T?) -> Unit
+) {
+   ValueField(
+       label = label,
+       start = start,
+       fromString = fromString,
+       onChange = onChange,
+       modifier = modifier,
+       enabled = enabled,
+       keyboardType = KeyboardType.Number,
+   )
+}
+
 @OptIn(ExperimentalComposeUiApi::class)
 @Composable
 fun <T> ValueField(
     label: String,
-    modifier: Modifier = Modifier,
-    enabled: Boolean = true,
-    singleLine: Boolean = true,
     start: T,
     fromString: (String) -> T?,
+    modifier: Modifier = Modifier,
+    keyboardType: KeyboardType,
+    enabled: Boolean = true,
+    singleLine: Boolean = true,
     onChange: (T?) -> Unit = { },
 ) {
     val keyboardController = LocalSoftwareKeyboardController.current
@@ -77,7 +124,7 @@ fun <T> ValueField(
         modifier = modifier,
         enabled = enabled,
         label = { Text(label) },
-        keyboardOptions = KeyboardOptions.Default.copy(keyboardType = KeyboardType.Number),
+        keyboardOptions = KeyboardOptions.Default.copy(keyboardType = keyboardType),
         keyboardActions = KeyboardActions(onDone = { keyboardController?.hide() }),
         colors = if (valid) { validStateColors } else { errorStateColors },
         trailingIcon = { if (!valid) { Icons.Default.Warning } },
